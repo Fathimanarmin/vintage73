@@ -66,7 +66,7 @@ export const MENU_STRUCTURE = [
     title: 'INVENTORY',
     icon: FiArchive,
     items: [
-      { name: 'Barcode Generator', icon: TbBarcode, path: '/barcode' },
+      { name: 'Barcode Creator', icon: TbBarcode, path: '/barcode' },
       { name: 'Purchase Entry', icon: FiShoppingBag, path: '/purchase' },
       { name: 'Stock Receipt', icon: FiPackage, path: '/stock-receipt' },
       { name: 'Stock Transfer', icon: FiTruck, path: '/stock-transfer' },

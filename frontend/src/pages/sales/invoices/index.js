@@ -86,13 +86,20 @@ export default function InvoicesList() {
 
             if (!invoice) { toast.error('Invoice not found'); return; }
 
+            const branchTemplate = invoice.branch?.invoiceTemplate || invoice.branch?.invoiceSettings?.template;
+            const baseSettings = invoice.isReturn ? returnSettings : salesSettings;
             const formattedData = {
                 ...invoice,
                 items: invoice.items.map(item => ({
                     ...item,
                     name: item.product?.name || 'Unknown Product',
                     hsnCode: item.product?.hsnCode || ''
-                }))
+                })),
+                settings: {
+                    ...(baseSettings || {}),
+                    ...(invoice.branch?.invoiceSettings || {}),
+                    template: branchTemplate || (invoice.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                }
             };
             setPrintData(formattedData);   // set BEFORE opening modal
             setShowPreview(true);
@@ -113,6 +120,8 @@ export default function InvoicesList() {
             const invoice = Array.isArray(data) ? data[0] : data;
             if (!invoice) { toast.error('Invoice not found'); return; }
 
+            const branchTemplate = invoice.branch?.invoiceTemplate || invoice.branch?.invoiceSettings?.template;
+            const baseSettings = invoice.isReturn ? returnSettings : salesSettings;
             const formattedData = {
                 ...invoice,
                 items: invoice.items.map(item => ({
@@ -120,7 +129,11 @@ export default function InvoicesList() {
                     name: item.product?.name || 'Unknown Product',
                     hsnCode: item.product?.hsnCode || ''
                 })),
-                settings: invoice.isReturn ? returnSettings : salesSettings
+                settings: {
+                    ...(baseSettings || {}),
+                    ...(invoice.branch?.invoiceSettings || {}),
+                    template: branchTemplate || (invoice.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                }
             };
             setPrintData(formattedData);
             // small delay to let React update the off-screen ref

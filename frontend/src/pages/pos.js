@@ -61,9 +61,9 @@ export default function POS() {
     const [availableSalesmen, setAvailableSalesmen] = useState([]);
 const EXCHANGE_RATES = {
     INR: 1,
-    AED: 0.044,
-    EUR: 0.011,
-    USD: 0.012
+    AED: 1,
+    EUR: 1,
+    USD: 1
 };
 
 const CURRENCY_SYMBOLS = {
@@ -130,7 +130,7 @@ const CURRENCY_SYMBOLS = {
                     const restoredCode = parsed.currencyCode || 'INR';
                     setCurrencyCode(restoredCode);
                     setCurrencySymbol(CURRENCY_SYMBOLS[restoredCode] || '₹');
-                    setExchangeRate(EXCHANGE_RATES[restoredCode] || 1);
+                    setExchangeRate(1);
                     setSaleDescription(parsed.saleDescription || '');
                 } catch (e) {
                     console.error('Failed to restore POS state:', e);
@@ -163,14 +163,9 @@ const CURRENCY_SYMBOLS = {
     // Calculations
     const calcResults = useMemo(() => {
         return cart.reduce((acc, item) => {
-            // Dual-Mode Pricing Logic:
-            // If price was NOT manually edited, we treat item.price as the RAW INR price and multiply by exRate.
-            // If price WAS manually edited, we treat it as being already in the TARGET currency.
-            const effectivePrice = item.isPriceOverridden ? parseFloat(item.price || 0) : parseFloat(item.price || 0) * (exchangeRate || 1);
+            const effectivePrice = parseFloat(item.price || 0);
             const qty = parseFloat(item.quantity || 0);
-            
-            // item.discountAmount is handled similarly for consistency
-            const effectiveDisc = item.isPriceOverridden ? parseFloat(item.discountAmount || 0) : parseFloat(item.discountAmount || 0) * (exchangeRate || 1);
+            const effectiveDisc = parseFloat(item.discountAmount || 0);
             
             const rate = taxEnabled ? parseFloat(item.taxRate || 0) : 0; 
             const isInc = item.isTaxInclusive === true;
@@ -308,23 +303,21 @@ const CURRENCY_SYMBOLS = {
             setSaleDate(new Date(invoice.saleDate).toISOString().split('T')[0]);
             setCurrencyCode(invoice.currencyCode || 'INR');
             setCurrencySymbol(CURRENCY_SYMBOLS[invoice.currencyCode || 'INR']);
-            const currentExRate = invoice.exchangeRate || 1;
-            setExchangeRate(currentExRate);
+            setExchangeRate(1);
             setSaleDescription(invoice.description || '');
             setTaxEnabled(parseFloat(invoice.taxAmount || 0) > 0);
 
-            // Convert other transaction values from INR to target currency
-            setRoundOff((invoice.roundOffAmount * currentExRate).toFixed(2));
-            setAdvanceRedeemed((invoice.advanceUsed * currentExRate).toFixed(2));
+            // Set other transaction values without exchange rate conversion
+            setRoundOff(parseFloat(invoice.roundOffAmount || 0).toFixed(2));
+            setAdvanceRedeemed(parseFloat(invoice.advanceUsed || 0).toFixed(2));
             setAddedPayments((invoice.payments || []).map(p => ({
                 ...p,
-                amount: p.amount * currentExRate
+                amount: p.amount
             })));
 
             // Map items to cart
             const restoredCart = invoice.items.map(item => {
                 const product = (currentProducts || products).find(p => p.id === item.productId);
-                const itemExRate = invoice.exchangeRate || 1;
                 const selectedSize = item.size || null;
                 const cartKey = `${item.productId}_${selectedSize || 'nosize'}`;
                 return {
@@ -335,11 +328,10 @@ const CURRENCY_SYMBOLS = {
                     productTypeName: item.product?.productTypeName || item.product?.productType?.name || '',
                     selectedSize,
                     size: selectedSize,
-                    // Convert stored INR price back to invoice's currency and round to 2 decimals
-                    price: parseFloat((item.unitPrice * itemExRate).toFixed(2)),
+                    price: parseFloat(item.unitPrice || 0),
                     quantity: item.quantity,
                     discountPercent: item.discountPercent || 0,
-                    discountAmount: parseFloat(((item.discountAmount || 0) * itemExRate).toFixed(2)),
+                    discountAmount: parseFloat(item.discountAmount || 0),
                     taxRate: parseFloat(item.taxRate || 0),
                     taxPercent: parseFloat(item.taxRate || 0),
                     isTaxInclusive: item.isTaxInclusive === true || item.isTaxInclusive === 'true',
@@ -421,11 +413,14 @@ const CURRENCY_SYMBOLS = {
                     setBranchSettings({
                         stockIncluded: isStockEnabled
                     });
-                    if (data?.invoiceSettings && Object.keys(data.invoiceSettings).length > 0) {
-                        setSalesSettings(data.invoiceSettings);
-                    } else {
-                        setSalesSettings(companyProfile?.invoiceSettings || null);
-                    }
+                    const branchTemplate = data?.invoiceTemplate || data?.invoiceSettings?.template;
+                    const baseSettings = (data?.invoiceSettings && Object.keys(data.invoiceSettings).length > 0)
+                        ? data.invoiceSettings
+                        : (companyProfile?.invoiceSettings || {});
+                    setSalesSettings({
+                        ...baseSettings,
+                        template: branchTemplate || baseSettings?.template || 'modern'
+                    });
                 } catch (err) {
                     console.error("Failed to fetch branch settings", err);
                 }
@@ -605,32 +600,63 @@ const CURRENCY_SYMBOLS = {
             const query = search.trim();
             if (!query) return;
 
+            if (!customerId) {
+                toast.error('Please select a customer first');
+                return;
+            }
+
             const foundGroup = groupedProducts.find(p => 
                 (p.barcode && p.barcode.toLowerCase() === query.toLowerCase()) || 
-                p.name.toLowerCase() === query.toLowerCase() ||
-                p.variants?.some(v => v.barcode && v.barcode.toLowerCase() === query.toLowerCase())
+                p.variants?.some(v => v.barcode && v.barcode.toLowerCase() === query.toLowerCase()) ||
+                p.name.toLowerCase() === query.toLowerCase()
             );
 
             if (foundGroup) {
                 const matchedVariant = foundGroup.variants?.find(v => v.barcode && v.barcode.toLowerCase() === query.toLowerCase());
                 if (matchedVariant) {
                     if ((parseInt(matchedVariant.stock, 10) || 0) <= 0) {
-                        toast.error(`Size "${matchedVariant.size}" is out of stock (Stock: 0) and cannot be sold.`);
+                        toast.error(`"${foundGroup.name}" (${matchedVariant.size}) is out of stock (Stock: 0)`);
                         setSearch('');
                         return;
                     }
                     addToCart(foundGroup, matchedVariant.size);
-                } else if (foundGroup.hasSizes) {
-                    handleProductCardClick(foundGroup);
+                } else if (foundGroup.hasSizes && foundGroup.variants && foundGroup.variants.length > 0) {
+                    if (foundGroup.variants.length === 1) {
+                        const singleVar = foundGroup.variants[0];
+                        if ((parseInt(singleVar.stock, 10) || 0) <= 0) {
+                            toast.error(`"${foundGroup.name}" (${singleVar.size}) is out of stock (Stock: 0)`);
+                            setSearch('');
+                            return;
+                        }
+                        addToCart(foundGroup, singleVar.size);
+                    } else {
+                        handleProductCardClick(foundGroup);
+                    }
                 } else {
+                    const isStockEnabled = branchSettings.stockIncluded !== false && branchSettings.stockIncluded !== 'false';
+                    if (isStockEnabled && (parseInt(foundGroup.stock, 10) || 0) <= 0) {
+                        toast.error(`"${foundGroup.name}" is out of stock in your branch.`);
+                        setSearch('');
+                        return;
+                    }
                     addToCart(foundGroup, null);
                 }
                 setSearch('');
             } else {
-                const rawProd = products.find(p => p.barcode === query || p.name.toLowerCase().includes(query.toLowerCase()));
+                const rawProd = products.find(p => 
+                    (p.barcode && p.barcode.toLowerCase() === query.toLowerCase()) || 
+                    p.name.toLowerCase() === query.toLowerCase()
+                );
                 if (rawProd) {
-                    addToCart(rawProd, null);
+                    const isStockEnabled = branchSettings.stockIncluded !== false && branchSettings.stockIncluded !== 'false';
+                    if (isStockEnabled && (parseInt(rawProd.stock, 10) || 0) <= 0) {
+                        toast.error(`"${rawProd.name}" is out of stock in your branch.`);
+                    } else {
+                        addToCart(rawProd, null);
+                    }
                     setSearch('');
+                } else {
+                    toast.error(`No product found with barcode or name "${query}"`);
                 }
             }
         }
@@ -828,8 +854,8 @@ const CURRENCY_SYMBOLS = {
         // DiscountAmount = Price - NewNetPrice
 
         const newCart = cart.map(item => {
-            const effPrice = item.isPriceOverridden ? item.price : item.price * (exchangeRate || 1);
-            const effDisc = item.isPriceOverridden ? (item.discountAmount || 0) : (item.discountAmount || 0) * (exchangeRate || 1);
+            const effPrice = parseFloat(item.price || 0);
+            const effDisc = parseFloat(item.discountAmount || 0);
             
             const currentNet = effPrice - effDisc;
             const newNet = currentNet * ratio;
@@ -959,36 +985,29 @@ const CURRENCY_SYMBOLS = {
                 branchId: selectedBranch ? parseInt(selectedBranch) : (user?.branchId || null),
                 saleDate,
                 items: cart.map(item => {
-                    // Normalize back to INR for DB storage
-                    // If not overridden, item.price is ALREADY INR.
-                    // If overridden, item.price is in target currency, so divide by exchangeRate.
-                    const unitPriceINR = item.isPriceOverridden ? (item.price / (exchangeRate || 1)) : item.price;
-                    const discountAmountINR = item.isPriceOverridden ? ((item.discountAmount || 0) / (exchangeRate || 1)) : (item.discountAmount || 0);
-
                     return {
                         productId: item.id,
                         size: item.selectedSize || item.size || null,
                         quantity: item.quantity,
-                        unitPrice: unitPriceINR,
+                        unitPrice: parseFloat(item.price || 0),
                         taxPercent: taxEnabled ? item.taxPercent : 0,
                         discountPercent: item.discountPercent,
-                        discountAmount: discountAmountINR,
+                        discountAmount: parseFloat(item.discountAmount || 0),
                         isTaxInclusive: item.isTaxInclusive
                     };
                 }),
                 paymentMethod: finalPayments.length === 1 ? finalPayments[0].method : 'Split',
-                // Normalize total/paid/roundoff values to INR for DB storage
-                paidAmount: finalPaidAmount / exchangeRate,
+                paidAmount: finalPaidAmount,
                 terminalId: terminal?.id,
-                roundOffAmount: roundOff / exchangeRate,
-                advanceRedeemed: parseFloat(advanceRedeemed || 0) / exchangeRate,
+                roundOffAmount: parseFloat(roundOff || 0),
+                advanceRedeemed: parseFloat(advanceRedeemed || 0),
                 payments: finalPayments.map(p => ({
                     ...p,
-                    amount: p.amount / exchangeRate
+                    amount: p.amount
                 })),
                 salesmanId: salesmanId ? parseInt(salesmanId) : null,
                 currencyCode,
-                exchangeRate,
+                exchangeRate: 1,
                 description: saleDescription
             };
 
@@ -1006,12 +1025,17 @@ const CURRENCY_SYMBOLS = {
             // Using shallow: false to ensure state resets correctly
             router.replace('/pos', undefined, { shallow: false });
 
+            const saleBranchTemplate = res.data?.branch?.invoiceTemplate || res.data?.branch?.invoiceSettings?.template;
             setLastSale({
                 ...res.data,
                 currencyCode,
                 currencySymbol,
-                exchangeRate,
-                settings: (res.data.isReturn ? returnSettings : salesSettings) || {}
+                exchangeRate: 1,
+                settings: {
+                    ...((res.data.isReturn ? returnSettings : salesSettings) || {}),
+                    ...(res.data?.branch?.invoiceSettings || {}),
+                    template: saleBranchTemplate || (res.data.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                }
             });
             setShowPaymentModal(false);
             // Delay print slightly to allow state update
@@ -1167,7 +1191,14 @@ const CURRENCY_SYMBOLS = {
                                         )}
 
                                         {/* Product Name */}
-                                        <h3 className="font-semibold text-slate-800 text-sm truncate mb-1" title={product.name}>{product.name}</h3>
+                                        <h3 className="font-semibold text-slate-800 text-sm truncate mb-0.5" title={product.name}>{product.name}</h3>
+
+                                        {/* Product Barcode */}
+                                        {(product.barcode || (product.variants?.length === 1 && product.variants[0]?.barcode)) && (
+                                            <p className="font-mono text-xs text-slate-500 font-medium tracking-tight mb-1 truncate">
+                                                {product.barcode || product.variants[0]?.barcode}
+                                            </p>
+                                        )}
 
                                         {/* Available Sizes & Stock (Compact display) */}
                                         {product.hasSizes && product.variants && product.variants.length > 0 && (
@@ -1196,7 +1227,7 @@ const CURRENCY_SYMBOLS = {
 
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-50 mt-auto">
                                         <p className="text-primary font-bold text-sm">
-                                            {currencyCode === 'AED' ? `${(product.price * exchangeRate).toFixed(2)} ${currencySymbol}` : `${currencySymbol}${(product.price * exchangeRate).toFixed(2)}`}
+                                            {currencyCode === 'AED' ? `${parseFloat(product.price || 0).toFixed(2)} ${currencySymbol}` : `${currencySymbol}${parseFloat(product.price || 0).toFixed(2)}`}
                                         </p>
                                         {isOutOfStock ? (
                                             <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 cursor-not-allowed opacity-50" title="Out of Stock">
@@ -1365,18 +1396,9 @@ const CURRENCY_SYMBOLS = {
                                 value={currencyCode}
                                 onChange={(e) => {
                                     const code = e.target.value;
-                                    const newExRate = EXCHANGE_RATES[code];
-                                    
-                                    // Convert existing items in cart to new currency
-                                    setCart(prev => prev.map(item => ({
-                                        ...item,
-                                        price: (item.price / exchangeRate) * newExRate,
-                                        discountAmount: (item.discountAmount / exchangeRate) * newExRate
-                                    })));
-
                                     setCurrencyCode(code);
-                                    setCurrencySymbol(CURRENCY_SYMBOLS[code]);
-                                    setExchangeRate(newExRate);
+                                    setCurrencySymbol(CURRENCY_SYMBOLS[code] || code);
+                                    setExchangeRate(1);
                                 }}
                             >
                                 <option value="INR">INR (₹)</option>
@@ -1423,8 +1445,8 @@ const CURRENCY_SYMBOLS = {
                         <div className="divide-y divide-slate-50">
                             {cart.map(item => {
                                 const itemKey = item.cartItemId || `${item.id}_${item.selectedSize || 'nosize'}`;
-                                const effPrice = item.isPriceOverridden ? parseFloat(item.price || 0) : parseFloat(item.price || 0) * (exchangeRate || 1);
-                                const effDisc = item.isPriceOverridden ? parseFloat(item.discountAmount || 0) : parseFloat(item.discountAmount || 0) * (exchangeRate || 1);
+                                const effPrice = parseFloat(item.price || 0);
+                                const effDisc = parseFloat(item.discountAmount || 0);
                                 const lineTotal = (effPrice - effDisc) * (parseFloat(item.quantity) || 0);
 
                                 return (
@@ -1458,7 +1480,7 @@ const CURRENCY_SYMBOLS = {
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <span className="text-[10px] text-slate-400">
-                                                            {item.isPriceOverridden ? currencySymbol : '₹'}
+                                                            {currencySymbol}
                                                         </span>
                                                         <input
                                                             className="w-10 p-0.5 text-[10px] text-center bg-slate-100 border border-slate-200 rounded outline-none focus:border-primary"
@@ -1487,7 +1509,7 @@ const CURRENCY_SYMBOLS = {
                                             <div className="flex-[2] text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <span className="text-[10px] text-slate-400">
-                                                        {item.isPriceOverridden ? currencySymbol : '₹'}
+                                                        {currencySymbol}
                                                     </span>
                                                     <input
                                                         className="w-16 p-0.5 font-medium text-right text-slate-700 bg-slate-100 border border-slate-200 rounded outline-none focus:border-primary"
@@ -1749,7 +1771,14 @@ const CURRENCY_SYMBOLS = {
                 <div style={{ display: 'none' }}>
                     <div ref={componentRef}>
                         <ProfessionalInvoice 
-                            printData={{...lastSale, settings: lastSale?.isReturn ? returnSettings : salesSettings}} 
+                            printData={{
+                                ...lastSale, 
+                                settings: {
+                                    ...(lastSale?.isReturn ? returnSettings : salesSettings),
+                                    ...(lastSale?.branch?.invoiceSettings || {}),
+                                    template: lastSale?.branch?.invoiceTemplate || lastSale?.branch?.invoiceSettings?.template || (lastSale?.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                                }
+                            }} 
                             companyProfile={companyProfile} 
                         />
                     </div>
@@ -1875,16 +1904,14 @@ const CURRENCY_SYMBOLS = {
                                                         <td className="p-2 text-right">
                                                             {(() => {
                                                                 const sym = CURRENCY_SYMBOLS[selectedHistorySale.currencyCode] || '₹';
-                                                                const rate = parseFloat(selectedHistorySale.exchangeRate || 1);
-                                                                const val = (item.unitPrice * rate).toFixed(2);
+                                                                const val = parseFloat(item.unitPrice || 0).toFixed(2);
                                                                 return selectedHistorySale.currencyCode === 'AED' ? `${val} ${sym}` : `${sym}${val}`;
                                                             })()}
                                                         </td>
                                                         <td className="p-2 text-right font-medium">
                                                             {(() => {
                                                                 const sym = CURRENCY_SYMBOLS[selectedHistorySale.currencyCode] || '₹';
-                                                                const rate = parseFloat(selectedHistorySale.exchangeRate || 1);
-                                                                const val = (item.total * rate).toFixed(2);
+                                                                const val = parseFloat(item.total || 0).toFixed(2);
                                                                 return selectedHistorySale.currencyCode === 'AED' ? `${val} ${sym}` : `${sym}${val}`;
                                                             })()}
                                                         </td>
@@ -1967,7 +1994,7 @@ const CURRENCY_SYMBOLS = {
                                         </span>
                                     )}
                                     <span className="text-xs font-bold text-primary">
-                                        • {currencyCode === 'AED' ? `${(sizeModalProduct.price * exchangeRate).toFixed(2)} ${currencySymbol}` : `${currencySymbol}${(sizeModalProduct.price * exchangeRate).toFixed(2)}`}
+                                        • {currencyCode === 'AED' ? `${parseFloat(sizeModalProduct.price || 0).toFixed(2)} ${currencySymbol}` : `${currencySymbol}${parseFloat(sizeModalProduct.price || 0).toFixed(2)}`}
                                     </span>
                                 </div>
                             </div>

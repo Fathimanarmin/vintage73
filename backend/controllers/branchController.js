@@ -52,9 +52,25 @@ exports.createBranch = asyncHandler(async (req, res) => {
     throw new Error('Access denied: Only global admins can create branches');
   }
 
-  const { name, address, phone, email, stockIncluded } = req.body;
+  const { name, address, phone, email, stockIncluded, invoiceTemplate, invoiceSettings } = req.body;
+  const dataToSave = {
+    name,
+    address,
+    phone,
+    email,
+    stockIncluded: stockIncluded !== undefined ? stockIncluded : true
+  };
+  if (invoiceTemplate !== undefined) {
+    dataToSave.invoiceTemplate = invoiceTemplate || null;
+  }
+  if (invoiceSettings !== undefined) {
+    dataToSave.invoiceSettings = invoiceSettings;
+  } else if (invoiceTemplate) {
+    dataToSave.invoiceSettings = { template: invoiceTemplate };
+  }
+
   const branch = await prisma.branch.create({
-    data: { name, address, phone, email, stockIncluded: stockIncluded !== undefined ? stockIncluded : true }
+    data: dataToSave
   });
   res.status(201).json(branch);
 });
@@ -75,10 +91,22 @@ exports.updateBranch = asyncHandler(async (req, res) => {
     throw new Error('Invalid Branch ID');
   }
 
-  const { name, address, phone, email, isActive, stockIncluded } = req.body;
+  const { name, address, phone, email, isActive, stockIncluded, invoiceTemplate, invoiceSettings } = req.body;
+  const dataToUpdate = { name, address, phone, email, isActive, stockIncluded };
+  if (invoiceTemplate !== undefined) {
+    dataToUpdate.invoiceTemplate = invoiceTemplate || null;
+  }
+  if (invoiceSettings !== undefined) {
+    dataToUpdate.invoiceSettings = invoiceSettings;
+  } else if (invoiceTemplate !== undefined) {
+    const existing = await prisma.branch.findUnique({ where: { id: branchId }, select: { invoiceSettings: true } });
+    const currentSettings = (existing?.invoiceSettings && typeof existing.invoiceSettings === 'object') ? existing.invoiceSettings : {};
+    dataToUpdate.invoiceSettings = { ...currentSettings, template: invoiceTemplate || null };
+  }
+
   const branch = await prisma.branch.update({
     where: { id: branchId },
-    data: { name, address, phone, email, isActive, stockIncluded }
+    data: dataToUpdate
   });
   res.json(branch);
 });
@@ -120,9 +148,13 @@ exports.updateInvoiceSettings = asyncHandler(async (req, res) => {
   }
 
   const { invoiceSettings } = req.body;
+  const dataToUpdate = { invoiceSettings };
+  if (invoiceSettings && invoiceSettings.template !== undefined) {
+    dataToUpdate.invoiceTemplate = invoiceSettings.template || null;
+  }
   const branch = await prisma.branch.update({
     where: { id: branchId },
-    data: { invoiceSettings }
+    data: dataToUpdate
   });
   res.json(branch);
 });

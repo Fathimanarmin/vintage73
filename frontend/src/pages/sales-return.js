@@ -295,7 +295,11 @@ export default function SalesReturn() {
             customerName: lastReturn?.customerName || invoiceData?.customerName || 'Walk-in Customer',
             previousBalance: lastReturn?.previousBalance || 0,
             currentBalance: lastReturn?.currentBalance || 0,
-            settings: invoiceSettings
+            settings: {
+              ...(invoiceSettings || {}),
+              ...(lastReturn?.branch?.invoiceSettings || invoiceData?.branch?.invoiceSettings || {}),
+              template: lastReturn?.branch?.invoiceTemplate || lastReturn?.branch?.invoiceSettings?.template || invoiceData?.branch?.invoiceTemplate || invoiceData?.branch?.invoiceSettings?.template || invoiceSettings?.template || 'modern'
+            }
           }}
           companyProfile={companyProfile}
         />

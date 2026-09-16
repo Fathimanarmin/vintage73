@@ -11,6 +11,7 @@ const SearchableSelect = ({
     className = "",
     triggerClassName = "",
     direction = 'down',   // 'down' | 'up' | 'auto'
+    zIndex = 100005,
 }) => {
     const { theme } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +55,7 @@ const SearchableSelect = ({
                 bottom  : window.innerHeight - rect.top + GAP,
                 left,
                 width   : panelW,
-                zIndex  : 10001,
+                zIndex  : zIndex,
             });
         } else {
             setPanelStyle({
@@ -62,10 +63,10 @@ const SearchableSelect = ({
                 top     : rect.bottom + GAP,
                 left,
                 width   : panelW,
-                zIndex  : 10001,
+                zIndex  : zIndex,
             });
         }
-    }, [direction]);
+    }, [direction, zIndex]);
 
     // Recompute when open / on scroll or resize
     useEffect(() => {

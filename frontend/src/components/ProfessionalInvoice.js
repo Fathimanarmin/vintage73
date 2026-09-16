@@ -39,7 +39,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
     const {
         invoiceNumber, quotationNumber, saleDate, quotationDate, createdAt, items, subTotal, taxAmount, totalAmount, roundOffAmount,
         customer, customerName, previousBalance, currentBalance, placeOfSupply,
-        currencyCode, currencySymbol, exchangeRate, discount, advanceUsed, description, notes, terms, paidAmount
+        currencyCode, currencySymbol, exchangeRate, discount, advanceUsed, description, notes, terms, paidAmount, paymentMethod
     } = printData;
 
     const isQuotation = !!quotationNumber;
@@ -63,7 +63,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
     const currentSymbol = currencySymbol || getCurrencySymbol(currencyCode) || companyProfile?.currencySymbol || '₹';
     const settings = printData.settings || {};
-    const tpl = settings.template || 'modern';
+    const tpl = (settings.template || 'modern').toLowerCase();
     const pageSize = settings.pageSize || 'A5';
     const accent = settings.accentColor || '#10b981';
 
@@ -72,10 +72,10 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
     const isA4 = pageSize === 'A4';
     const isMobile = previewMode === 'Mobile';
 
-    const isModern = tpl === 'modern';
+    const isModern = tpl === 'modern' || tpl === 'boutique';
     const isClassic = tpl === 'classic';
     const isBold = tpl === 'bold';
-    const isMinimal = tpl === 'minimal';
+    const isMinimal = tpl === 'minimal' || tpl === 'simple';
     const exRate = parseFloat(exchangeRate) || 1;
     const formatAmt = (amt) => (parseFloat(amt || 0) * exRate).toFixed(2);
 
@@ -274,7 +274,14 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                     <tbody>
                         {items?.map((item, idx) => (
                             <tr key={idx} className="border-b border-transparent">
-                                <td className={`${s_TableTd} text-left font-medium text-slate-800`}>{item.product?.name || item.name || 'Item'}</td>
+                                <td className={`${s_TableTd} text-left font-medium text-slate-800`}>
+                                    <div>{item.product?.name || item.name || 'Item'}</div>
+                                    {item.size && (
+                                        <span className="inline-block mt-0.5 text-[10.5px] font-normal text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                            Size: {item.size}
+                                        </span>
+                                    )}
+                                </td>
                                 {settings.showColHsn !== false && <td className={`${s_TableTd} text-center font-medium text-slate-500`}>{item.product?.hsnCode || '-'}</td>}
                                 {settings.showColQty !== false && <td className={`${s_TableTd} text-center font-semibold text-slate-600`}>{item.quantity || 0}</td>}
                                 {settings.showColPrice !== false && <td className={`${s_TableTd} text-center text-slate-400 font-medium`}>{currentSymbol}{formatAmt(item.unitPrice)}</td>}
@@ -358,6 +365,22 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                             <div className="flex justify-between items-center text-slate-500 text-[11px] font-medium tracking-tight">
                                 <span className="whitespace-nowrap mr-2">Advance Amount</span>
                                 <span className="font-semibold text-emerald-600 whitespace-nowrap">- {currentSymbol}{formatAmt(advanceUsed)}</span>
+                            </div>
+                        )}
+
+                        {/* Payment Method (if provided) */}
+                        {paymentMethod && (
+                            <div className="flex justify-between items-center text-slate-500 text-[11px] font-medium tracking-tight">
+                                <span className="whitespace-nowrap mr-2">Payment Method</span>
+                                <span className="font-semibold text-slate-700 whitespace-nowrap">{paymentMethod}</span>
+                            </div>
+                        )}
+
+                        {/* Amount Paid (if provided) */}
+                        {parseFloat(paidAmount || 0) > 0 && (
+                            <div className="flex justify-between items-center text-slate-500 text-[11px] font-medium tracking-tight">
+                                <span className="whitespace-nowrap mr-2">Amount Paid</span>
+                                <span className="font-semibold text-emerald-600 whitespace-nowrap">{currentSymbol}{formatAmt(paidAmount)}</span>
                             </div>
                         )}
                     </div>

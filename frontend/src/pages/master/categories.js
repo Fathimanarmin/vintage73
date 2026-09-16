@@ -10,7 +10,8 @@ export default function CategoryMaster() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
-    const [formData, setFormData] = useState({ name: '', unitType: '', attributes: [] });
+    const [barcodeTemplates, setBarcodeTemplates] = useState([]);
+    const [formData, setFormData] = useState({ name: '', unitType: '', attributes: [], defaultLabelDesignId: '' });
 
     // Attribute editing state
     const [newAttributeName, setNewAttributeName] = useState('');
@@ -55,8 +56,18 @@ export default function CategoryMaster() {
         }
     };
 
+    const fetchBarcodeTemplates = async () => {
+        try {
+            const { data } = await api.get('/barcode-templates');
+            setBarcodeTemplates(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to fetch barcode templates:', error);
+        }
+    };
+
     useEffect(() => {
         fetchCategories();
+        fetchBarcodeTemplates();
     }, [activeTab]);
 
     const handleSubmit = async (e) => {
@@ -64,7 +75,12 @@ export default function CategoryMaster() {
         const baseUrl = activeTab === 'product' ? '/categories' : '/tickets/categories';
         try {
             const payload = activeTab === 'product'
-                ? { name: formData.name, unitType: formData.unitType, attributes: formData.attributes }
+                ? {
+                    name: formData.name,
+                    unitType: formData.unitType,
+                    attributes: formData.attributes,
+                    defaultLabelDesignId: formData.defaultLabelDesignId ? parseInt(formData.defaultLabelDesignId) : null
+                }
                 : { name: formData.name };
 
             if (editingCategory) {
@@ -75,7 +91,7 @@ export default function CategoryMaster() {
                 toast.success('Category created successfully');
             }
             setShowModal(false);
-            setFormData({ name: '', unitType: '', attributes: [] });
+            setFormData({ name: '', unitType: '', attributes: [], defaultLabelDesignId: '' });
             setNewAttributeName('');
             setNewOptionInputs({});
             setEditingCategory(null);
@@ -101,16 +117,18 @@ export default function CategoryMaster() {
     const openModal = (category = null) => {
         setNewAttributeName('');
         setNewOptionInputs({});
+        fetchBarcodeTemplates();
         if (category) {
             setEditingCategory(category);
             setFormData({
                 name: category.name,
                 unitType: category.unitType || '',
-                attributes: Array.isArray(category.attributes) ? JSON.parse(JSON.stringify(category.attributes)) : []
+                attributes: Array.isArray(category.attributes) ? JSON.parse(JSON.stringify(category.attributes)) : [],
+                defaultLabelDesignId: category.defaultLabelDesignId || category.defaultLabelDesign?.id || ''
             });
         } else {
             setEditingCategory(null);
-            setFormData({ name: '', unitType: '', attributes: [] });
+            setFormData({ name: '', unitType: '', attributes: [], defaultLabelDesignId: '' });
         }
         setShowModal(true);
     };
@@ -229,6 +247,7 @@ export default function CategoryMaster() {
                         <thead>
                             <tr className="whitespace-nowrap">
                                 <th>Category Name</th>
+                                {activeTab === 'product' && <th>Default Label</th>}
                                 {activeTab === 'product' && <th>Unit Type</th>}
                                 {activeTab === 'product' && <th>Attributes</th>}
                                 {activeTab === 'product' && <th>Products Linked</th>}
@@ -238,9 +257,9 @@ export default function CategoryMaster() {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="6" className="text-center py-8">Loading...</td></tr>
+                                <tr><td colSpan="7" className="text-center py-8">Loading...</td></tr>
                             ) : filteredCategories.length === 0 ? (
-                                <tr><td colSpan="6" className="text-center py-8 text-slate-500">No categories found.</td></tr>
+                                <tr><td colSpan="7" className="text-center py-8 text-slate-500">No categories found.</td></tr>
                             ) : (
                                 filteredCategories.map((category) => (
                                     <tr key={category.id}>
@@ -252,6 +271,17 @@ export default function CategoryMaster() {
                                                 {category.name}
                                             </div>
                                         </td>
+                                        {activeTab === 'product' && (
+                                            <td>
+                                                {category.defaultLabelDesign ? (
+                                                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md text-xs font-semibold">
+                                                        {category.defaultLabelDesign.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-400 text-xs">-</span>
+                                                )}
+                                            </td>
+                                        )}
                                         {activeTab === 'product' && (
                                             <td>
                                                 {category.unitType ? (
@@ -357,6 +387,26 @@ export default function CategoryMaster() {
                                             <option key={unit.value} value={unit.value}>{unit.label}</option>
                                         ))}
                                     </select>
+                                </div>
+                            )}
+
+                            {/* Default Label Design — product categories only */}
+                            {activeTab === 'product' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Default Label Design</label>
+                                    <select
+                                        className="input w-full"
+                                        value={formData.defaultLabelDesignId || ''}
+                                        onChange={(e) => setFormData({ ...formData, defaultLabelDesignId: e.target.value })}
+                                    >
+                                        <option value="">Select Label Design</option>
+                                        {barcodeTemplates.map(t => (
+                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-[11px] text-slate-400 mt-1">
+                                        Dynamically loaded from Barcode Creator templates.
+                                    </p>
                                 </div>
                             )}
 

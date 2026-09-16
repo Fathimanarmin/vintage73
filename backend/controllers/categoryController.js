@@ -1,11 +1,12 @@
 const prisma = require('../config/prisma');
 const asyncHandler = require('../middleware/asyncHandler');
 
-// Get All Categories (includes attributes for Product Type inheritance)
+// Get All Categories (includes attributes for Product Type inheritance and default label design)
 exports.getAllCategories = asyncHandler(async (req, res) => {
     const categories = await prisma.category.findMany({
         orderBy: { name: 'asc' },
         include: {
+            defaultLabelDesign: true,
             _count: {
                 select: { products: true }
             }
@@ -20,7 +21,7 @@ exports.getCategoryAttributes = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const category = await prisma.category.findUnique({
         where: { id: parseInt(id) },
-        select: { id: true, name: true, attributes: true }
+        select: { id: true, name: true, attributes: true, defaultLabelDesignId: true, defaultLabelDesign: true }
     });
 
     if (!category) {
@@ -32,19 +33,25 @@ exports.getCategoryAttributes = asyncHandler(async (req, res) => {
     res.json({
         id: category.id,
         name: category.name,
-        attributes: Array.isArray(category.attributes) ? category.attributes : []
+        attributes: Array.isArray(category.attributes) ? category.attributes : [],
+        defaultLabelDesignId: category.defaultLabelDesignId,
+        defaultLabelDesign: category.defaultLabelDesign
     });
 });
 
 // Create Category
 exports.createCategory = asyncHandler(async (req, res) => {
-    const { name, unitType, attributes } = req.body;
+    const { name, unitType, attributes, defaultLabelDesignId } = req.body;
     try {
         const category = await prisma.category.create({
             data: {
                 name,
                 unitType,
-                attributes: Array.isArray(attributes) ? attributes : []
+                attributes: Array.isArray(attributes) ? attributes : [],
+                defaultLabelDesignId: defaultLabelDesignId ? parseInt(defaultLabelDesignId) : null
+            },
+            include: {
+                defaultLabelDesign: true
             }
         });
         res.status(201).json(category);
@@ -60,16 +67,22 @@ exports.createCategory = asyncHandler(async (req, res) => {
 // Update Category
 exports.updateCategory = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, unitType, attributes } = req.body;
+    const { name, unitType, attributes, defaultLabelDesignId } = req.body;
     try {
         const dataToUpdate = {};
         if (name !== undefined) dataToUpdate.name = name;
         if (unitType !== undefined) dataToUpdate.unitType = unitType;
         if (attributes !== undefined) dataToUpdate.attributes = Array.isArray(attributes) ? attributes : [];
+        if (defaultLabelDesignId !== undefined) {
+            dataToUpdate.defaultLabelDesignId = defaultLabelDesignId ? parseInt(defaultLabelDesignId) : null;
+        }
 
         const category = await prisma.category.update({
             where: { id: parseInt(id) },
-            data: dataToUpdate
+            data: dataToUpdate,
+            include: {
+                defaultLabelDesign: true
+            }
         });
         res.json(category);
     } catch (error) {

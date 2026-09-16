@@ -1415,7 +1415,14 @@ export default function SalesReport() {
             <div style={{ display: 'none' }}>
                 <ProfessionalInvoice
                     ref={componentRef}
-                    printData={{ ...printSale, settings: printSale?.isReturn ? returnSettings : salesSettings }}
+                    printData={{ 
+                        ...printSale, 
+                        settings: {
+                            ...(printSale?.isReturn ? returnSettings : salesSettings),
+                            ...(printSale?.branch?.invoiceSettings || {}),
+                            template: printSale?.branch?.invoiceTemplate || printSale?.branch?.invoiceSettings?.template || (printSale?.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                        }
+                    }}
                     companyProfile={companyProfile}
                 />
             </div>

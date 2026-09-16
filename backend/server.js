@@ -82,6 +82,7 @@ app.use('/api/accounts', require('./routes/accountsRoutes'));
 app.use('/api/branches', require('./routes/branchRoutes'));
 app.use('/api/transfers', require('./routes/stockTransferRoutes'));
 app.use('/api/barcode-settings', require('./routes/barcodeSettingRoutes'));
+app.use('/api/barcode-templates', require('./routes/barcodeTemplateRoutes'));
 app.use('/api/hrms', require('./routes/hrmsRoutes'));
 app.use('/api/crm', require('./routes/crmRoutes'));
 app.use('/api/credits', require('./routes/creditRoutes'));

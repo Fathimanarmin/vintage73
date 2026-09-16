@@ -10,6 +10,7 @@ import {
 
 import Modal from '@/components/Modal';
 import ProfessionalInvoice from '@/components/ProfessionalInvoice';
+import { INVOICE_TEMPLATES, getTemplateName, normalizeTemplateId } from '@/lib/invoiceTemplates';
 
 const COMPONENT_METADATA = {
   showLogo: { label: 'Logo', icon: FiImage },
@@ -89,12 +90,7 @@ export default function InvoiceSettings() {
         showColTotal: true
     };
 
-    const TEMPLATES = [
-        { id: 'modern', name: 'Modern', type: 'Design 1' },
-        { id: 'minimal', name: 'Minimal', type: 'Design 2' },
-        { id: 'classic', name: 'Classic', type: 'Design 3' },
-        { id: 'bold', name: 'Bold', type: 'Design 4' }
-    ];
+    const TEMPLATES = INVOICE_TEMPLATES;
 
     const [settings, setSettings] = useState({
         sales: defaultSettings,
@@ -102,12 +98,28 @@ export default function InvoiceSettings() {
     });
 
     const [previewCompanyProfile, setPreviewCompanyProfile] = useState(null);
+    const [branches, setBranches] = useState([]);
+    const [selectedBranchId, setSelectedBranchId] = useState('');
 
     useEffect(() => {
         fetchSettings();
         fetchFinancialYears();
         fetchPreviewCompanyProfile();
+        fetchBranches();
     }, []);
+
+    const fetchBranches = async () => {
+        try {
+            const res = await api.get('/branches');
+            const list = res.data || [];
+            setBranches(list);
+            if (list.length > 0) {
+                setSelectedBranchId(list[0].id.toString());
+            }
+        } catch (err) {
+            console.error('Failed to fetch branches for invoice settings', err);
+        }
+    };
 
     const fetchPreviewCompanyProfile = async () => {
         try {
@@ -301,31 +313,119 @@ export default function InvoiceSettings() {
                             </div>
 
                             <div className="p-5 overflow-y-auto flex-1 pb-10">
+                                {/* Branch Invoice Template (Source of Truth) */}
+                                {branches.length > 0 && (
+                                    <div className="mb-6 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <div className="flex items-center justify-between mb-2.5">
+                                            <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <FiMapPin className="text-[#009262]" /> Branch Invoice Template
+                                            </h3>
+                                            <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-medium">
+                                                Source of Truth
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="space-y-2.5">
+                                            <div>
+                                                <label className="block text-[11px] text-slate-500 font-medium mb-1">Branch:</label>
+                                                <select
+                                                    value={selectedBranchId}
+                                                    onChange={e => {
+                                                        const bId = e.target.value;
+                                                        setSelectedBranchId(bId);
+                                                        const b = branches.find(x => x.id.toString() === bId);
+                                                        const t = b?.invoiceTemplate || b?.invoiceSettings?.template;
+                                                        if (t) updateSetting('template', normalizeTemplateId(t));
+                                                    }}
+                                                    className="input py-1.5 text-xs w-full bg-white font-medium"
+                                                >
+                                                    {branches.map(b => (
+                                                        <option key={b.id} value={b.id}>
+                                                            {b.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {(() => {
+                                                const currentBranch = branches.find(b => b.id.toString() === selectedBranchId) || branches[0];
+                                                const assignedTpl = currentBranch?.invoiceTemplate || currentBranch?.invoiceSettings?.template;
+                                                return (
+                                                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                                                        <div>
+                                                            <div className="text-[11px] text-slate-500">Invoice Template:</div>
+                                                            <div className="text-xs font-semibold text-slate-800">
+                                                                {assignedTpl ? getTemplateName(assignedTpl) : 'Not Assigned (Default)'}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => updateSetting('template', normalizeTemplateId(assignedTpl))}
+                                                            className="px-2.5 py-1 text-xs font-medium text-[#009262] bg-white border border-[#009262]/30 rounded-lg hover:bg-[#009262]/10 transition-colors flex items-center gap-1 shadow-sm"
+                                                            title="Preview this branch's invoice template layout"
+                                                        >
+                                                            <FiMonitor size={12} /> Preview
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Template Section */}
                                 <div className="mb-6">
-                                    <h3 className="text-sm font-medium text-slate-800 mb-3 flex items-center gap-2">
-                                        <FiFileText className="text-slate-400" /> Template
-                                    </h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        {TEMPLATES.map(t => (
-                                            <div 
-                                                key={t.id}
-                                                onClick={() => updateSetting('template', t.id)}
-                                                className={`cursor-pointer rounded-lg overflow-hidden border transition-all ${currentConfig.template === t.id ? 'border-[#009262] ring-1 ring-[#009262]' : 'border-slate-200 hover:border-slate-300'}`}
-                                            >
-                                                <div className="bg-slate-50 h-16 p-2 flex items-center justify-center">
-                                                    <div className="w-full h-full bg-white border border-slate-200 rounded shadow-sm opacity-50 flex flex-col pt-2 px-1 gap-1">
-                                                        <div className="w-4 h-4 rounded-full bg-slate-200 mx-auto"></div>
-                                                        <div className="w-10 h-1 bg-slate-200 mx-auto"></div>
-                                                        <div className="w-full h-1 bg-slate-200 mt-auto"></div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                                            <FiFileText className="text-slate-400" /> Invoice Templates
+                                        </h3>
+                                    </div>
+                                    <div className="space-y-2.5">
+                                        {TEMPLATES.map(t => {
+                                            const assignedBranches = branches.filter(b => {
+                                                const bTpl = b.invoiceTemplate || b.invoiceSettings?.template;
+                                                return normalizeTemplateId(bTpl) === t.id;
+                                            });
+                                            const isSelected = currentConfig.template === t.id;
+
+                                            return (
+                                                <div 
+                                                    key={t.id}
+                                                    onClick={() => updateSetting('template', t.id)}
+                                                    className={`cursor-pointer rounded-xl border p-3 transition-all ${isSelected ? 'border-[#009262] bg-[#009262]/5 ring-1 ring-[#009262]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                                                >
+                                                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#009262] bg-[#009262]' : 'border-slate-300'}`}>
+                                                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-slate-800">{t.name}</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                updateSetting('template', t.id);
+                                                            }}
+                                                            className={`text-[11px] px-2 py-0.5 rounded border flex items-center gap-1 font-medium transition-colors ${isSelected ? 'bg-[#009262] text-white border-[#009262]' : 'bg-white text-[#009262] border-[#009262]/30 hover:bg-[#009262]/10'}`}
+                                                        >
+                                                            <FiMonitor size={11} /> Preview
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="text-[11px] text-slate-500 pl-5.5">
+                                                        <span>Assigned to: </span>
+                                                        {assignedBranches.length > 0 ? (
+                                                            <strong className="text-slate-700 font-semibold">
+                                                                {assignedBranches.map(b => b.name).join(', ')}
+                                                            </strong>
+                                                        ) : (
+                                                            <span className="text-slate-400 italic">None</span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className={`text-[10px] text-center p-1.5 font-medium flex items-center justify-center gap-1 ${currentConfig.template === t.id ? 'bg-[#009262] text-white' : 'bg-white text-slate-600'}`}>
-                                                    {currentConfig.template === t.id && <span>✓</span>}
-                                                    {currentConfig.template === t.id ? 'Selected' : t.name}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-3 font-medium">Layout styles will update instantly.</p>
                                 </div>

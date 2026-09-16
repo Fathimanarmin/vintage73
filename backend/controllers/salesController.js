@@ -278,7 +278,8 @@ exports.createSale = asyncHandler(async (req, res) => {
       include: { 
         customer: true, 
         items: { include: { product: true } }, 
-        salesman: { select: { name: true } } 
+        salesman: { select: { name: true } },
+        branch: true
       }
     });
 
@@ -361,7 +362,8 @@ exports.getAllSales = asyncHandler(async (req, res) => {
     include: {
       customer: true,
       items: { include: { product: true } },
-      salesman: { select: { name: true } }
+      salesman: { select: { name: true } },
+      branch: true
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -621,7 +623,8 @@ exports.updateSale = asyncHandler(async (req, res) => {
       include: { 
         customer: true, 
         items: { include: { product: true } },
-        salesman: { select: { name: true } } 
+        salesman: { select: { name: true } },
+        branch: true
       }
     });
 

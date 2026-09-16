@@ -129,6 +129,11 @@ export type StockTransferItem = $Result.DefaultSelection<Prisma.$StockTransferIt
  */
 export type BarcodeSetting = $Result.DefaultSelection<Prisma.$BarcodeSettingPayload>
 /**
+ * Model BarcodeTemplate
+ * 
+ */
+export type BarcodeTemplate = $Result.DefaultSelection<Prisma.$BarcodeTemplatePayload>
+/**
  * Model EmployeeProfile
  * 
  */
@@ -670,6 +675,16 @@ export class PrismaClient<
     * ```
     */
   get barcodeSetting(): Prisma.BarcodeSettingDelegate<ExtArgs>;
+
+  /**
+   * `prisma.barcodeTemplate`: Exposes CRUD operations for the **BarcodeTemplate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BarcodeTemplates
+    * const barcodeTemplates = await prisma.barcodeTemplate.findMany()
+    * ```
+    */
+  get barcodeTemplate(): Prisma.BarcodeTemplateDelegate<ExtArgs>;
 
   /**
    * `prisma.employeeProfile`: Exposes CRUD operations for the **EmployeeProfile** model.
@@ -1543,6 +1558,7 @@ export namespace Prisma {
     StockTransfer: 'StockTransfer',
     StockTransferItem: 'StockTransferItem',
     BarcodeSetting: 'BarcodeSetting',
+    BarcodeTemplate: 'BarcodeTemplate',
     EmployeeProfile: 'EmployeeProfile',
     Designation: 'Designation',
     Department: 'Department',
@@ -1597,7 +1613,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     meta: {
-      modelProps: 'user' | 'branch' | 'companyProfile' | 'state' | 'customer' | 'advance' | 'advanceHistory' | 'supplier' | 'category' | 'productType' | 'product' | 'productStock' | 'purchase' | 'purchaseItem' | 'sale' | 'saleItem' | 'expense' | 'payment' | 'quotation' | 'quotationItem' | 'stockTransfer' | 'stockTransferItem' | 'barcodeSetting' | 'employeeProfile' | 'designation' | 'department' | 'attendance' | 'leaveRequest' | 'leaveType' | 'payroll' | 'lead' | 'referralPayment' | 'followUp' | 'leadActivity' | 'deal' | 'cRMTask' | 'missPunchRequest' | 'salaryAdvance' | 'accountGroup' | 'ledger' | 'transactionPosting' | 'voucher' | 'journalEntry' | 'financialYear' | 'gSTSettings' | 'deliveryChallan' | 'deliveryChallanItem' | 'bank' | 'whatsAppSetting' | 'whatsAppLog' | 'terminal' | 'systemSetting' | 'chatMessage' | 'notification' | 'workLog' | 'ticket' | 'ticketCategory' | 'ticketHistory' | 'ticketMessage' | 'ticketClosureRequest' | 'invoiceSetting'
+      modelProps: 'user' | 'branch' | 'companyProfile' | 'state' | 'customer' | 'advance' | 'advanceHistory' | 'supplier' | 'category' | 'productType' | 'product' | 'productStock' | 'purchase' | 'purchaseItem' | 'sale' | 'saleItem' | 'expense' | 'payment' | 'quotation' | 'quotationItem' | 'stockTransfer' | 'stockTransferItem' | 'barcodeSetting' | 'barcodeTemplate' | 'employeeProfile' | 'designation' | 'department' | 'attendance' | 'leaveRequest' | 'leaveType' | 'payroll' | 'lead' | 'referralPayment' | 'followUp' | 'leadActivity' | 'deal' | 'cRMTask' | 'missPunchRequest' | 'salaryAdvance' | 'accountGroup' | 'ledger' | 'transactionPosting' | 'voucher' | 'journalEntry' | 'financialYear' | 'gSTSettings' | 'deliveryChallan' | 'deliveryChallanItem' | 'bank' | 'whatsAppSetting' | 'whatsAppLog' | 'terminal' | 'systemSetting' | 'chatMessage' | 'notification' | 'workLog' | 'ticket' | 'ticketCategory' | 'ticketHistory' | 'ticketMessage' | 'ticketClosureRequest' | 'invoiceSetting'
       txIsolationLevel: Prisma.TransactionIsolationLevel
     },
     model: {
@@ -3116,6 +3132,72 @@ export namespace Prisma {
           count: {
             args: Prisma.BarcodeSettingCountArgs<ExtArgs>,
             result: $Utils.Optional<BarcodeSettingCountAggregateOutputType> | number
+          }
+        }
+      }
+      BarcodeTemplate: {
+        payload: Prisma.$BarcodeTemplatePayload<ExtArgs>
+        fields: Prisma.BarcodeTemplateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BarcodeTemplateFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BarcodeTemplateFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>
+          }
+          findFirst: {
+            args: Prisma.BarcodeTemplateFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BarcodeTemplateFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>
+          }
+          findMany: {
+            args: Prisma.BarcodeTemplateFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>[]
+          }
+          create: {
+            args: Prisma.BarcodeTemplateCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>
+          }
+          createMany: {
+            args: Prisma.BarcodeTemplateCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.BarcodeTemplateDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>
+          }
+          update: {
+            args: Prisma.BarcodeTemplateUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>
+          }
+          deleteMany: {
+            args: Prisma.BarcodeTemplateDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BarcodeTemplateUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.BarcodeTemplateUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<Prisma.$BarcodeTemplatePayload>
+          }
+          aggregate: {
+            args: Prisma.BarcodeTemplateAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateBarcodeTemplate>
+          }
+          groupBy: {
+            args: Prisma.BarcodeTemplateGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<BarcodeTemplateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BarcodeTemplateCountArgs<ExtArgs>,
+            result: $Utils.Optional<BarcodeTemplateCountAggregateOutputType> | number
           }
         }
       }
@@ -6786,6 +6868,40 @@ export namespace Prisma {
 
 
   /**
+   * Count Type BarcodeTemplateCountOutputType
+   */
+
+  export type BarcodeTemplateCountOutputType = {
+    categories: number
+  }
+
+  export type BarcodeTemplateCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categories?: boolean | BarcodeTemplateCountOutputTypeCountCategoriesArgs
+  }
+
+  // Custom InputTypes
+
+  /**
+   * BarcodeTemplateCountOutputType without action
+   */
+  export type BarcodeTemplateCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplateCountOutputType
+     */
+    select?: BarcodeTemplateCountOutputTypeSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * BarcodeTemplateCountOutputType without action
+   */
+  export type BarcodeTemplateCountOutputTypeCountCategoriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CategoryWhereInput
+  }
+
+
+
+  /**
    * Count Type DesignationCountOutputType
    */
 
@@ -9352,6 +9468,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     stockIncluded: boolean | null
+    invoiceTemplate: string | null
   }
 
   export type BranchMaxAggregateOutputType = {
@@ -9364,6 +9481,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     stockIncluded: boolean | null
+    invoiceTemplate: string | null
   }
 
   export type BranchCountAggregateOutputType = {
@@ -9377,6 +9495,7 @@ export namespace Prisma {
     updatedAt: number
     invoiceSettings: number
     stockIncluded: number
+    invoiceTemplate: number
     _all: number
   }
 
@@ -9399,6 +9518,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     stockIncluded?: true
+    invoiceTemplate?: true
   }
 
   export type BranchMaxAggregateInputType = {
@@ -9411,6 +9531,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     stockIncluded?: true
+    invoiceTemplate?: true
   }
 
   export type BranchCountAggregateInputType = {
@@ -9424,6 +9545,7 @@ export namespace Prisma {
     updatedAt?: true
     invoiceSettings?: true
     stockIncluded?: true
+    invoiceTemplate?: true
     _all?: true
   }
 
@@ -9524,6 +9646,7 @@ export namespace Prisma {
     updatedAt: Date
     invoiceSettings: JsonValue | null
     stockIncluded: boolean
+    invoiceTemplate: string | null
     _count: BranchCountAggregateOutputType | null
     _avg: BranchAvgAggregateOutputType | null
     _sum: BranchSumAggregateOutputType | null
@@ -9556,6 +9679,7 @@ export namespace Prisma {
     updatedAt?: boolean
     invoiceSettings?: boolean
     stockIncluded?: boolean
+    invoiceTemplate?: boolean
     attendance?: boolean | Branch$attendanceArgs<ExtArgs>
     barcodeSetting?: boolean | Branch$barcodeSettingArgs<ExtArgs>
     customers?: boolean | Branch$customersArgs<ExtArgs>
@@ -9592,6 +9716,7 @@ export namespace Prisma {
     updatedAt?: boolean
     invoiceSettings?: boolean
     stockIncluded?: boolean
+    invoiceTemplate?: boolean
   }
 
   export type BranchInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9658,6 +9783,7 @@ export namespace Prisma {
       updatedAt: Date
       invoiceSettings: Prisma.JsonValue | null
       stockIncluded: boolean
+      invoiceTemplate: string | null
     }, ExtArgs["result"]["branch"]>
     composites: {}
   }
@@ -10105,6 +10231,7 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"Branch", 'DateTime'>
     readonly invoiceSettings: FieldRef<"Branch", 'Json'>
     readonly stockIncluded: FieldRef<"Branch", 'Boolean'>
+    readonly invoiceTemplate: FieldRef<"Branch", 'String'>
   }
     
 
@@ -17342,22 +17469,26 @@ export namespace Prisma {
 
   export type CategoryAvgAggregateOutputType = {
     id: number | null
+    defaultLabelDesignId: number | null
   }
 
   export type CategorySumAggregateOutputType = {
     id: number | null
+    defaultLabelDesignId: number | null
   }
 
   export type CategoryMinAggregateOutputType = {
     id: number | null
     name: string | null
     unitType: string | null
+    defaultLabelDesignId: number | null
   }
 
   export type CategoryMaxAggregateOutputType = {
     id: number | null
     name: string | null
     unitType: string | null
+    defaultLabelDesignId: number | null
   }
 
   export type CategoryCountAggregateOutputType = {
@@ -17365,28 +17496,33 @@ export namespace Prisma {
     name: number
     unitType: number
     attributes: number
+    defaultLabelDesignId: number
     _all: number
   }
 
 
   export type CategoryAvgAggregateInputType = {
     id?: true
+    defaultLabelDesignId?: true
   }
 
   export type CategorySumAggregateInputType = {
     id?: true
+    defaultLabelDesignId?: true
   }
 
   export type CategoryMinAggregateInputType = {
     id?: true
     name?: true
     unitType?: true
+    defaultLabelDesignId?: true
   }
 
   export type CategoryMaxAggregateInputType = {
     id?: true
     name?: true
     unitType?: true
+    defaultLabelDesignId?: true
   }
 
   export type CategoryCountAggregateInputType = {
@@ -17394,6 +17530,7 @@ export namespace Prisma {
     name?: true
     unitType?: true
     attributes?: true
+    defaultLabelDesignId?: true
     _all?: true
   }
 
@@ -17488,6 +17625,7 @@ export namespace Prisma {
     name: string
     unitType: string | null
     attributes: JsonValue | null
+    defaultLabelDesignId: number | null
     _count: CategoryCountAggregateOutputType | null
     _avg: CategoryAvgAggregateOutputType | null
     _sum: CategorySumAggregateOutputType | null
@@ -17514,6 +17652,8 @@ export namespace Prisma {
     name?: boolean
     unitType?: boolean
     attributes?: boolean
+    defaultLabelDesignId?: boolean
+    defaultLabelDesign?: boolean | Category$defaultLabelDesignArgs<ExtArgs>
     products?: boolean | Category$productsArgs<ExtArgs>
     productTypes?: boolean | Category$productTypesArgs<ExtArgs>
     _count?: boolean | CategoryCountOutputTypeDefaultArgs<ExtArgs>
@@ -17524,9 +17664,11 @@ export namespace Prisma {
     name?: boolean
     unitType?: boolean
     attributes?: boolean
+    defaultLabelDesignId?: boolean
   }
 
   export type CategoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    defaultLabelDesign?: boolean | Category$defaultLabelDesignArgs<ExtArgs>
     products?: boolean | Category$productsArgs<ExtArgs>
     productTypes?: boolean | Category$productTypesArgs<ExtArgs>
     _count?: boolean | CategoryCountOutputTypeDefaultArgs<ExtArgs>
@@ -17536,6 +17678,7 @@ export namespace Prisma {
   export type $CategoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Category"
     objects: {
+      defaultLabelDesign: Prisma.$BarcodeTemplatePayload<ExtArgs> | null
       products: Prisma.$ProductPayload<ExtArgs>[]
       productTypes: Prisma.$ProductTypePayload<ExtArgs>[]
     }
@@ -17544,6 +17687,7 @@ export namespace Prisma {
       name: string
       unitType: string | null
       attributes: Prisma.JsonValue | null
+      defaultLabelDesignId: number | null
     }, ExtArgs["result"]["category"]>
     composites: {}
   }
@@ -17909,6 +18053,8 @@ export namespace Prisma {
   export interface Prisma__CategoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: 'PrismaPromise';
 
+    defaultLabelDesign<T extends Category$defaultLabelDesignArgs<ExtArgs> = {}>(args?: Subset<T, Category$defaultLabelDesignArgs<ExtArgs>>): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'findUniqueOrThrow'> | null, null, ExtArgs>;
+
     products<T extends Category$productsArgs<ExtArgs> = {}>(args?: Subset<T, Category$productsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductPayload<ExtArgs>, T, 'findMany'> | Null>;
 
     productTypes<T extends Category$productTypesArgs<ExtArgs> = {}>(args?: Subset<T, Category$productTypesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductTypePayload<ExtArgs>, T, 'findMany'> | Null>;
@@ -17945,6 +18091,7 @@ export namespace Prisma {
     readonly name: FieldRef<"Category", 'String'>
     readonly unitType: FieldRef<"Category", 'String'>
     readonly attributes: FieldRef<"Category", 'Json'>
+    readonly defaultLabelDesignId: FieldRef<"Category", 'Int'>
   }
     
 
@@ -18253,6 +18400,22 @@ export namespace Prisma {
      * Filter which Categories to delete
      */
     where?: CategoryWhereInput
+  }
+
+
+  /**
+   * Category.defaultLabelDesign
+   */
+  export type Category$defaultLabelDesignArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    where?: BarcodeTemplateWhereInput
   }
 
 
@@ -34284,6 +34447,1026 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well.
      */
     include?: BarcodeSettingInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model BarcodeTemplate
+   */
+
+  export type AggregateBarcodeTemplate = {
+    _count: BarcodeTemplateCountAggregateOutputType | null
+    _avg: BarcodeTemplateAvgAggregateOutputType | null
+    _sum: BarcodeTemplateSumAggregateOutputType | null
+    _min: BarcodeTemplateMinAggregateOutputType | null
+    _max: BarcodeTemplateMaxAggregateOutputType | null
+  }
+
+  export type BarcodeTemplateAvgAggregateOutputType = {
+    id: number | null
+    labelWidth: number | null
+    labelHeight: number | null
+    dpi: number | null
+  }
+
+  export type BarcodeTemplateSumAggregateOutputType = {
+    id: number | null
+    labelWidth: number | null
+    labelHeight: number | null
+    dpi: number | null
+  }
+
+  export type BarcodeTemplateMinAggregateOutputType = {
+    id: number | null
+    name: string | null
+    rawZpl: string | null
+    labelWidth: number | null
+    labelHeight: number | null
+    dpi: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BarcodeTemplateMaxAggregateOutputType = {
+    id: number | null
+    name: string | null
+    rawZpl: string | null
+    labelWidth: number | null
+    labelHeight: number | null
+    dpi: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BarcodeTemplateCountAggregateOutputType = {
+    id: number
+    name: number
+    rawZpl: number
+    labelWidth: number
+    labelHeight: number
+    dpi: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BarcodeTemplateAvgAggregateInputType = {
+    id?: true
+    labelWidth?: true
+    labelHeight?: true
+    dpi?: true
+  }
+
+  export type BarcodeTemplateSumAggregateInputType = {
+    id?: true
+    labelWidth?: true
+    labelHeight?: true
+    dpi?: true
+  }
+
+  export type BarcodeTemplateMinAggregateInputType = {
+    id?: true
+    name?: true
+    rawZpl?: true
+    labelWidth?: true
+    labelHeight?: true
+    dpi?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BarcodeTemplateMaxAggregateInputType = {
+    id?: true
+    name?: true
+    rawZpl?: true
+    labelWidth?: true
+    labelHeight?: true
+    dpi?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BarcodeTemplateCountAggregateInputType = {
+    id?: true
+    name?: true
+    rawZpl?: true
+    labelWidth?: true
+    labelHeight?: true
+    dpi?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BarcodeTemplateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BarcodeTemplate to aggregate.
+     */
+    where?: BarcodeTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarcodeTemplates to fetch.
+     */
+    orderBy?: BarcodeTemplateOrderByWithRelationInput | BarcodeTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BarcodeTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarcodeTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarcodeTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BarcodeTemplates
+    **/
+    _count?: true | BarcodeTemplateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BarcodeTemplateAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BarcodeTemplateSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BarcodeTemplateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BarcodeTemplateMaxAggregateInputType
+  }
+
+  export type GetBarcodeTemplateAggregateType<T extends BarcodeTemplateAggregateArgs> = {
+        [P in keyof T & keyof AggregateBarcodeTemplate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBarcodeTemplate[P]>
+      : GetScalarType<T[P], AggregateBarcodeTemplate[P]>
+  }
+
+
+
+
+  export type BarcodeTemplateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BarcodeTemplateWhereInput
+    orderBy?: BarcodeTemplateOrderByWithAggregationInput | BarcodeTemplateOrderByWithAggregationInput[]
+    by: BarcodeTemplateScalarFieldEnum[] | BarcodeTemplateScalarFieldEnum
+    having?: BarcodeTemplateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BarcodeTemplateCountAggregateInputType | true
+    _avg?: BarcodeTemplateAvgAggregateInputType
+    _sum?: BarcodeTemplateSumAggregateInputType
+    _min?: BarcodeTemplateMinAggregateInputType
+    _max?: BarcodeTemplateMaxAggregateInputType
+  }
+
+  export type BarcodeTemplateGroupByOutputType = {
+    id: number
+    name: string
+    rawZpl: string
+    labelWidth: number | null
+    labelHeight: number | null
+    dpi: number | null
+    createdAt: Date
+    updatedAt: Date
+    _count: BarcodeTemplateCountAggregateOutputType | null
+    _avg: BarcodeTemplateAvgAggregateOutputType | null
+    _sum: BarcodeTemplateSumAggregateOutputType | null
+    _min: BarcodeTemplateMinAggregateOutputType | null
+    _max: BarcodeTemplateMaxAggregateOutputType | null
+  }
+
+  type GetBarcodeTemplateGroupByPayload<T extends BarcodeTemplateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BarcodeTemplateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BarcodeTemplateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BarcodeTemplateGroupByOutputType[P]>
+            : GetScalarType<T[P], BarcodeTemplateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BarcodeTemplateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    rawZpl?: boolean
+    labelWidth?: boolean
+    labelHeight?: boolean
+    dpi?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    categories?: boolean | BarcodeTemplate$categoriesArgs<ExtArgs>
+    _count?: boolean | BarcodeTemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["barcodeTemplate"]>
+
+  export type BarcodeTemplateSelectScalar = {
+    id?: boolean
+    name?: boolean
+    rawZpl?: boolean
+    labelWidth?: boolean
+    labelHeight?: boolean
+    dpi?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BarcodeTemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categories?: boolean | BarcodeTemplate$categoriesArgs<ExtArgs>
+    _count?: boolean | BarcodeTemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }
+
+
+  export type $BarcodeTemplatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BarcodeTemplate"
+    objects: {
+      categories: Prisma.$CategoryPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      name: string
+      rawZpl: string
+      labelWidth: number | null
+      labelHeight: number | null
+      dpi: number | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["barcodeTemplate"]>
+    composites: {}
+  }
+
+
+  type BarcodeTemplateGetPayload<S extends boolean | null | undefined | BarcodeTemplateDefaultArgs> = $Result.GetResult<Prisma.$BarcodeTemplatePayload, S>
+
+  type BarcodeTemplateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<BarcodeTemplateFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: BarcodeTemplateCountAggregateInputType | true
+    }
+
+  export interface BarcodeTemplateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BarcodeTemplate'], meta: { name: 'BarcodeTemplate' } }
+    /**
+     * Find zero or one BarcodeTemplate that matches the filter.
+     * @param {BarcodeTemplateFindUniqueArgs} args - Arguments to find a BarcodeTemplate
+     * @example
+     * // Get one BarcodeTemplate
+     * const barcodeTemplate = await prisma.barcodeTemplate.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends BarcodeTemplateFindUniqueArgs<ExtArgs>>(
+      args: SelectSubset<T, BarcodeTemplateFindUniqueArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'findUnique'> | null, null, ExtArgs>
+
+    /**
+     * Find one BarcodeTemplate that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {BarcodeTemplateFindUniqueOrThrowArgs} args - Arguments to find a BarcodeTemplate
+     * @example
+     * // Get one BarcodeTemplate
+     * const barcodeTemplate = await prisma.barcodeTemplate.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends BarcodeTemplateFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, BarcodeTemplateFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'findUniqueOrThrow'>, never, ExtArgs>
+
+    /**
+     * Find the first BarcodeTemplate that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateFindFirstArgs} args - Arguments to find a BarcodeTemplate
+     * @example
+     * // Get one BarcodeTemplate
+     * const barcodeTemplate = await prisma.barcodeTemplate.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends BarcodeTemplateFindFirstArgs<ExtArgs>>(
+      args?: SelectSubset<T, BarcodeTemplateFindFirstArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'findFirst'> | null, null, ExtArgs>
+
+    /**
+     * Find the first BarcodeTemplate that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateFindFirstOrThrowArgs} args - Arguments to find a BarcodeTemplate
+     * @example
+     * // Get one BarcodeTemplate
+     * const barcodeTemplate = await prisma.barcodeTemplate.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends BarcodeTemplateFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, BarcodeTemplateFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'findFirstOrThrow'>, never, ExtArgs>
+
+    /**
+     * Find zero or more BarcodeTemplates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BarcodeTemplates
+     * const barcodeTemplates = await prisma.barcodeTemplate.findMany()
+     * 
+     * // Get first 10 BarcodeTemplates
+     * const barcodeTemplates = await prisma.barcodeTemplate.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const barcodeTemplateWithIdOnly = await prisma.barcodeTemplate.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends BarcodeTemplateFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, BarcodeTemplateFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'findMany'>>
+
+    /**
+     * Create a BarcodeTemplate.
+     * @param {BarcodeTemplateCreateArgs} args - Arguments to create a BarcodeTemplate.
+     * @example
+     * // Create one BarcodeTemplate
+     * const BarcodeTemplate = await prisma.barcodeTemplate.create({
+     *   data: {
+     *     // ... data to create a BarcodeTemplate
+     *   }
+     * })
+     * 
+    **/
+    create<T extends BarcodeTemplateCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, BarcodeTemplateCreateArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'create'>, never, ExtArgs>
+
+    /**
+     * Create many BarcodeTemplates.
+     *     @param {BarcodeTemplateCreateManyArgs} args - Arguments to create many BarcodeTemplates.
+     *     @example
+     *     // Create many BarcodeTemplates
+     *     const barcodeTemplate = await prisma.barcodeTemplate.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends BarcodeTemplateCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, BarcodeTemplateCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a BarcodeTemplate.
+     * @param {BarcodeTemplateDeleteArgs} args - Arguments to delete one BarcodeTemplate.
+     * @example
+     * // Delete one BarcodeTemplate
+     * const BarcodeTemplate = await prisma.barcodeTemplate.delete({
+     *   where: {
+     *     // ... filter to delete one BarcodeTemplate
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends BarcodeTemplateDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, BarcodeTemplateDeleteArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'delete'>, never, ExtArgs>
+
+    /**
+     * Update one BarcodeTemplate.
+     * @param {BarcodeTemplateUpdateArgs} args - Arguments to update one BarcodeTemplate.
+     * @example
+     * // Update one BarcodeTemplate
+     * const barcodeTemplate = await prisma.barcodeTemplate.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends BarcodeTemplateUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, BarcodeTemplateUpdateArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'update'>, never, ExtArgs>
+
+    /**
+     * Delete zero or more BarcodeTemplates.
+     * @param {BarcodeTemplateDeleteManyArgs} args - Arguments to filter BarcodeTemplates to delete.
+     * @example
+     * // Delete a few BarcodeTemplates
+     * const { count } = await prisma.barcodeTemplate.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends BarcodeTemplateDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, BarcodeTemplateDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BarcodeTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BarcodeTemplates
+     * const barcodeTemplate = await prisma.barcodeTemplate.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends BarcodeTemplateUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, BarcodeTemplateUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one BarcodeTemplate.
+     * @param {BarcodeTemplateUpsertArgs} args - Arguments to update or create a BarcodeTemplate.
+     * @example
+     * // Update or create a BarcodeTemplate
+     * const barcodeTemplate = await prisma.barcodeTemplate.upsert({
+     *   create: {
+     *     // ... data to create a BarcodeTemplate
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BarcodeTemplate we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends BarcodeTemplateUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, BarcodeTemplateUpsertArgs<ExtArgs>>
+    ): Prisma__BarcodeTemplateClient<$Result.GetResult<Prisma.$BarcodeTemplatePayload<ExtArgs>, T, 'upsert'>, never, ExtArgs>
+
+    /**
+     * Count the number of BarcodeTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateCountArgs} args - Arguments to filter BarcodeTemplates to count.
+     * @example
+     * // Count the number of BarcodeTemplates
+     * const count = await prisma.barcodeTemplate.count({
+     *   where: {
+     *     // ... the filter for the BarcodeTemplates we want to count
+     *   }
+     * })
+    **/
+    count<T extends BarcodeTemplateCountArgs>(
+      args?: Subset<T, BarcodeTemplateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BarcodeTemplateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BarcodeTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BarcodeTemplateAggregateArgs>(args: Subset<T, BarcodeTemplateAggregateArgs>): Prisma.PrismaPromise<GetBarcodeTemplateAggregateType<T>>
+
+    /**
+     * Group by BarcodeTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarcodeTemplateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BarcodeTemplateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BarcodeTemplateGroupByArgs['orderBy'] }
+        : { orderBy?: BarcodeTemplateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BarcodeTemplateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBarcodeTemplateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BarcodeTemplate model
+   */
+  readonly fields: BarcodeTemplateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BarcodeTemplate.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BarcodeTemplateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+
+    categories<T extends BarcodeTemplate$categoriesArgs<ExtArgs> = {}>(args?: Subset<T, BarcodeTemplate$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, 'findMany'> | Null>;
+
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>;
+  }
+
+
+
+  /**
+   * Fields of the BarcodeTemplate model
+   */ 
+  interface BarcodeTemplateFieldRefs {
+    readonly id: FieldRef<"BarcodeTemplate", 'Int'>
+    readonly name: FieldRef<"BarcodeTemplate", 'String'>
+    readonly rawZpl: FieldRef<"BarcodeTemplate", 'String'>
+    readonly labelWidth: FieldRef<"BarcodeTemplate", 'Float'>
+    readonly labelHeight: FieldRef<"BarcodeTemplate", 'Float'>
+    readonly dpi: FieldRef<"BarcodeTemplate", 'Int'>
+    readonly createdAt: FieldRef<"BarcodeTemplate", 'DateTime'>
+    readonly updatedAt: FieldRef<"BarcodeTemplate", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+
+  /**
+   * BarcodeTemplate findUnique
+   */
+  export type BarcodeTemplateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which BarcodeTemplate to fetch.
+     */
+    where: BarcodeTemplateWhereUniqueInput
+  }
+
+
+  /**
+   * BarcodeTemplate findUniqueOrThrow
+   */
+  export type BarcodeTemplateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which BarcodeTemplate to fetch.
+     */
+    where: BarcodeTemplateWhereUniqueInput
+  }
+
+
+  /**
+   * BarcodeTemplate findFirst
+   */
+  export type BarcodeTemplateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which BarcodeTemplate to fetch.
+     */
+    where?: BarcodeTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarcodeTemplates to fetch.
+     */
+    orderBy?: BarcodeTemplateOrderByWithRelationInput | BarcodeTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BarcodeTemplates.
+     */
+    cursor?: BarcodeTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarcodeTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarcodeTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BarcodeTemplates.
+     */
+    distinct?: BarcodeTemplateScalarFieldEnum | BarcodeTemplateScalarFieldEnum[]
+  }
+
+
+  /**
+   * BarcodeTemplate findFirstOrThrow
+   */
+  export type BarcodeTemplateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which BarcodeTemplate to fetch.
+     */
+    where?: BarcodeTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarcodeTemplates to fetch.
+     */
+    orderBy?: BarcodeTemplateOrderByWithRelationInput | BarcodeTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BarcodeTemplates.
+     */
+    cursor?: BarcodeTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarcodeTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarcodeTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BarcodeTemplates.
+     */
+    distinct?: BarcodeTemplateScalarFieldEnum | BarcodeTemplateScalarFieldEnum[]
+  }
+
+
+  /**
+   * BarcodeTemplate findMany
+   */
+  export type BarcodeTemplateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which BarcodeTemplates to fetch.
+     */
+    where?: BarcodeTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarcodeTemplates to fetch.
+     */
+    orderBy?: BarcodeTemplateOrderByWithRelationInput | BarcodeTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BarcodeTemplates.
+     */
+    cursor?: BarcodeTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarcodeTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarcodeTemplates.
+     */
+    skip?: number
+    distinct?: BarcodeTemplateScalarFieldEnum | BarcodeTemplateScalarFieldEnum[]
+  }
+
+
+  /**
+   * BarcodeTemplate create
+   */
+  export type BarcodeTemplateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BarcodeTemplate.
+     */
+    data: XOR<BarcodeTemplateCreateInput, BarcodeTemplateUncheckedCreateInput>
+  }
+
+
+  /**
+   * BarcodeTemplate createMany
+   */
+  export type BarcodeTemplateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BarcodeTemplates.
+     */
+    data: BarcodeTemplateCreateManyInput | BarcodeTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * BarcodeTemplate update
+   */
+  export type BarcodeTemplateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BarcodeTemplate.
+     */
+    data: XOR<BarcodeTemplateUpdateInput, BarcodeTemplateUncheckedUpdateInput>
+    /**
+     * Choose, which BarcodeTemplate to update.
+     */
+    where: BarcodeTemplateWhereUniqueInput
+  }
+
+
+  /**
+   * BarcodeTemplate updateMany
+   */
+  export type BarcodeTemplateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BarcodeTemplates.
+     */
+    data: XOR<BarcodeTemplateUpdateManyMutationInput, BarcodeTemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which BarcodeTemplates to update
+     */
+    where?: BarcodeTemplateWhereInput
+  }
+
+
+  /**
+   * BarcodeTemplate upsert
+   */
+  export type BarcodeTemplateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BarcodeTemplate to update in case it exists.
+     */
+    where: BarcodeTemplateWhereUniqueInput
+    /**
+     * In case the BarcodeTemplate found by the `where` argument doesn't exist, create a new BarcodeTemplate with this data.
+     */
+    create: XOR<BarcodeTemplateCreateInput, BarcodeTemplateUncheckedCreateInput>
+    /**
+     * In case the BarcodeTemplate was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BarcodeTemplateUpdateInput, BarcodeTemplateUncheckedUpdateInput>
+  }
+
+
+  /**
+   * BarcodeTemplate delete
+   */
+  export type BarcodeTemplateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
+    /**
+     * Filter which BarcodeTemplate to delete.
+     */
+    where: BarcodeTemplateWhereUniqueInput
+  }
+
+
+  /**
+   * BarcodeTemplate deleteMany
+   */
+  export type BarcodeTemplateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BarcodeTemplates to delete
+     */
+    where?: BarcodeTemplateWhereInput
+  }
+
+
+  /**
+   * BarcodeTemplate.categories
+   */
+  export type BarcodeTemplate$categoriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Category
+     */
+    select?: CategorySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: CategoryInclude<ExtArgs> | null
+    where?: CategoryWhereInput
+    orderBy?: CategoryOrderByWithRelationInput | CategoryOrderByWithRelationInput[]
+    cursor?: CategoryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CategoryScalarFieldEnum | CategoryScalarFieldEnum[]
+  }
+
+
+  /**
+   * BarcodeTemplate without action
+   */
+  export type BarcodeTemplateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarcodeTemplate
+     */
+    select?: BarcodeTemplateSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: BarcodeTemplateInclude<ExtArgs> | null
   }
 
 
@@ -74470,7 +75653,8 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     invoiceSettings: 'invoiceSettings',
-    stockIncluded: 'stockIncluded'
+    stockIncluded: 'stockIncluded',
+    invoiceTemplate: 'invoiceTemplate'
   };
 
   export type BranchScalarFieldEnum = (typeof BranchScalarFieldEnum)[keyof typeof BranchScalarFieldEnum]
@@ -74591,7 +75775,8 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     unitType: 'unitType',
-    attributes: 'attributes'
+    attributes: 'attributes',
+    defaultLabelDesignId: 'defaultLabelDesignId'
   };
 
   export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
@@ -74883,6 +76068,20 @@ export namespace Prisma {
   };
 
   export type BarcodeSettingScalarFieldEnum = (typeof BarcodeSettingScalarFieldEnum)[keyof typeof BarcodeSettingScalarFieldEnum]
+
+
+  export const BarcodeTemplateScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    rawZpl: 'rawZpl',
+    labelWidth: 'labelWidth',
+    labelHeight: 'labelHeight',
+    dpi: 'dpi',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BarcodeTemplateScalarFieldEnum = (typeof BarcodeTemplateScalarFieldEnum)[keyof typeof BarcodeTemplateScalarFieldEnum]
 
 
   export const EmployeeProfileScalarFieldEnum: {
@@ -75858,6 +77057,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Branch"> | Date | string
     invoiceSettings?: JsonNullableFilter<"Branch">
     stockIncluded?: BoolFilter<"Branch"> | boolean
+    invoiceTemplate?: StringNullableFilter<"Branch"> | string | null
     attendance?: AttendanceListRelationFilter
     barcodeSetting?: XOR<BarcodeSettingNullableRelationFilter, BarcodeSettingWhereInput> | null
     customers?: CustomerListRelationFilter
@@ -75893,6 +77093,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     invoiceSettings?: SortOrderInput | SortOrder
     stockIncluded?: SortOrder
+    invoiceTemplate?: SortOrderInput | SortOrder
     attendance?: AttendanceOrderByRelationAggregateInput
     barcodeSetting?: BarcodeSettingOrderByWithRelationInput
     customers?: CustomerOrderByRelationAggregateInput
@@ -75931,6 +77132,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Branch"> | Date | string
     invoiceSettings?: JsonNullableFilter<"Branch">
     stockIncluded?: BoolFilter<"Branch"> | boolean
+    invoiceTemplate?: StringNullableFilter<"Branch"> | string | null
     attendance?: AttendanceListRelationFilter
     barcodeSetting?: XOR<BarcodeSettingNullableRelationFilter, BarcodeSettingWhereInput> | null
     customers?: CustomerListRelationFilter
@@ -75966,6 +77168,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     invoiceSettings?: SortOrderInput | SortOrder
     stockIncluded?: SortOrder
+    invoiceTemplate?: SortOrderInput | SortOrder
     _count?: BranchCountOrderByAggregateInput
     _avg?: BranchAvgOrderByAggregateInput
     _max?: BranchMaxOrderByAggregateInput
@@ -75987,6 +77190,7 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Branch"> | Date | string
     invoiceSettings?: JsonNullableWithAggregatesFilter<"Branch">
     stockIncluded?: BoolWithAggregatesFilter<"Branch"> | boolean
+    invoiceTemplate?: StringNullableWithAggregatesFilter<"Branch"> | string | null
   }
 
   export type CompanyProfileWhereInput = {
@@ -76585,6 +77789,8 @@ export namespace Prisma {
     name?: StringFilter<"Category"> | string
     unitType?: StringNullableFilter<"Category"> | string | null
     attributes?: JsonNullableFilter<"Category">
+    defaultLabelDesignId?: IntNullableFilter<"Category"> | number | null
+    defaultLabelDesign?: XOR<BarcodeTemplateNullableRelationFilter, BarcodeTemplateWhereInput> | null
     products?: ProductListRelationFilter
     productTypes?: ProductTypeListRelationFilter
   }
@@ -76594,6 +77800,8 @@ export namespace Prisma {
     name?: SortOrder
     unitType?: SortOrderInput | SortOrder
     attributes?: SortOrderInput | SortOrder
+    defaultLabelDesignId?: SortOrderInput | SortOrder
+    defaultLabelDesign?: BarcodeTemplateOrderByWithRelationInput
     products?: ProductOrderByRelationAggregateInput
     productTypes?: ProductTypeOrderByRelationAggregateInput
   }
@@ -76606,6 +77814,8 @@ export namespace Prisma {
     NOT?: CategoryWhereInput | CategoryWhereInput[]
     unitType?: StringNullableFilter<"Category"> | string | null
     attributes?: JsonNullableFilter<"Category">
+    defaultLabelDesignId?: IntNullableFilter<"Category"> | number | null
+    defaultLabelDesign?: XOR<BarcodeTemplateNullableRelationFilter, BarcodeTemplateWhereInput> | null
     products?: ProductListRelationFilter
     productTypes?: ProductTypeListRelationFilter
   }, "id" | "name">
@@ -76615,6 +77825,7 @@ export namespace Prisma {
     name?: SortOrder
     unitType?: SortOrderInput | SortOrder
     attributes?: SortOrderInput | SortOrder
+    defaultLabelDesignId?: SortOrderInput | SortOrder
     _count?: CategoryCountOrderByAggregateInput
     _avg?: CategoryAvgOrderByAggregateInput
     _max?: CategoryMaxOrderByAggregateInput
@@ -76630,6 +77841,7 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Category"> | string
     unitType?: StringNullableWithAggregatesFilter<"Category"> | string | null
     attributes?: JsonNullableWithAggregatesFilter<"Category">
+    defaultLabelDesignId?: IntNullableWithAggregatesFilter<"Category"> | number | null
   }
 
   export type ProductTypeWhereInput = {
@@ -78217,6 +79429,78 @@ export namespace Prisma {
     rowGap?: FloatWithAggregatesFilter<"BarcodeSetting"> | number
     createdAt?: DateTimeWithAggregatesFilter<"BarcodeSetting"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BarcodeSetting"> | Date | string
+  }
+
+  export type BarcodeTemplateWhereInput = {
+    AND?: BarcodeTemplateWhereInput | BarcodeTemplateWhereInput[]
+    OR?: BarcodeTemplateWhereInput[]
+    NOT?: BarcodeTemplateWhereInput | BarcodeTemplateWhereInput[]
+    id?: IntFilter<"BarcodeTemplate"> | number
+    name?: StringFilter<"BarcodeTemplate"> | string
+    rawZpl?: StringFilter<"BarcodeTemplate"> | string
+    labelWidth?: FloatNullableFilter<"BarcodeTemplate"> | number | null
+    labelHeight?: FloatNullableFilter<"BarcodeTemplate"> | number | null
+    dpi?: IntNullableFilter<"BarcodeTemplate"> | number | null
+    createdAt?: DateTimeFilter<"BarcodeTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"BarcodeTemplate"> | Date | string
+    categories?: CategoryListRelationFilter
+  }
+
+  export type BarcodeTemplateOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    rawZpl?: SortOrder
+    labelWidth?: SortOrderInput | SortOrder
+    labelHeight?: SortOrderInput | SortOrder
+    dpi?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    categories?: CategoryOrderByRelationAggregateInput
+  }
+
+  export type BarcodeTemplateWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    name?: string
+    AND?: BarcodeTemplateWhereInput | BarcodeTemplateWhereInput[]
+    OR?: BarcodeTemplateWhereInput[]
+    NOT?: BarcodeTemplateWhereInput | BarcodeTemplateWhereInput[]
+    rawZpl?: StringFilter<"BarcodeTemplate"> | string
+    labelWidth?: FloatNullableFilter<"BarcodeTemplate"> | number | null
+    labelHeight?: FloatNullableFilter<"BarcodeTemplate"> | number | null
+    dpi?: IntNullableFilter<"BarcodeTemplate"> | number | null
+    createdAt?: DateTimeFilter<"BarcodeTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"BarcodeTemplate"> | Date | string
+    categories?: CategoryListRelationFilter
+  }, "id" | "name">
+
+  export type BarcodeTemplateOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    rawZpl?: SortOrder
+    labelWidth?: SortOrderInput | SortOrder
+    labelHeight?: SortOrderInput | SortOrder
+    dpi?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BarcodeTemplateCountOrderByAggregateInput
+    _avg?: BarcodeTemplateAvgOrderByAggregateInput
+    _max?: BarcodeTemplateMaxOrderByAggregateInput
+    _min?: BarcodeTemplateMinOrderByAggregateInput
+    _sum?: BarcodeTemplateSumOrderByAggregateInput
+  }
+
+  export type BarcodeTemplateScalarWhereWithAggregatesInput = {
+    AND?: BarcodeTemplateScalarWhereWithAggregatesInput | BarcodeTemplateScalarWhereWithAggregatesInput[]
+    OR?: BarcodeTemplateScalarWhereWithAggregatesInput[]
+    NOT?: BarcodeTemplateScalarWhereWithAggregatesInput | BarcodeTemplateScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"BarcodeTemplate"> | number
+    name?: StringWithAggregatesFilter<"BarcodeTemplate"> | string
+    rawZpl?: StringWithAggregatesFilter<"BarcodeTemplate"> | string
+    labelWidth?: FloatNullableWithAggregatesFilter<"BarcodeTemplate"> | number | null
+    labelHeight?: FloatNullableWithAggregatesFilter<"BarcodeTemplate"> | number | null
+    dpi?: IntNullableWithAggregatesFilter<"BarcodeTemplate"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"BarcodeTemplate"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BarcodeTemplate"> | Date | string
   }
 
   export type EmployeeProfileWhereInput = {
@@ -81839,6 +83123,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -81874,6 +83159,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -81908,6 +83194,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -81943,6 +83230,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -81978,6 +83266,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
   }
 
   export type BranchUpdateManyMutationInput = {
@@ -81990,6 +83279,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BranchUncheckedUpdateManyInput = {
@@ -82003,6 +83293,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CompanyProfileCreateInput = {
@@ -82680,6 +83971,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesign?: BarcodeTemplateCreateNestedOneWithoutCategoriesInput
     products?: ProductCreateNestedManyWithoutCategoryInput
     productTypes?: ProductTypeCreateNestedManyWithoutCategoryInput
   }
@@ -82689,6 +83981,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: number | null
     products?: ProductUncheckedCreateNestedManyWithoutCategoryInput
     productTypes?: ProductTypeUncheckedCreateNestedManyWithoutCategoryInput
   }
@@ -82697,6 +83990,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesign?: BarcodeTemplateUpdateOneWithoutCategoriesNestedInput
     products?: ProductUpdateManyWithoutCategoryNestedInput
     productTypes?: ProductTypeUpdateManyWithoutCategoryNestedInput
   }
@@ -82706,6 +84000,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: NullableIntFieldUpdateOperationsInput | number | null
     products?: ProductUncheckedUpdateManyWithoutCategoryNestedInput
     productTypes?: ProductTypeUncheckedUpdateManyWithoutCategoryNestedInput
   }
@@ -82715,6 +84010,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: number | null
   }
 
   export type CategoryUpdateManyMutationInput = {
@@ -82728,6 +84024,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type ProductTypeCreateInput = {
@@ -84439,6 +85736,84 @@ export namespace Prisma {
     paperWidth?: FloatFieldUpdateOperationsInput | number
     columnGap?: FloatFieldUpdateOperationsInput | number
     rowGap?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BarcodeTemplateCreateInput = {
+    name: string
+    rawZpl: string
+    labelWidth?: number | null
+    labelHeight?: number | null
+    dpi?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    categories?: CategoryCreateNestedManyWithoutDefaultLabelDesignInput
+  }
+
+  export type BarcodeTemplateUncheckedCreateInput = {
+    id?: number
+    name: string
+    rawZpl: string
+    labelWidth?: number | null
+    labelHeight?: number | null
+    dpi?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    categories?: CategoryUncheckedCreateNestedManyWithoutDefaultLabelDesignInput
+  }
+
+  export type BarcodeTemplateUpdateInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    rawZpl?: StringFieldUpdateOperationsInput | string
+    labelWidth?: NullableFloatFieldUpdateOperationsInput | number | null
+    labelHeight?: NullableFloatFieldUpdateOperationsInput | number | null
+    dpi?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categories?: CategoryUpdateManyWithoutDefaultLabelDesignNestedInput
+  }
+
+  export type BarcodeTemplateUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    rawZpl?: StringFieldUpdateOperationsInput | string
+    labelWidth?: NullableFloatFieldUpdateOperationsInput | number | null
+    labelHeight?: NullableFloatFieldUpdateOperationsInput | number | null
+    dpi?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categories?: CategoryUncheckedUpdateManyWithoutDefaultLabelDesignNestedInput
+  }
+
+  export type BarcodeTemplateCreateManyInput = {
+    id?: number
+    name: string
+    rawZpl: string
+    labelWidth?: number | null
+    labelHeight?: number | null
+    dpi?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BarcodeTemplateUpdateManyMutationInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    rawZpl?: StringFieldUpdateOperationsInput | string
+    labelWidth?: NullableFloatFieldUpdateOperationsInput | number | null
+    labelHeight?: NullableFloatFieldUpdateOperationsInput | number | null
+    dpi?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BarcodeTemplateUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    rawZpl?: StringFieldUpdateOperationsInput | string
+    labelWidth?: NullableFloatFieldUpdateOperationsInput | number | null
+    labelHeight?: NullableFloatFieldUpdateOperationsInput | number | null
+    dpi?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -88578,6 +89953,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     invoiceSettings?: SortOrder
     stockIncluded?: SortOrder
+    invoiceTemplate?: SortOrder
   }
 
   export type BranchAvgOrderByAggregateInput = {
@@ -88594,6 +89970,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     stockIncluded?: SortOrder
+    invoiceTemplate?: SortOrder
   }
 
   export type BranchMinOrderByAggregateInput = {
@@ -88606,6 +89983,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     stockIncluded?: SortOrder
+    invoiceTemplate?: SortOrder
   }
 
   export type BranchSumOrderByAggregateInput = {
@@ -88974,6 +90352,11 @@ export namespace Prisma {
     id?: SortOrder
   }
 
+  export type BarcodeTemplateNullableRelationFilter = {
+    is?: BarcodeTemplateWhereInput | null
+    isNot?: BarcodeTemplateWhereInput | null
+  }
+
   export type ProductListRelationFilter = {
     every?: ProductWhereInput
     some?: ProductWhereInput
@@ -88999,26 +90382,31 @@ export namespace Prisma {
     name?: SortOrder
     unitType?: SortOrder
     attributes?: SortOrder
+    defaultLabelDesignId?: SortOrder
   }
 
   export type CategoryAvgOrderByAggregateInput = {
     id?: SortOrder
+    defaultLabelDesignId?: SortOrder
   }
 
   export type CategoryMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     unitType?: SortOrder
+    defaultLabelDesignId?: SortOrder
   }
 
   export type CategoryMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     unitType?: SortOrder
+    defaultLabelDesignId?: SortOrder
   }
 
   export type CategorySumOrderByAggregateInput = {
     id?: SortOrder
+    defaultLabelDesignId?: SortOrder
   }
 
   export type CategoryRelationFilter = {
@@ -90292,6 +91680,90 @@ export namespace Prisma {
     paperWidth?: SortOrder
     columnGap?: SortOrder
     rowGap?: SortOrder
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type CategoryListRelationFilter = {
+    every?: CategoryWhereInput
+    some?: CategoryWhereInput
+    none?: CategoryWhereInput
+  }
+
+  export type CategoryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BarcodeTemplateCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    rawZpl?: SortOrder
+    labelWidth?: SortOrder
+    labelHeight?: SortOrder
+    dpi?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BarcodeTemplateAvgOrderByAggregateInput = {
+    id?: SortOrder
+    labelWidth?: SortOrder
+    labelHeight?: SortOrder
+    dpi?: SortOrder
+  }
+
+  export type BarcodeTemplateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    rawZpl?: SortOrder
+    labelWidth?: SortOrder
+    labelHeight?: SortOrder
+    dpi?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BarcodeTemplateMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    rawZpl?: SortOrder
+    labelWidth?: SortOrder
+    labelHeight?: SortOrder
+    dpi?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BarcodeTemplateSumOrderByAggregateInput = {
+    id?: SortOrder
+    labelWidth?: SortOrder
+    labelHeight?: SortOrder
+    dpi?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type DepartmentNullableRelationFilter = {
@@ -95184,6 +96656,12 @@ export namespace Prisma {
     deleteMany?: PurchaseScalarWhereInput | PurchaseScalarWhereInput[]
   }
 
+  export type BarcodeTemplateCreateNestedOneWithoutCategoriesInput = {
+    create?: XOR<BarcodeTemplateCreateWithoutCategoriesInput, BarcodeTemplateUncheckedCreateWithoutCategoriesInput>
+    connectOrCreate?: BarcodeTemplateCreateOrConnectWithoutCategoriesInput
+    connect?: BarcodeTemplateWhereUniqueInput
+  }
+
   export type ProductCreateNestedManyWithoutCategoryInput = {
     create?: XOR<ProductCreateWithoutCategoryInput, ProductUncheckedCreateWithoutCategoryInput> | ProductCreateWithoutCategoryInput[] | ProductUncheckedCreateWithoutCategoryInput[]
     connectOrCreate?: ProductCreateOrConnectWithoutCategoryInput | ProductCreateOrConnectWithoutCategoryInput[]
@@ -95210,6 +96688,16 @@ export namespace Prisma {
     connectOrCreate?: ProductTypeCreateOrConnectWithoutCategoryInput | ProductTypeCreateOrConnectWithoutCategoryInput[]
     createMany?: ProductTypeCreateManyCategoryInputEnvelope
     connect?: ProductTypeWhereUniqueInput | ProductTypeWhereUniqueInput[]
+  }
+
+  export type BarcodeTemplateUpdateOneWithoutCategoriesNestedInput = {
+    create?: XOR<BarcodeTemplateCreateWithoutCategoriesInput, BarcodeTemplateUncheckedCreateWithoutCategoriesInput>
+    connectOrCreate?: BarcodeTemplateCreateOrConnectWithoutCategoriesInput
+    upsert?: BarcodeTemplateUpsertWithoutCategoriesInput
+    disconnect?: BarcodeTemplateWhereInput | boolean
+    delete?: BarcodeTemplateWhereInput | boolean
+    connect?: BarcodeTemplateWhereUniqueInput
+    update?: XOR<XOR<BarcodeTemplateUpdateToOneWithWhereWithoutCategoriesInput, BarcodeTemplateUpdateWithoutCategoriesInput>, BarcodeTemplateUncheckedUpdateWithoutCategoriesInput>
   }
 
   export type ProductUpdateManyWithoutCategoryNestedInput = {
@@ -96492,6 +97980,56 @@ export namespace Prisma {
     upsert?: BranchUpsertWithoutBarcodeSettingInput
     connect?: BranchWhereUniqueInput
     update?: XOR<XOR<BranchUpdateToOneWithWhereWithoutBarcodeSettingInput, BranchUpdateWithoutBarcodeSettingInput>, BranchUncheckedUpdateWithoutBarcodeSettingInput>
+  }
+
+  export type CategoryCreateNestedManyWithoutDefaultLabelDesignInput = {
+    create?: XOR<CategoryCreateWithoutDefaultLabelDesignInput, CategoryUncheckedCreateWithoutDefaultLabelDesignInput> | CategoryCreateWithoutDefaultLabelDesignInput[] | CategoryUncheckedCreateWithoutDefaultLabelDesignInput[]
+    connectOrCreate?: CategoryCreateOrConnectWithoutDefaultLabelDesignInput | CategoryCreateOrConnectWithoutDefaultLabelDesignInput[]
+    createMany?: CategoryCreateManyDefaultLabelDesignInputEnvelope
+    connect?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+  }
+
+  export type CategoryUncheckedCreateNestedManyWithoutDefaultLabelDesignInput = {
+    create?: XOR<CategoryCreateWithoutDefaultLabelDesignInput, CategoryUncheckedCreateWithoutDefaultLabelDesignInput> | CategoryCreateWithoutDefaultLabelDesignInput[] | CategoryUncheckedCreateWithoutDefaultLabelDesignInput[]
+    connectOrCreate?: CategoryCreateOrConnectWithoutDefaultLabelDesignInput | CategoryCreateOrConnectWithoutDefaultLabelDesignInput[]
+    createMany?: CategoryCreateManyDefaultLabelDesignInputEnvelope
+    connect?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type CategoryUpdateManyWithoutDefaultLabelDesignNestedInput = {
+    create?: XOR<CategoryCreateWithoutDefaultLabelDesignInput, CategoryUncheckedCreateWithoutDefaultLabelDesignInput> | CategoryCreateWithoutDefaultLabelDesignInput[] | CategoryUncheckedCreateWithoutDefaultLabelDesignInput[]
+    connectOrCreate?: CategoryCreateOrConnectWithoutDefaultLabelDesignInput | CategoryCreateOrConnectWithoutDefaultLabelDesignInput[]
+    upsert?: CategoryUpsertWithWhereUniqueWithoutDefaultLabelDesignInput | CategoryUpsertWithWhereUniqueWithoutDefaultLabelDesignInput[]
+    createMany?: CategoryCreateManyDefaultLabelDesignInputEnvelope
+    set?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    disconnect?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    delete?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    connect?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    update?: CategoryUpdateWithWhereUniqueWithoutDefaultLabelDesignInput | CategoryUpdateWithWhereUniqueWithoutDefaultLabelDesignInput[]
+    updateMany?: CategoryUpdateManyWithWhereWithoutDefaultLabelDesignInput | CategoryUpdateManyWithWhereWithoutDefaultLabelDesignInput[]
+    deleteMany?: CategoryScalarWhereInput | CategoryScalarWhereInput[]
+  }
+
+  export type CategoryUncheckedUpdateManyWithoutDefaultLabelDesignNestedInput = {
+    create?: XOR<CategoryCreateWithoutDefaultLabelDesignInput, CategoryUncheckedCreateWithoutDefaultLabelDesignInput> | CategoryCreateWithoutDefaultLabelDesignInput[] | CategoryUncheckedCreateWithoutDefaultLabelDesignInput[]
+    connectOrCreate?: CategoryCreateOrConnectWithoutDefaultLabelDesignInput | CategoryCreateOrConnectWithoutDefaultLabelDesignInput[]
+    upsert?: CategoryUpsertWithWhereUniqueWithoutDefaultLabelDesignInput | CategoryUpsertWithWhereUniqueWithoutDefaultLabelDesignInput[]
+    createMany?: CategoryCreateManyDefaultLabelDesignInputEnvelope
+    set?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    disconnect?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    delete?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    connect?: CategoryWhereUniqueInput | CategoryWhereUniqueInput[]
+    update?: CategoryUpdateWithWhereUniqueWithoutDefaultLabelDesignInput | CategoryUpdateWithWhereUniqueWithoutDefaultLabelDesignInput[]
+    updateMany?: CategoryUpdateManyWithWhereWithoutDefaultLabelDesignInput | CategoryUpdateManyWithWhereWithoutDefaultLabelDesignInput[]
+    deleteMany?: CategoryScalarWhereInput | CategoryScalarWhereInput[]
   }
 
   export type DepartmentCreateNestedOneWithoutEmployeesInput = {
@@ -99060,6 +100598,22 @@ export namespace Prisma {
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
   }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
   export type NestedJsonFilter<$PrismaModel = never> = 
     | PatchUndefined<
         Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -100525,6 +102079,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -100559,6 +102114,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -101601,6 +103157,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -101635,6 +103192,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -103455,6 +105013,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     challans?: DeliveryChallanCreateNestedManyWithoutBranchInput
@@ -103489,6 +105048,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     challans?: DeliveryChallanUncheckedCreateNestedManyWithoutBranchInput
@@ -103912,6 +105472,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     challans?: DeliveryChallanUpdateManyWithoutBranchNestedInput
@@ -103946,6 +105507,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     challans?: DeliveryChallanUncheckedUpdateManyWithoutBranchNestedInput
@@ -104411,6 +105973,32 @@ export namespace Prisma {
     data: XOR<PurchaseUpdateManyMutationInput, PurchaseUncheckedUpdateManyWithoutSupplierInput>
   }
 
+  export type BarcodeTemplateCreateWithoutCategoriesInput = {
+    name: string
+    rawZpl: string
+    labelWidth?: number | null
+    labelHeight?: number | null
+    dpi?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BarcodeTemplateUncheckedCreateWithoutCategoriesInput = {
+    id?: number
+    name: string
+    rawZpl: string
+    labelWidth?: number | null
+    labelHeight?: number | null
+    dpi?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BarcodeTemplateCreateOrConnectWithoutCategoriesInput = {
+    where: BarcodeTemplateWhereUniqueInput
+    create: XOR<BarcodeTemplateCreateWithoutCategoriesInput, BarcodeTemplateUncheckedCreateWithoutCategoriesInput>
+  }
+
   export type ProductCreateWithoutCategoryInput = {
     name: string
     categoryName?: string | null
@@ -104527,6 +106115,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type BarcodeTemplateUpsertWithoutCategoriesInput = {
+    update: XOR<BarcodeTemplateUpdateWithoutCategoriesInput, BarcodeTemplateUncheckedUpdateWithoutCategoriesInput>
+    create: XOR<BarcodeTemplateCreateWithoutCategoriesInput, BarcodeTemplateUncheckedCreateWithoutCategoriesInput>
+    where?: BarcodeTemplateWhereInput
+  }
+
+  export type BarcodeTemplateUpdateToOneWithWhereWithoutCategoriesInput = {
+    where?: BarcodeTemplateWhereInput
+    data: XOR<BarcodeTemplateUpdateWithoutCategoriesInput, BarcodeTemplateUncheckedUpdateWithoutCategoriesInput>
+  }
+
+  export type BarcodeTemplateUpdateWithoutCategoriesInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    rawZpl?: StringFieldUpdateOperationsInput | string
+    labelWidth?: NullableFloatFieldUpdateOperationsInput | number | null
+    labelHeight?: NullableFloatFieldUpdateOperationsInput | number | null
+    dpi?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BarcodeTemplateUncheckedUpdateWithoutCategoriesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    rawZpl?: StringFieldUpdateOperationsInput | string
+    labelWidth?: NullableFloatFieldUpdateOperationsInput | number | null
+    labelHeight?: NullableFloatFieldUpdateOperationsInput | number | null
+    dpi?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ProductUpsertWithWhereUniqueWithoutCategoryInput = {
     where: ProductWhereUniqueInput
     update: XOR<ProductUpdateWithoutCategoryInput, ProductUncheckedUpdateWithoutCategoryInput>
@@ -104612,6 +106232,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesign?: BarcodeTemplateCreateNestedOneWithoutCategoriesInput
     products?: ProductCreateNestedManyWithoutCategoryInput
   }
 
@@ -104620,6 +106241,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: number | null
     products?: ProductUncheckedCreateNestedManyWithoutCategoryInput
   }
 
@@ -104726,6 +106348,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesign?: BarcodeTemplateUpdateOneWithoutCategoriesNestedInput
     products?: ProductUpdateManyWithoutCategoryNestedInput
   }
 
@@ -104734,6 +106357,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: NullableIntFieldUpdateOperationsInput | number | null
     products?: ProductUncheckedUpdateManyWithoutCategoryNestedInput
   }
 
@@ -104782,6 +106406,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesign?: BarcodeTemplateCreateNestedOneWithoutCategoriesInput
     productTypes?: ProductTypeCreateNestedManyWithoutCategoryInput
   }
 
@@ -104790,6 +106415,7 @@ export namespace Prisma {
     name: string
     unitType?: string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: number | null
     productTypes?: ProductTypeUncheckedCreateNestedManyWithoutCategoryInput
   }
 
@@ -105095,6 +106721,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesign?: BarcodeTemplateUpdateOneWithoutCategoriesNestedInput
     productTypes?: ProductTypeUpdateManyWithoutCategoryNestedInput
   }
 
@@ -105103,6 +106730,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     unitType?: NullableStringFieldUpdateOperationsInput | string | null
     attributes?: NullableJsonNullValueInput | InputJsonValue
+    defaultLabelDesignId?: NullableIntFieldUpdateOperationsInput | number | null
     productTypes?: ProductTypeUncheckedUpdateManyWithoutCategoryNestedInput
   }
 
@@ -105306,6 +106934,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -105340,6 +106969,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -105467,6 +107097,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -105501,6 +107132,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -105618,6 +107250,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -105652,6 +107285,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -105808,6 +107442,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -105842,6 +107477,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -106274,6 +107910,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -106308,6 +107945,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -106770,6 +108408,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -106804,6 +108443,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -107609,6 +109249,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -107643,6 +109284,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -107692,6 +109334,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -107726,6 +109369,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -107759,6 +109403,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -107793,6 +109438,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -108078,6 +109724,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -108112,6 +109759,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -108446,6 +110094,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -108480,6 +110129,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -108858,6 +110508,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -108892,6 +110543,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -109513,6 +111165,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -109547,6 +111200,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -109681,6 +111335,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -109715,6 +111370,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -109793,6 +111449,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -109827,6 +111484,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -109973,6 +111631,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -110007,6 +111666,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -110284,6 +111944,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
     challans?: DeliveryChallanCreateNestedManyWithoutBranchInput
@@ -110318,6 +111979,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
     challans?: DeliveryChallanUncheckedCreateNestedManyWithoutBranchInput
@@ -110367,6 +112029,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
     challans?: DeliveryChallanUpdateManyWithoutBranchNestedInput
@@ -110401,6 +112064,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
     challans?: DeliveryChallanUncheckedUpdateManyWithoutBranchNestedInput
@@ -110422,6 +112086,60 @@ export namespace Prisma {
     workLogs?: WorkLogUncheckedUpdateManyWithoutBranchNestedInput
     leads?: LeadUncheckedUpdateManyWithoutBranchNestedInput
     users?: UserUncheckedUpdateManyWithoutBranchNestedInput
+  }
+
+  export type CategoryCreateWithoutDefaultLabelDesignInput = {
+    name: string
+    unitType?: string | null
+    attributes?: NullableJsonNullValueInput | InputJsonValue
+    products?: ProductCreateNestedManyWithoutCategoryInput
+    productTypes?: ProductTypeCreateNestedManyWithoutCategoryInput
+  }
+
+  export type CategoryUncheckedCreateWithoutDefaultLabelDesignInput = {
+    id?: number
+    name: string
+    unitType?: string | null
+    attributes?: NullableJsonNullValueInput | InputJsonValue
+    products?: ProductUncheckedCreateNestedManyWithoutCategoryInput
+    productTypes?: ProductTypeUncheckedCreateNestedManyWithoutCategoryInput
+  }
+
+  export type CategoryCreateOrConnectWithoutDefaultLabelDesignInput = {
+    where: CategoryWhereUniqueInput
+    create: XOR<CategoryCreateWithoutDefaultLabelDesignInput, CategoryUncheckedCreateWithoutDefaultLabelDesignInput>
+  }
+
+  export type CategoryCreateManyDefaultLabelDesignInputEnvelope = {
+    data: CategoryCreateManyDefaultLabelDesignInput | CategoryCreateManyDefaultLabelDesignInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CategoryUpsertWithWhereUniqueWithoutDefaultLabelDesignInput = {
+    where: CategoryWhereUniqueInput
+    update: XOR<CategoryUpdateWithoutDefaultLabelDesignInput, CategoryUncheckedUpdateWithoutDefaultLabelDesignInput>
+    create: XOR<CategoryCreateWithoutDefaultLabelDesignInput, CategoryUncheckedCreateWithoutDefaultLabelDesignInput>
+  }
+
+  export type CategoryUpdateWithWhereUniqueWithoutDefaultLabelDesignInput = {
+    where: CategoryWhereUniqueInput
+    data: XOR<CategoryUpdateWithoutDefaultLabelDesignInput, CategoryUncheckedUpdateWithoutDefaultLabelDesignInput>
+  }
+
+  export type CategoryUpdateManyWithWhereWithoutDefaultLabelDesignInput = {
+    where: CategoryScalarWhereInput
+    data: XOR<CategoryUpdateManyMutationInput, CategoryUncheckedUpdateManyWithoutDefaultLabelDesignInput>
+  }
+
+  export type CategoryScalarWhereInput = {
+    AND?: CategoryScalarWhereInput | CategoryScalarWhereInput[]
+    OR?: CategoryScalarWhereInput[]
+    NOT?: CategoryScalarWhereInput | CategoryScalarWhereInput[]
+    id?: IntFilter<"Category"> | number
+    name?: StringFilter<"Category"> | string
+    unitType?: StringNullableFilter<"Category"> | string | null
+    attributes?: JsonNullableFilter<"Category">
+    defaultLabelDesignId?: IntNullableFilter<"Category"> | number | null
   }
 
   export type DepartmentCreateWithoutEmployeesInput = {
@@ -110855,6 +112573,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
     challans?: DeliveryChallanCreateNestedManyWithoutBranchInput
@@ -110889,6 +112608,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
     challans?: DeliveryChallanUncheckedCreateNestedManyWithoutBranchInput
@@ -111034,6 +112754,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
     challans?: DeliveryChallanUpdateManyWithoutBranchNestedInput
@@ -111068,6 +112789,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
     challans?: DeliveryChallanUncheckedUpdateManyWithoutBranchNestedInput
@@ -111299,6 +113021,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -111333,6 +113056,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -111606,6 +113330,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -111640,6 +113365,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -111860,6 +113586,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -111894,6 +113621,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -112116,6 +113844,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -112150,6 +113879,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -112565,6 +114295,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -112599,6 +114330,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -113194,6 +114926,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -113228,6 +114961,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -114940,6 +116674,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -114974,6 +116709,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -115215,6 +116951,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -115249,6 +116986,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -115582,6 +117320,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -115616,6 +117355,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -115939,6 +117679,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -115973,6 +117714,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -117352,6 +119094,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -117386,6 +119129,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -117652,6 +119396,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -117686,6 +119431,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -117767,6 +119513,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -117801,6 +119548,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -117983,6 +119731,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -118017,6 +119766,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -118658,6 +120408,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -118692,6 +120443,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -118853,6 +120605,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -118887,6 +120640,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -119626,6 +121380,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -119660,6 +121415,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -119907,6 +121663,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -119941,6 +121698,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -120268,6 +122026,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingCreateNestedOneWithoutBranchInput
     customers?: CustomerCreateNestedManyWithoutBranchInput
@@ -120302,6 +122061,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: boolean
+    invoiceTemplate?: string | null
     attendance?: AttendanceUncheckedCreateNestedManyWithoutBranchInput
     barcodeSetting?: BarcodeSettingUncheckedCreateNestedOneWithoutBranchInput
     customers?: CustomerUncheckedCreateNestedManyWithoutBranchInput
@@ -120901,6 +122661,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUpdateOneWithoutBranchNestedInput
     customers?: CustomerUpdateManyWithoutBranchNestedInput
@@ -120935,6 +122696,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoiceSettings?: NullableJsonNullValueInput | InputJsonValue
     stockIncluded?: BoolFieldUpdateOperationsInput | boolean
+    invoiceTemplate?: NullableStringFieldUpdateOperationsInput | string | null
     attendance?: AttendanceUncheckedUpdateManyWithoutBranchNestedInput
     barcodeSetting?: BarcodeSettingUncheckedUpdateOneWithoutBranchNestedInput
     customers?: CustomerUncheckedUpdateManyWithoutBranchNestedInput
@@ -127489,6 +129251,37 @@ export namespace Prisma {
     unitCost?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type CategoryCreateManyDefaultLabelDesignInput = {
+    id?: number
+    name: string
+    unitType?: string | null
+    attributes?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type CategoryUpdateWithoutDefaultLabelDesignInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    unitType?: NullableStringFieldUpdateOperationsInput | string | null
+    attributes?: NullableJsonNullValueInput | InputJsonValue
+    products?: ProductUpdateManyWithoutCategoryNestedInput
+    productTypes?: ProductTypeUpdateManyWithoutCategoryNestedInput
+  }
+
+  export type CategoryUncheckedUpdateWithoutDefaultLabelDesignInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    unitType?: NullableStringFieldUpdateOperationsInput | string | null
+    attributes?: NullableJsonNullValueInput | InputJsonValue
+    products?: ProductUncheckedUpdateManyWithoutCategoryNestedInput
+    productTypes?: ProductTypeUncheckedUpdateManyWithoutCategoryNestedInput
+  }
+
+  export type CategoryUncheckedUpdateManyWithoutDefaultLabelDesignInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    unitType?: NullableStringFieldUpdateOperationsInput | string | null
+    attributes?: NullableJsonNullValueInput | InputJsonValue
+  }
+
   export type EmployeeProfileCreateManyDesignationInput = {
     id?: number
     userId: number
@@ -129526,6 +131319,10 @@ export namespace Prisma {
      */
     export type StockTransferCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = StockTransferCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use BarcodeTemplateCountOutputTypeDefaultArgs instead
+     */
+    export type BarcodeTemplateCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BarcodeTemplateCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use DesignationCountOutputTypeDefaultArgs instead
      */
     export type DesignationCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = DesignationCountOutputTypeDefaultArgs<ExtArgs>
@@ -129677,6 +131474,10 @@ export namespace Prisma {
      * @deprecated Use BarcodeSettingDefaultArgs instead
      */
     export type BarcodeSettingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BarcodeSettingDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use BarcodeTemplateDefaultArgs instead
+     */
+    export type BarcodeTemplateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BarcodeTemplateDefaultArgs<ExtArgs>
     /**
      * @deprecated Use EmployeeProfileDefaultArgs instead
      */

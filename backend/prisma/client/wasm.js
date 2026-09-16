@@ -134,7 +134,8 @@ exports.Prisma.BranchScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   invoiceSettings: 'invoiceSettings',
-  stockIncluded: 'stockIncluded'
+  stockIncluded: 'stockIncluded',
+  invoiceTemplate: 'invoiceTemplate'
 };
 
 exports.Prisma.CompanyProfileScalarFieldEnum = {
@@ -234,7 +235,8 @@ exports.Prisma.CategoryScalarFieldEnum = {
   id: 'id',
   name: 'name',
   unitType: 'unitType',
-  attributes: 'attributes'
+  attributes: 'attributes',
+  defaultLabelDesignId: 'defaultLabelDesignId'
 };
 
 exports.Prisma.ProductTypeScalarFieldEnum = {
@@ -479,6 +481,17 @@ exports.Prisma.BarcodeSettingScalarFieldEnum = {
   paperWidth: 'paperWidth',
   columnGap: 'columnGap',
   rowGap: 'rowGap',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BarcodeTemplateScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  rawZpl: 'rawZpl',
+  labelWidth: 'labelWidth',
+  labelHeight: 'labelHeight',
+  dpi: 'dpi',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1048,6 +1061,7 @@ exports.Prisma.ModelName = {
   StockTransfer: 'StockTransfer',
   StockTransferItem: 'StockTransferItem',
   BarcodeSetting: 'BarcodeSetting',
+  BarcodeTemplate: 'BarcodeTemplate',
   EmployeeProfile: 'EmployeeProfile',
   Designation: 'Designation',
   Department: 'Department',

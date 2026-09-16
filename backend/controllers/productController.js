@@ -38,7 +38,11 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   const products = await prisma.product.findMany({
     where: whereClause,
     include: {
-      category: true,
+      category: {
+        include: {
+          defaultLabelDesign: true
+        }
+      },
       productType: true,
       stocks: parsedBranchId ? {
         where: { branchId: parsedBranchId }
@@ -151,7 +155,11 @@ exports.createProduct = asyncHandler(async (req, res) => {
     const product = await prisma.product.create({
       data,
       include: {
-        category: true,
+        category: {
+          include: {
+            defaultLabelDesign: true
+          }
+        },
         productType: true,
         stocks: true
       }
@@ -291,7 +299,11 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     where: { id: parseInt(id) },
     data: dataToUpdate,
     include: {
-      category: true,
+      category: {
+        include: {
+          defaultLabelDesign: true
+        }
+      },
       productType: true,
       stocks: true
     }

@@ -68,6 +68,7 @@ model Branch {
   updatedAt         DateTime           @updatedAt
   invoiceSettings   Json?
   stockIncluded     Boolean            @default(true)
+  invoiceTemplate   String?
   attendance        Attendance[]
   barcodeSetting    BarcodeSetting?
   customers         Customer[]
@@ -199,12 +200,14 @@ model Supplier {
 }
 
 model Category {
-  id           Int           @id @default(autoincrement())
-  name         String        @unique
-  unitType     String?
-  attributes   Json?         @default("[]")
-  products     Product[]
-  productTypes ProductType[]
+  id                   Int              @id @default(autoincrement())
+  name                 String           @unique
+  unitType             String?
+  attributes           Json?            @default("[]")
+  defaultLabelDesignId Int?
+  defaultLabelDesign   BarcodeTemplate? @relation(fields: [defaultLabelDesignId], references: [id], onDelete: SetNull)
+  products             Product[]
+  productTypes         ProductType[]
 }
 
 model ProductType {
@@ -513,6 +516,18 @@ model BarcodeSetting {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   branch           Branch   @relation(fields: [branchId], references: [id])
+}
+
+model BarcodeTemplate {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  rawZpl      String     @db.Text
+  labelWidth  Float?     @default(40)
+  labelHeight Float?     @default(20)
+  dpi         Int?       @default(203)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  categories  Category[]
 }
 
 model EmployeeProfile {
