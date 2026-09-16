@@ -4,6 +4,7 @@ import { FiPlus, FiPrinter, FiSearch, FiEdit, FiTrash2, FiBox, FiToggleLeft, FiT
 import Barcode from 'react-barcode';
 import { toast } from 'react-toastify';
 import SearchableSelect from '@/components/SearchableSelect';
+import { printZplViaQz } from '@/lib/qzTray';
 
 const DEFAULT_GENDERS = ['Men', 'Women', 'Boy', 'Girl', 'Unisex'];
 
@@ -15,9 +16,16 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
+  const [brands, setBrands] = useState([]);
+  const [showAddBrandModal, setShowAddBrandModal] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+  const [addingBrand, setAddingBrand] = useState(false);
+
   const initialFormState = {
     id: null,
     name: '',
+    brandId: '',
+    brandName: '',
     categoryId: '',
     categoryName: '',
     productTypeId: '',
@@ -60,6 +68,8 @@ export default function Products() {
   const [resolvedZpl, setResolvedZpl] = useState('');
   const [printTargetProduct, setPrintTargetProduct] = useState(null);
   const [printQuantity, setPrintQuantity] = useState(1);
+  const [selectedPrintBrandId, setSelectedPrintBrandId] = useState('');
+  const [printExecuting, setPrintExecuting] = useState(false);
 
   const [barcodeSettings, setBarcodeSettings] = useState({
     nameFontSize: 20,
@@ -91,16 +101,18 @@ export default function Products() {
     try {
       const storedUser = localStorage.getItem('user');
       const branchId = storedUser ? JSON.parse(storedUser).branchId : null;
-      const [prodRes, compRes, catRes, ptRes] = await Promise.all([
+      const [prodRes, compRes, catRes, ptRes, brandRes] = await Promise.all([
         api.get('/products', { params: { branchId } }),
         api.get('/company'),
         api.get('/categories'),
-        api.get('/product-types')
+        api.get('/product-types'),
+        api.get('/brands')
       ]);
       setProducts(prodRes.data);
       setCompanyProfile(compRes.data);
       setCategories(catRes.data);
       setProductTypes(ptRes.data);
+      setBrands(brandRes.data || []);
 
       if (branchId) {
         try {
@@ -128,13 +140,113 @@ export default function Products() {
     }
   };
 
-  const handleOpenPrintModal = async (product) => {
-    if (!product.barcode) {
-      toast.error('This product does not have a barcode assigned.');
-      return;
+  const generateZplAndPreview = async (product, brandId, labelTemplate) => {
+    // 1. Resolve Brand & Barcode
+    let activeBarcode = product.barcode || '';
+    if (brandId) {
+      const bObj = brands.find(b => String(b.id) === String(brandId));
+      if (bObj && bObj.barcode) {
+        activeBarcode = bObj.barcode;
+      }
     }
 
-    // 1. Resolve Product Category
+    if (!activeBarcode) {
+      activeBarcode = 'BC' + Date.now().toString().slice(-10);
+    }
+
+    // 2. Base ZPL template with 38mm x 25mm dimensions
+    let zpl = labelTemplate?.rawZpl;
+    if (!zpl || !zpl.trim()) {
+      zpl = `^XA
+^PW304
+^LL200
+^CI28
+^FO20,15^A0N,22,22^FD{{barcode}}^FS
+^BY1.5,3,40^FO20,40^BCN,42,N,N,N^FD{{barcode}}^FS
+^FO20,92^A0N,20,20^FD{{productName}}^FS
+^FO20,118^A0N,20,20^FDMRP: ₹{{price}}^FS
+^PQ1,0,0,N
+^XZ`;
+    }
+
+    // Ensure 38mm x 25mm dimensions (304 x 200 dots at 203 DPI)
+    if (!/\^PW\d+/i.test(zpl)) {
+      zpl = zpl.replace(/\^XA/i, '^XA\n^PW304\n^LL200');
+    } else {
+      zpl = zpl.replace(/\^PW\d+/gi, '^PW304').replace(/\^LL\d+/gi, '^LL200');
+    }
+
+    const priceStr = product.price !== undefined && product.price !== null ? String(product.price) : '0';
+    const pName = product.name || '';
+
+    const replacements = {
+      productName: pName,
+      name: pName,
+      product_name: pName,
+      'product name': pName,
+      barcode: activeBarcode,
+      barcodeNumber: activeBarcode,
+      barcode_number: activeBarcode,
+      'barcode number': activeBarcode,
+      sku: activeBarcode,
+      price: priceStr,
+      mrp: priceStr,
+      'price/mrp': priceStr,
+      price_mrp: priceStr,
+      sellingPrice: priceStr,
+      selling_price: priceStr,
+      size: product.size || '',
+      category: product.categoryName || '',
+      company: companyProfile?.companyName || ''
+    };
+
+    Object.entries(replacements).forEach(([key, val]) => {
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regexDouble = new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'gi');
+      const regexSingle = new RegExp(`\\{\\s*${escapedKey}\\s*\\}`, 'gi');
+      zpl = zpl.replace(regexDouble, val).replace(regexSingle, val);
+    });
+
+    // Fallback replacement for legacy samples
+    if (zpl.includes('SK1252612334') || zpl.includes('SK1252612335')) {
+      zpl = zpl.replace(/SK1252612334/g, activeBarcode).replace(/SK1252612335/g, activeBarcode);
+    }
+    if (zpl.includes('PENDANT')) {
+      zpl = zpl.replace(/PENDANT/g, pName);
+    }
+    if (product.price && zpl.includes('^FD1500^FS')) {
+      zpl = zpl.replace(/\^FD1500\^FS/g, `^FD${product.price}^FS`);
+    }
+
+    setResolvedZpl(zpl);
+    setPreviewLoading(true);
+
+    try {
+      const { data } = await api.post('/barcode-templates/render-preview', {
+        zpl,
+        labelWidth: 38,
+        labelHeight: 25,
+        dpi: 203,
+        sampleProduct: {
+          name: pName,
+          barcode: activeBarcode,
+          price: priceStr
+        }
+      });
+
+      if (data.success && data.image) {
+        setPreviewImage(data.image);
+        setPreviewDimensions(data.dimensions);
+      }
+    } catch (err) {
+      console.error('Failed to render barcode preview:', err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleOpenPrintModal = async (product) => {
+    // 1. Resolve Category & Default Label Design
     let productCat = null;
     const catId = product.categoryId || product.category?.id;
     if (catId) {
@@ -146,15 +258,10 @@ export default function Products() {
     if (!productCat && product.categoryName) {
       productCat = categories.find(c => c.name?.toLowerCase() === product.categoryName.toLowerCase());
     }
-    if (!productCat && typeof product.category === 'string') {
-      productCat = categories.find(c => c.name?.toLowerCase() === product.category.toLowerCase());
-    }
 
-    // 2. Get Category's configured Default Label Design
     let labelTemplate = productCat?.defaultLabelDesign;
     let templateId = productCat?.defaultLabelDesignId || labelTemplate?.id;
 
-    // Refresh category attributes if defaultLabelDesignId not yet attached
     if (!templateId && productCat?.id) {
       try {
         const { data: catDetails } = await api.get(`/categories/${productCat.id}/attributes`);
@@ -167,7 +274,6 @@ export default function Products() {
       }
     }
 
-    // If template object is not loaded or missing rawZpl, fetch by templateId
     if ((!labelTemplate || !labelTemplate.rawZpl) && templateId) {
       try {
         const { data: tpl } = await api.get(`/barcode-templates/${templateId}`);
@@ -177,95 +283,33 @@ export default function Products() {
       }
     }
 
-    if (!labelTemplate || !labelTemplate.rawZpl) {
-      toast.warning(
-        productCat
-          ? `Category "${productCat.name}" does not have a Default Label Design configured. Please select one in Category Master.`
-          : `This product does not have a category assigned with a Default Label Design. Please assign in Category Master.`
-      );
-      return;
-    }
-
-    // 3. Populate product data into Raw ZPL
-    let zpl = labelTemplate.rawZpl;
-
-    const priceStr = product.price !== undefined && product.price !== null ? String(product.price) : '0';
-    const pName = product.name || '';
-    const pBarcode = product.barcode || '';
-
-    const replacements = {
-      productName: pName,
-      name: pName,
-      product_name: pName,
-      'product name': pName,
-      barcode: pBarcode,
-      barcodeNumber: pBarcode,
-      barcode_number: pBarcode,
-      'barcode number': pBarcode,
-      sku: pBarcode,
-      price: priceStr,
-      mrp: priceStr,
-      'price/mrp': priceStr,
-      price_mrp: priceStr,
-      sellingPrice: priceStr,
-      selling_price: priceStr,
-      size: product.size || '',
-      category: product.categoryName || productCat?.name || '',
-      company: companyProfile?.companyName || ''
-    };
-
-    // Replace both {placeholder} and {{placeholder}} case-insensitively
-    Object.entries(replacements).forEach(([key, val]) => {
-      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regexDouble = new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'gi');
-      const regexSingle = new RegExp(`\\{\\s*${escapedKey}\\s*\\}`, 'gi');
-      zpl = zpl.replace(regexDouble, val).replace(regexSingle, val);
-    });
-
-    // Fallback: if template contains legacy sample product values, map them dynamically
-    if (zpl.includes('SK1252612334') || zpl.includes('SK1252612335')) {
-      zpl = zpl.replace(/SK1252612334/g, product.barcode || '')
-               .replace(/SK1252612335/g, product.barcode || '');
-    }
-    if (zpl.includes('PENDANT')) {
-      zpl = zpl.replace(/PENDANT/g, product.name || '');
-    }
-    if (product.price && zpl.includes('^FD1500^FS')) {
-      zpl = zpl.replace(/\^FD1500\^FS/g, `^FD${product.price}^FS`);
+    // 2. Resolve initial Brand from product
+    let initialBrandId = '';
+    if (product.brandId) {
+      initialBrandId = String(product.brandId);
+    } else if (product.brand?.id) {
+      initialBrandId = String(product.brand.id);
+    } else if (product.brandName) {
+      const match = brands.find(b => b.name?.toLowerCase() === product.brandName.toLowerCase());
+      if (match) initialBrandId = String(match.id);
     }
 
     setPrintTargetProduct(product);
+    setSelectedPrintBrandId(initialBrandId);
     setResolvedLabelTemplate(labelTemplate);
-    setResolvedZpl(zpl);
     setPrintQuantity(1);
     setPreviewImage(null);
     setPreviewDimensions(null);
-    setPreviewLoading(true);
     setShowPreviewModal(true);
 
-    try {
-      const { data } = await api.post('/barcode-templates/render-preview', {
-        zpl,
-        labelWidth: labelTemplate.labelWidth || 40,
-        labelHeight: labelTemplate.labelHeight || 20,
-        dpi: labelTemplate.dpi || 203,
-        sampleProduct: {
-          name: product.name,
-          barcode: product.barcode,
-          price: product.price
-        }
-      });
+    // 3. Generate ZPL and render 38x25mm preview
+    await generateZplAndPreview(product, initialBrandId, labelTemplate);
+  };
 
-      if (data.success && data.image) {
-        setPreviewImage(data.image);
-        setPreviewDimensions(data.dimensions);
-      } else {
-        toast.error(data.message || 'Failed to render ZPL preview');
-      }
-    } catch (err) {
-      toast.error('Failed to render barcode preview: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setPreviewLoading(false);
+  const handlePrintBrandChange = async (newBrandId) => {
+    setSelectedPrintBrandId(newBrandId);
+    if (printTargetProduct) {
+      await generateZplAndPreview(printTargetProduct, newBrandId, resolvedLabelTemplate);
     }
   };
 
@@ -288,31 +332,22 @@ export default function Products() {
     const product = printTargetProduct;
     if (!product || !resolvedZpl) return;
 
-    let finalZpl = resolvedZpl;
-    if (/\^PQ\d+/i.test(finalZpl)) {
-      finalZpl = finalZpl.replace(/\^PQ\d+[^\\^]*/gi, `^PQ${qty},0,0,N`);
-    } else if (/\^XZ/i.test(finalZpl)) {
-      finalZpl = finalZpl.replace(/\^XZ/gi, `^PQ${qty},0,0,N\n^XZ`);
-    } else {
-      finalZpl = `${finalZpl}\n^PQ${qty},0,0,N\n^XZ`;
-    }
-
-    setShowQuantityModal(false);
-    setShowPreviewModal(false);
-
+    setPrintExecuting(true);
     try {
-      const { data } = await api.post('/barcode-templates/print-zpl', {
-        zpl: finalZpl,
-        quantity: qty
-      });
-
-      if (data.success) {
-        toast.success(data.message || `Sent ${qty} label(s) for "${product.name}" to Zebra printer.`);
-      } else {
-        toast.info(data.message || `Prepared ${qty} label(s) for printing.`);
-      }
+      const result = await printZplViaQz(resolvedZpl, qty);
+      toast.success(result.message || `Sent ${qty} label(s) for "${product.name}" to printer via QZ Tray.`);
+      setShowPreviewModal(false);
     } catch (err) {
-      toast.error('Print request failed: ' + (err.response?.data?.message || err.message));
+      console.error('Print request failed:', err);
+      if (err.message === 'QZ_NOT_CONNECTED' || err.message?.includes('QZ')) {
+        toast.error('QZ Tray is not connected. Please make sure QZ Tray is running on your computer to print labels.');
+      } else if (err.message === 'NO_PRINTER_FOUND') {
+        toast.error('No Zebra printer found in QZ Tray. Please check your printer connection.');
+      } else {
+        toast.error('Print request failed: ' + (err.message || 'Unknown printer error'));
+      }
+    } finally {
+      setPrintExecuting(false);
     }
   };
 
@@ -385,6 +420,57 @@ export default function Products() {
     setShowModal(true);
   };
 
+  // Handle Brand change
+  const handleBrandChange = (val) => {
+    const selected = brands.find(b => b.id.toString() === val?.toString());
+    setFormData(prev => ({
+      ...prev,
+      brandId: val || '',
+      brandName: selected ? selected.name : ''
+    }));
+  };
+
+  // Handle Add Brand modal submission with duplicate validation
+  const handleCreateBrand = async (e) => {
+    if (e) e.preventDefault();
+    const trimmed = newBrandName.trim();
+    if (!trimmed) {
+      toast.error('Brand name is required');
+      return;
+    }
+
+    // Frontend duplicate check (trimmed & case-insensitive)
+    const duplicate = brands.some(
+      b => b.name.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (duplicate) {
+      toast.error('Brand already exists');
+      return;
+    }
+
+    try {
+      setAddingBrand(true);
+      const res = await api.post('/brands', { name: trimmed });
+      const createdBrand = res.data;
+      // Immediately make newly created Brand available in dropdown without page reload
+      setBrands(prev => [...prev, createdBrand].sort((a, b) => a.name.localeCompare(b.name)));
+      // Auto-select in Product form
+      setFormData(prev => ({
+        ...prev,
+        brandId: createdBrand.id.toString(),
+        brandName: createdBrand.name
+      }));
+      setNewBrandName('');
+      setShowAddBrandModal(false);
+      toast.success('Brand added successfully');
+    } catch (err) {
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to add brand';
+      toast.error(msg);
+    } finally {
+      setAddingBrand(false);
+    }
+  };
+
   // Open modal to edit existing product
   const handleEdit = (product) => {
     let parsedAttributes = {};
@@ -403,6 +489,8 @@ export default function Products() {
       ...product,
       id: product.id,
       name: product.name || '',
+      brandId: product.brandId ? product.brandId.toString() : (product.brand?.id ? product.brand.id.toString() : ''),
+      brandName: product.brandName || product.brand?.name || '',
       categoryId: product.categoryId ? product.categoryId.toString() : '',
       categoryName: product.categoryName || product.category?.name || '',
       productTypeId: product.productTypeId ? product.productTypeId.toString() : '',
@@ -523,6 +611,12 @@ export default function Products() {
 
     // Append basic fields
     data.append('name', formData.name.trim());
+    if (formData.brandId) {
+      data.append('brandId', formData.brandId);
+      data.append('brandName', formData.brandName || '');
+    } else if (formData.brandName) {
+      data.append('brandName', formData.brandName);
+    }
     data.append('categoryId', formData.categoryId);
     data.append('categoryName', formData.categoryName || '');
     data.append('price', formData.price || '0');
@@ -677,6 +771,7 @@ export default function Products() {
             <thead>
               <tr className="whitespace-nowrap">
                 <th>Product Name</th>
+                <th>Brand</th>
                 <th>Category</th>
                 <th>Product Type</th>
                 <th>Gender</th>
@@ -692,11 +787,11 @@ export default function Products() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="11" className="text-center py-8 text-slate-400">Loading products...</td>
+                  <td colSpan="12" className="text-center py-8 text-slate-400">Loading products...</td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="text-center py-8 text-slate-400">No products found.</td>
+                  <td colSpan="12" className="text-center py-8 text-slate-400">No products found.</td>
                 </tr>
               ) : (
                 filteredProducts.map((product) => {
@@ -727,6 +822,17 @@ export default function Products() {
                             )}
                           </div>
                         </div>
+                      </td>
+
+                      {/* Brand */}
+                      <td>
+                        {product.brand?.name || product.brandName ? (
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-md text-[11px] font-semibold border border-amber-200">
+                            {product.brand?.name || product.brandName}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
                       </td>
 
                       {/* Category */}
@@ -925,6 +1031,36 @@ export default function Products() {
                         placeholder="Select Category..."
                         zIndex={100005}
                       />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-medium text-slate-700">
+                          Brand
+                        </label>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1">
+                          <SearchableSelect
+                            options={(brands || []).map(b => ({ label: b.name, value: b.id }))}
+                            value={formData.brandId}
+                            onChange={handleBrandChange}
+                            placeholder="Select Brand..."
+                            zIndex={100005}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewBrandName('');
+                            setShowAddBrandModal(true);
+                          }}
+                          className="btn btn-secondary text-xs px-3 py-2 flex items-center gap-1 shrink-0 h-[42px]"
+                          title="Add Brand"
+                        >
+                          <FiPlus /> Add Brand
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1290,23 +1426,16 @@ export default function Products() {
         </div>
       )}
 
-      {/* Barcode Label Design Preview Modal */}
-      {showPreviewModal && (
+      {/* Print Barcode Modal */}
+      {showPreviewModal && printTargetProduct && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[115] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150 border border-slate-100 flex flex-col">
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-slate-800">Label Preview</h3>
-                  {resolvedLabelTemplate && (
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-xs font-semibold">
-                      {resolvedLabelTemplate.name}
-                    </span>
-                  )}
-                </div>
+                <h3 className="text-base font-bold text-slate-800">Print Barcode</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {printTargetProduct?.name} • <span className="font-mono">{printTargetProduct?.barcode}</span> • ₹{printTargetProduct?.price}
+                  {printTargetProduct.name} • {resolvedLabelTemplate?.name || '38×25mm Design'}
                 </p>
               </div>
               <button
@@ -1318,93 +1447,46 @@ export default function Products() {
               </button>
             </div>
 
-            {/* Modal Body: Rendered Label Graphic */}
-            <div className="p-6 bg-slate-100/70 flex flex-col items-center justify-center min-h-[220px]">
-              {previewLoading ? (
-                <div className="flex flex-col items-center gap-2 py-8 text-slate-400 text-xs">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent animate-spin rounded-full" />
-                  <span>Rendering Labelary Preview...</span>
-                </div>
-              ) : previewImage ? (
-                <div className="flex flex-col items-center">
-                  <div className="bg-white p-3 rounded-xl shadow-md border border-slate-200 max-w-full flex items-center justify-center overflow-hidden">
-                    <img
-                      src={previewImage}
-                      alt="ZPL Label Preview"
-                      className="max-h-[180px] max-w-full object-contain filter drop-shadow-xs"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                    <span>{resolvedLabelTemplate?.labelWidth || 40}×{resolvedLabelTemplate?.labelHeight || 20}mm</span>
-                    <span>•</span>
-                    <span>{resolvedLabelTemplate?.dpi || 203} DPI</span>
-                    {previewDimensions && (
-                      <>
-                        <span>•</span>
-                        <span className="font-mono text-[10px] text-slate-400">^PW{previewDimensions.calculatedPw} ^LL{previewDimensions.calculatedLl}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-400">Preview not available</p>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-white border-t border-slate-100 flex justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setShowPreviewModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPrintQuantity(1);
-                  setShowQuantityModal(true);
-                }}
-                disabled={previewLoading || !previewImage}
-                className="px-5 py-2 rounded-xl bg-primary text-white font-semibold text-xs hover:bg-primary-dark shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center gap-1.5"
-              >
-                <FiPrinter size={14} /> Print
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Print Quantity Modal */}
-      {showQuantityModal && printTargetProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[125] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
-            <div className="p-5 border-b border-slate-100 bg-slate-50/80">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-slate-800">Print Labels</h3>
-                <span className="text-xs font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-100 font-semibold">
-                  {printTargetProduct.barcode}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 truncate">
-                {printTargetProduct.name} • Template: {resolvedLabelTemplate?.name || 'Selected Design'}
-              </p>
-            </div>
-
+            {/* Modal Body */}
             <div className="p-5 space-y-4">
+              {/* Product and Brand Selection */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Product</label>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="input w-full text-xs font-medium bg-slate-50 text-slate-700 truncate"
+                    value={printTargetProduct.name}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Brand</label>
+                  <select
+                    className="input w-full text-xs font-medium bg-white border rounded"
+                    value={selectedPrintBrandId}
+                    onChange={e => handlePrintBrandChange(e.target.value)}
+                  >
+                    <option value="">-- Select Brand --</option>
+                    {brands.map(b => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Number of Labels */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Number of Labels to Print
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Number of Labels
                 </label>
                 <input
                   type="number"
                   min="1"
                   step="1"
-                  autoFocus
                   required
-                  className="input w-full text-center text-lg font-bold text-slate-800"
+                  className="input w-full text-sm font-bold text-slate-800 text-center"
                   value={printQuantity}
                   onChange={e => setPrintQuantity(e.target.value)}
                   onKeyDown={e => {
@@ -1414,28 +1496,103 @@ export default function Products() {
                     }
                   }}
                 />
-                <p className="text-[11px] text-slate-400 mt-1 text-center">
-                  Controls the exact number of physical labels printed
-                </p>
               </div>
 
-              <div className="flex gap-2.5 pt-2">
+              {/* Rendered 38mm x 25mm Preview */}
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 flex flex-col items-center justify-center min-h-[170px]">
+                {previewLoading ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-slate-400 text-xs">
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent animate-spin rounded-full" />
+                    <span>Rendering 38×25mm Preview...</span>
+                  </div>
+                ) : previewImage ? (
+                  <div className="flex flex-col items-center">
+                    <div className="bg-white p-2 rounded-lg shadow-xs border border-slate-200 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={previewImage}
+                        alt="ZPL Label Preview"
+                        className="max-h-[140px] max-w-full object-contain filter drop-shadow-xs"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-500 font-medium">
+                      <span>38×25mm • 203 DPI</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">Preview not available</p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-white border-t border-slate-100 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExecutePrint}
+                disabled={previewLoading || printExecuting}
+                className="px-5 py-2 rounded-xl bg-primary text-white font-semibold text-xs hover:bg-primary-dark shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <FiPrinter size={14} /> {printExecuting ? 'Printing...' : 'Print'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Brand Modal */}
+      {showAddBrandModal && (
+        <div className="fixed inset-0 z-[60000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
+              <h3 className="text-base font-bold text-slate-800">Add Brand</h3>
+              <button
+                type="button"
+                onClick={() => setShowAddBrandModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none p-1 rounded-lg hover:bg-slate-100"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleCreateBrand} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Brand Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  className="input w-full"
+                  placeholder="e.g. Nike"
+                  value={newBrandName}
+                  onChange={e => setNewBrandName(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowQuantityModal(false)}
-                  className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-50 transition-colors"
+                  onClick={() => setShowAddBrandModal(false)}
+                  className="btn btn-secondary text-xs px-4 py-2"
                 >
                   Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={handleExecutePrint}
-                  className="flex-1 px-4 py-2 rounded-xl bg-primary text-white font-semibold text-xs hover:bg-primary-dark shadow-md shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                  type="submit"
+                  disabled={addingBrand}
+                  className="btn btn-primary text-xs px-4 py-2 flex items-center gap-1"
                 >
-                  <FiPrinter size={14} /> Print
+                  {addingBrand ? 'Adding...' : 'Add Brand'}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

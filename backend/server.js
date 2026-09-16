@@ -94,6 +94,7 @@ app.use('/api/b2b', require('./routes/b2bRoutes'));
 app.use('/api/delivery-challans', require('./routes/deliveryChallanRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/product-types', require('./routes/productTypeRoutes'));
+app.use('/api/brands', require('./routes/brandRoutes'));
 app.use('/api/banks', require('./routes/bankRoutes'));
 app.use('/api/financial-years', require('./routes/financialYearRoutes'));
 app.use('/api/quotations', require('./routes/quotationRoutes'));

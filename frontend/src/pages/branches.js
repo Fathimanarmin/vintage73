@@ -16,8 +16,7 @@ export default function Branches() {
     phone: '', 
     email: '', 
     isActive: true, 
-    stockIncluded: true,
-    invoiceTemplate: ''
+    stockIncluded: true
   });
   const [editingId, setEditingId] = useState(null);
 
@@ -62,7 +61,7 @@ export default function Branches() {
       }
       setShowModal(false);
       setEditingId(null);
-      setFormData({ name: '', address: '', phone: '', email: '', isActive: true, stockIncluded: true, invoiceTemplate: '' });
+      setFormData({ name: '', address: '', phone: '', email: '', isActive: true, stockIncluded: true });
       fetchBranches();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save branch');
@@ -77,8 +76,7 @@ export default function Branches() {
       phone: branch.phone || '',
       email: branch.email || '',
       isActive: branch.isActive,
-      stockIncluded: branch.stockIncluded !== undefined ? branch.stockIncluded : true,
-      invoiceTemplate: branch.invoiceTemplate || branch.invoiceSettings?.template || ''
+      stockIncluded: branch.stockIncluded !== undefined ? branch.stockIncluded : true
     });
     setShowModal(true);
   };
@@ -95,7 +93,7 @@ export default function Branches() {
   };
 
   const handleOpenPreview = (templateId) => {
-    const targetTemplate = templateId || formData.invoiceTemplate || 'modern';
+    const targetTemplate = templateId || 'modern';
     setPreviewTemplate(targetTemplate);
     setShowPreviewModal(true);
   };
@@ -123,7 +121,7 @@ export default function Branches() {
           className="btn btn-primary w-full md:w-auto justify-center whitespace-nowrap" 
           onClick={() => {
             setEditingId(null);
-            setFormData({ name: '', address: '', phone: '', email: '', isActive: true, stockIncluded: true, invoiceTemplate: '' });
+            setFormData({ name: '', address: '', phone: '', email: '', isActive: true, stockIncluded: true });
             setShowModal(true);
           }}
         >
@@ -208,100 +206,56 @@ export default function Branches() {
 
       {/* Branch Create / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
-              <h2 className="text-xl font-semibold text-slate-800">{editingId ? 'Edit Branch' : 'Add New Branch'}</h2>
-              <button onClick={() => { setShowModal(false); setEditingId(null); }} className="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto max-h-[calc(100vh-2.5rem)] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-800">{editingId ? 'Edit Branch' : 'Add New Branch'}</h2>
+              <button 
+                type="button"
+                onClick={() => { setShowModal(false); setEditingId(null); }} 
+                className="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors text-2xl font-semibold leading-none"
+              >
+                &times;
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Branch Name *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Branch Name *</label>
                 <input
                   required
-                  className="input"
+                  className="input w-full"
                   placeholder="e.g. Downtown Branch"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
-              {/* Invoice Template Field */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-slate-700">
-                    Invoice Template <span className="text-red-500">*</span>
-                  </label>
-                  {formData.invoiceTemplate && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenPreview(formData.invoiceTemplate)}
-                      className="text-xs text-[#009262] hover:text-[#047857] flex items-center gap-1 font-medium transition-colors"
-                    >
-                      <FiEye size={13} /> Preview Design
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    required
-                    className="input flex-1"
-                    value={formData.invoiceTemplate}
-                    onChange={e => setFormData({ ...formData, invoiceTemplate: e.target.value })}
-                  >
-                    <option value="">Select Invoice Template</option>
-                    {INVOICE_TEMPLATES.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    disabled={!formData.invoiceTemplate}
-                    onClick={() => handleOpenPreview(formData.invoiceTemplate)}
-                    title="Preview selected invoice template"
-                    className={`px-3 py-2 rounded-xl border flex items-center gap-1.5 text-xs font-medium transition-colors shrink-0 ${
-                      formData.invoiceTemplate 
-                        ? 'border-[#009262] text-[#009262] bg-[#009262]/5 hover:bg-[#009262]/10 cursor-pointer' 
-                        : 'border-slate-200 text-slate-400 bg-slate-50 cursor-not-allowed'
-                    }`}
-                  >
-                    <FiEye size={14} />
-                    <span>Preview</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  This template determines the layout and design when printing invoices from this branch.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Address</label>
                 <textarea
-                  className="input min-h-[70px]"
+                  className="input w-full min-h-[75px]"
                   placeholder="Full address of the branch"
                   value={formData.address}
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone</label>
                   <input
-                    className="input"
+                    className="input w-full"
                     placeholder="+91..."
                     value={formData.phone}
                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
                   <input
                     type="email"
-                    className="input"
+                    className="input w-full"
                     placeholder="branch@example.com"
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -309,7 +263,7 @@ export default function Branches() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 py-2 mt-2">
+              <div className="flex flex-col gap-3 py-2 mt-1">
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -335,7 +289,7 @@ export default function Branches() {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditingId(null); }}>Cancel</button>
                 <button type="submit" className="btn btn-primary">{editingId ? 'Update Branch' : 'Create Branch'}</button>
               </div>

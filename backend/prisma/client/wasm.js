@@ -251,9 +251,19 @@ exports.Prisma.ProductTypeScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.BrandScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  barcode: 'barcode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ProductScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  brandId: 'brandId',
+  brandName: 'brandName',
   categoryId: 'categoryId',
   categoryName: 'categoryName',
   productTypeId: 'productTypeId',
@@ -311,6 +321,7 @@ exports.Prisma.PurchaseItemScalarFieldEnum = {
   id: 'id',
   purchaseId: 'purchaseId',
   productId: 'productId',
+  size: 'size',
   quantity: 'quantity',
   unitCost: 'unitCost',
   totalCost: 'totalCost'
@@ -1048,6 +1059,7 @@ exports.Prisma.ModelName = {
   Supplier: 'Supplier',
   Category: 'Category',
   ProductType: 'ProductType',
+  Brand: 'Brand',
   Product: 'Product',
   ProductStock: 'ProductStock',
   Purchase: 'Purchase',

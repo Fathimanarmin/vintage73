@@ -44,6 +44,7 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
         }
       },
       productType: true,
+      brand: true,
       stocks: parsedBranchId ? {
         where: { branchId: parsedBranchId }
       } : true
@@ -66,6 +67,8 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
 exports.createProduct = asyncHandler(async (req, res) => {
   let {
     name,
+    brandId,
+    brandName,
     price,
     taxRate,
     taxType,
@@ -96,6 +99,17 @@ exports.createProduct = asyncHandler(async (req, res) => {
     imageUrl = '/uploads/' + req.file.filename;
   }
 
+  // If brand is selected, resolve Brand's barcode
+  if (brandId && !isNaN(parseInt(brandId))) {
+    const assignedBrand = await prisma.brand.findUnique({ where: { id: parseInt(brandId) } });
+    if (assignedBrand) {
+      brandName = assignedBrand.name;
+      if (assignedBrand.barcode) {
+        barcode = assignedBrand.barcode;
+      }
+    }
+  }
+
   // Auto-generate barcode if missing and enabled
   if ((hasBarcode === 'true' || hasBarcode === true) && !barcode) {
     barcode = 'BC' + Date.now().toString().slice(-10) + Math.floor(Math.random() * 1000).toString();
@@ -124,6 +138,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
       name,
       categoryName,
       productTypeName,
+      brandName: brandName || null,
       gender: gender || null,
       attributes: parsedAttributes || undefined,
       size: size || null,
@@ -144,6 +159,10 @@ exports.createProduct = asyncHandler(async (req, res) => {
       isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true) : true
     };
 
+    if (brandId && !isNaN(parseInt(brandId))) {
+      data.brand = { connect: { id: parseInt(brandId) } };
+    }
+
     if (categoryId && !isNaN(parseInt(categoryId))) {
       data.category = { connect: { id: parseInt(categoryId) } };
     }
@@ -161,6 +180,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
           }
         },
         productType: true,
+        brand: true,
         stocks: true
       }
     });
@@ -206,6 +226,8 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const {
     name,
+    brandId,
+    brandName,
     price,
     taxRate,
     taxPercent,
@@ -240,6 +262,22 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (hsnCode !== undefined) dataToUpdate.hsnCode = hsnCode;
   if (description !== undefined) dataToUpdate.description = description;
   if (barcode !== undefined) dataToUpdate.barcode = barcode;
+
+  if (brandId !== undefined) {
+    if (brandId && !isNaN(parseInt(brandId))) {
+      const assignedBrand = await prisma.brand.findUnique({ where: { id: parseInt(brandId) } });
+      dataToUpdate.brand = { connect: { id: parseInt(brandId) } };
+      dataToUpdate.brandName = assignedBrand?.name || brandName || null;
+      if (assignedBrand?.barcode) {
+        dataToUpdate.barcode = assignedBrand.barcode;
+      }
+    } else {
+      dataToUpdate.brand = { disconnect: true };
+      dataToUpdate.brandName = null;
+    }
+  } else if (brandName !== undefined) {
+    dataToUpdate.brandName = brandName;
+  }
 
   if (attributes !== undefined) {
     dataToUpdate.attributes = safeJsonParse(attributes);
@@ -305,6 +343,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
         }
       },
       productType: true,
+      brand: true,
       stocks: true
     }
   });

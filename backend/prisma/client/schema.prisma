@@ -226,9 +226,20 @@ model ProductType {
   @@unique([name, categoryId])
 }
 
+model Brand {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  barcode   String?   @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
 model Product {
   id              Int                   @id @default(autoincrement())
   name            String
+  brandId         Int?
+  brandName       String?
   categoryId      Int?
   categoryName    String?
   productTypeId   Int?
@@ -246,7 +257,7 @@ model Product {
   hsnCode         String?
   warranty        Int?
   description     String?
-  barcode         String?               @unique
+  barcode         String?
   hasBarcode      Boolean               @default(false)
   minStockLevel   Int                   @default(5)
   createdAt       DateTime              @default(now())
@@ -256,6 +267,7 @@ model Product {
   imageUrl        String?
   isActive        Boolean               @default(true)
   challanItems    DeliveryChallanItem[]
+  brand           Brand?                @relation(fields: [brandId], references: [id])
   category        Category?             @relation(fields: [categoryId], references: [id])
   productType     ProductType?          @relation(fields: [productTypeId], references: [id])
   stocks          ProductStock[]
@@ -305,6 +317,7 @@ model PurchaseItem {
   id         Int      @id @default(autoincrement())
   purchaseId Int
   productId  Int
+  size       String?
   quantity   Int
   unitCost   Decimal  @db.Decimal(10, 2)
   totalCost  Decimal  @db.Decimal(10, 2)

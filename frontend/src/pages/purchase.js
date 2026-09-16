@@ -10,9 +10,20 @@ export default function Purchase() {
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [purchases, setPurchases] = useState([]);
-  const [rows, setRows] = useState([
-    { productId: '', quantity: 1, unitCost: 0, total: 0 }
-  ]);
+
+  const initialRow = {
+    productId: '',
+    brand: '',
+    brandId: null,
+    sizes: [],
+    totalQuantity: 0,
+    quantity: 0,
+    unitCost: 0,
+    taxPercent: 0,
+    total: 0
+  };
+
+  const [rows, setRows] = useState([{ ...initialRow }]);
   const [supplier, setSupplier] = useState('');
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -100,19 +111,80 @@ export default function Purchase() {
     const newRows = [...rows];
     newRows[index][field] = value;
 
-    // Auto-fetch Tax % and Unit Cost (if available) when Product is selected
+    // Auto-fetch Tax %, Unit Cost, Brand, and Sizes when Product is selected
     if (field === 'productId') {
       const product = products.find(p => p.id === parseInt(value));
       if (product) {
         newRows[index].taxPercent = parseFloat(product.taxRate || product.taxPercent || 0);
-        if (product.costPrice) { // Optional: Auto-fill cost price if you want
+        if (product.costPrice) {
           newRows[index].unitCost = parseFloat(product.costPrice);
         }
+
+        // Set product's brand
+        const bName = product.brand?.name || product.brandName || '';
+        newRows[index].brand = bName;
+        newRows[index].brandId = product.brandId || product.brand?.id || null;
+
+        // Dynamically load sizes strictly configured for this specific product with current stock
+        let parsedSizeStocks = product.sizeStocks;
+        if (typeof parsedSizeStocks === 'string') {
+          try { parsedSizeStocks = JSON.parse(parsedSizeStocks); } catch (e) { parsedSizeStocks = []; }
+        }
+
+        let configuredSizes = [];
+
+        if (Array.isArray(parsedSizeStocks) && parsedSizeStocks.length > 0) {
+          configuredSizes = parsedSizeStocks.map(s => ({
+            size: s.size,
+            currentStock: parseInt(s.stock, 10) || 0,
+            quantity: 0
+          }));
+        }
+
+        // If product has size string, merge any sizes not already in parsedSizeStocks
+        if (product.size) {
+          const rawSizes = product.size.includes(',')
+            ? product.size.split(',').map(s => s.trim()).filter(Boolean)
+            : [product.size.trim()];
+
+          const existingNames = new Set(configuredSizes.map(s => s.size.toLowerCase()));
+          rawSizes.forEach(sz => {
+            if (!existingNames.has(sz.toLowerCase())) {
+              configuredSizes.push({
+                size: sz,
+                currentStock: configuredSizes.length === 0 ? (parseInt(product.stock, 10) || 0) : 0,
+                quantity: 0
+              });
+              existingNames.add(sz.toLowerCase());
+            }
+          });
+        }
+
+        // If still empty, default to Free Size with current stock from product.stock
+        if (configuredSizes.length === 0) {
+          configuredSizes = [{
+            size: 'Free Size',
+            currentStock: parseInt(product.stock, 10) || 0,
+            quantity: 0
+          }];
+        }
+
+        newRows[index].sizes = configuredSizes;
+        newRows[index].totalQuantity = 0;
+        newRows[index].quantity = 0;
+        newRows[index].total = 0;
+      } else {
+        newRows[index].brand = '';
+        newRows[index].brandId = null;
+        newRows[index].sizes = [];
+        newRows[index].totalQuantity = 0;
+        newRows[index].quantity = 0;
+        newRows[index].total = 0;
       }
     }
 
     // Auto calculate total (Cost * Qty) + Tax
-    const qty = parseFloat(newRows[index].quantity || 0);
+    const qty = parseFloat(newRows[index].totalQuantity || newRows[index].quantity || 0);
     const cost = parseFloat(newRows[index].unitCost || 0);
     const taxRate = parseFloat(newRows[index].taxPercent || 0);
 
@@ -123,8 +195,30 @@ export default function Purchase() {
     setRows(newRows);
   };
 
+  const handleSizeQtyChange = (rowIndex, sizeIndex, val) => {
+    const newRows = [...rows];
+    const row = newRows[rowIndex];
+    const parsedQty = Math.max(0, parseInt(val, 10) || 0);
+
+    if (row.sizes && row.sizes[sizeIndex]) {
+      row.sizes[sizeIndex].quantity = parsedQty;
+
+      const totalQty = row.sizes.reduce((sum, s) => sum + (s.quantity || 0), 0);
+      row.totalQuantity = totalQty;
+      row.quantity = totalQty;
+
+      const cost = parseFloat(row.unitCost || 0);
+      const taxRate = parseFloat(row.taxPercent || 0);
+      const subTotal = totalQty * cost;
+      const taxAmt = subTotal * (taxRate / 100);
+      row.total = subTotal + taxAmt;
+
+      setRows(newRows);
+    }
+  };
+
   const addRow = () => {
-    setRows([...rows, { productId: '', quantity: 1, unitCost: 0, taxPercent: 0, total: 0 }]);
+    setRows([...rows, { ...initialRow }]);
   };
 
   const removeRow = (index) => {
@@ -149,6 +243,39 @@ export default function Purchase() {
         return;
       }
 
+      const itemsToSubmit = [];
+
+      for (const r of rows) {
+        if (!r.productId) continue;
+
+        const activeSizes = (r.sizes || []).filter(s => s.quantity > 0);
+
+        if (activeSizes.length > 0) {
+          for (const s of activeSizes) {
+            itemsToSubmit.push({
+              productId: parseInt(r.productId),
+              size: s.size || null,
+              quantity: parseInt(s.quantity),
+              unitCost: parseFloat(r.unitCost || 0),
+              taxPercent: parseFloat(r.taxPercent || 0)
+            });
+          }
+        } else if ((r.totalQuantity || r.quantity) > 0) {
+          itemsToSubmit.push({
+            productId: parseInt(r.productId),
+            size: r.size || null,
+            quantity: parseInt(r.totalQuantity || r.quantity),
+            unitCost: parseFloat(r.unitCost || 0),
+            taxPercent: parseFloat(r.taxPercent || 0)
+          });
+        }
+      }
+
+      if (itemsToSubmit.length === 0) {
+        toast.error('Please enter purchase quantity for at least one size');
+        return;
+      }
+
       const selectedSupplier = suppliers.find(s => s.id === parseInt(supplier));
 
       const payload = {
@@ -157,19 +284,14 @@ export default function Purchase() {
         purchaseDate: purchaseDate,
         paymentMethod: paymentMethod,
         branchId: parseInt(branchIdToUse),
-        items: rows.map(r => ({
-          productId: parseInt(r.productId),
-          quantity: parseInt(r.quantity),
-          unitCost: parseFloat(r.unitCost),
-          taxPercent: parseFloat(r.taxPercent || 0)
-        }))
+        items: itemsToSubmit
       };
       await api.post('/purchases', payload);
       toast.success('Purchase Saved & Stock Updated!');
-      setRows([{ productId: '', quantity: 1, unitCost: 0, total: 0 }]);
+      setRows([{ ...initialRow }]);
       setSupplier('');
       setPaymentMethod('Cash');
-      // Optional: switch to history
+      fetchData(); // Refresh product stocks immediately
       fetchHistory(); // Refresh history
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to save purchase');
@@ -294,21 +416,23 @@ export default function Purchase() {
           </div>
 
           <div className="table-container scroll-line lg:no-scrollbar mb-6 overflow-x-auto min-h-[400px] pb-32">
-            <table className="table-modern w-full min-w-[800px]">
+            <table className="table-modern w-full min-w-[960px]">
               <thead>
                 <tr className="bg-slate-50 text-left">
-                  <th className="p-3 w-1/3">Product</th>
-                  <th className="p-3 w-24">Quantity</th>
-                  <th className="p-3 w-24">Cost (₹)</th>
+                  <th className="p-3 w-1/4 min-w-[220px]">Product</th>
+                  <th className="p-3 w-32 min-w-[120px]">Brand</th>
+                  <th className="p-3 min-w-[260px]">Size & Purchase Qty</th>
+                  <th className="p-3 w-20 text-center">Total Qty</th>
+                  <th className="p-3 w-28">Cost (₹)</th>
                   <th className="p-3 w-20">Tax %</th>
-                  <th className="p-3 w-32">Total (₹)</th>
+                  <th className="p-3 w-28">Total (₹)</th>
                   <th className="p-3 w-16 text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, index) => (
                   <tr key={index} className="border-b border-slate-100 last:border-0 relative focus-within:z-50">
-                    <td className="p-2 relative">
+                    <td className="p-2 relative align-top">
                       <SearchableSelect
                         options={products.map(p => ({
                           value: p.id,
@@ -318,22 +442,67 @@ export default function Purchase() {
                         onChange={val => handleRowChange(index, 'productId', val)}
                         placeholder="Select Product..."
                         direction="down"
-                        className="min-w-[300px]"
+                        className="min-w-[220px]"
                       />
                     </td>
-                    <td className="p-2">
-                      <input type="number" min="1" className="input w-full p-2 border rounded" value={row.quantity} onChange={e => handleRowChange(index, 'quantity', e.target.value)} />
+                    <td className="p-2 align-top">
+                      <select
+                        className="input w-full p-2 border rounded text-xs bg-slate-50 cursor-default"
+                        value={row.brand || ''}
+                        onChange={e => handleRowChange(index, 'brand', e.target.value)}
+                        disabled={!row.productId}
+                      >
+                        {row.brand ? (
+                          <option value={row.brand}>{row.brand}</option>
+                        ) : (
+                          <option value="">{row.productId ? 'No Brand' : '-'}</option>
+                        )}
+                      </select>
                     </td>
-                    <td className="p-2">
-                      <input type="number" min="0" className="input w-full p-2 border rounded" value={row.unitCost} onChange={e => handleRowChange(index, 'unitCost', e.target.value)} />
+                    <td className="p-2 align-top">
+                      {!row.productId ? (
+                        <span className="text-xs text-slate-400 italic">Select product first</span>
+                      ) : (
+                        <div className="bg-slate-50/90 rounded-lg p-2.5 border border-slate-200">
+                          <div className="grid grid-cols-2 gap-3 text-[11px] font-bold text-slate-600 pb-1 mb-1.5 border-b border-slate-200 uppercase tracking-wider">
+                            <span>Size</span>
+                            <span className="text-right pr-1">Purchase Qty</span>
+                          </div>
+                          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                            {(row.sizes || []).map((sItem, sIdx) => (
+                              <div key={sIdx} className="grid grid-cols-2 gap-3 items-center text-xs">
+                                <span className="font-semibold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 text-center truncate">
+                                  {sItem.size}
+                                </span>
+                                <div className="text-right">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="input w-24 p-1 text-right text-xs font-bold border rounded bg-white"
+                                    placeholder="0"
+                                    value={sItem.quantity === 0 ? '' : sItem.quantity}
+                                    onChange={e => handleSizeQtyChange(index, sIdx, e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </td>
-                    <td className="p-2">
-                      <input type="number" min="0" className="input w-full p-2 border rounded bg-slate-50" value={row.taxPercent || 0} onChange={e => handleRowChange(index, 'taxPercent', e.target.value)} placeholder="0" />
+                    <td className="p-2 text-center align-top pt-4">
+                      <span className="font-bold text-slate-800 text-sm">{row.totalQuantity || row.quantity || 0}</span>
                     </td>
-                    <td className="p-3 font-medium text-slate-700">
+                    <td className="p-2 align-top pt-3">
+                      <input type="number" min="0" step="any" className="input w-full p-2 border rounded" value={row.unitCost} onChange={e => handleRowChange(index, 'unitCost', e.target.value)} />
+                    </td>
+                    <td className="p-2 align-top pt-3">
+                      <input type="number" min="0" step="any" className="input w-full p-2 border rounded bg-slate-50" value={row.taxPercent || 0} onChange={e => handleRowChange(index, 'taxPercent', e.target.value)} placeholder="0" />
+                    </td>
+                    <td className="p-3 font-semibold text-slate-700 align-top pt-4">
                       {row.total?.toFixed(2)}
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-2 text-center align-top pt-3">
                       <button onClick={() => removeRow(index)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         <FiTrash />
                       </button>
@@ -343,8 +512,9 @@ export default function Purchase() {
               </tbody>
             </table>
             <div className="mt-6 flex flex-wrap justify-end items-center gap-4 md:gap-8 px-4 py-4 bg-slate-50 rounded-xl border border-slate-100">
-              <div className="text-sm font-medium text-slate-600">SubTotal: <span className="text-slate-900 ml-1">₹ {rows.reduce((s, r) => s + (r.quantity * r.unitCost), 0).toFixed(2)}</span></div>
-              <div className="text-sm font-medium text-slate-600">Tax: <span className="text-slate-900 ml-1">₹ {rows.reduce((s, r) => s + ((r.quantity * r.unitCost) * ((r.taxPercent || 0) / 100)), 0).toFixed(2)}</span></div>
+              <div className="text-sm font-medium text-slate-600">Total Qty: <span className="text-slate-900 ml-1 font-bold">{rows.reduce((s, r) => s + (r.totalQuantity || r.quantity || 0), 0)}</span></div>
+              <div className="text-sm font-medium text-slate-600">SubTotal: <span className="text-slate-900 ml-1">₹ {rows.reduce((s, r) => s + ((r.totalQuantity || r.quantity || 0) * r.unitCost), 0).toFixed(2)}</span></div>
+              <div className="text-sm font-medium text-slate-600">Tax: <span className="text-slate-900 ml-1">₹ {rows.reduce((s, r) => s + (((r.totalQuantity || r.quantity || 0) * r.unitCost) * ((r.taxPercent || 0) / 100)), 0).toFixed(2)}</span></div>
               <div className="text-primary-dark font-bold text-xl bg-white px-4 py-2 rounded-lg shadow-sm border border-primary/10">Total: ₹ {grandTotal.toFixed(2)}</div>
             </div>
           </div>
@@ -484,6 +654,8 @@ export default function Purchase() {
                 <thead className="bg-slate-100/50 text-slate-600 font-medium">
                   <tr>
                     <th className="p-3 text-left pl-6">Product</th>
+                    <th className="p-3 text-left">Brand</th>
+                    <th className="p-3 text-center">Size</th>
                     <th className="p-3 text-center">Qty</th>
                     <th className="p-3 text-right">Cost</th>
                     <th className="p-3 text-right pr-6">Total</th>
@@ -492,8 +664,18 @@ export default function Purchase() {
                 <tbody className="divide-y divide-slate-100">
                   {selectedPurchase.items?.map(item => (
                     <tr key={item.id}>
-                      <td className="p-3 pl-6">{item.product?.name || "Deleted Product"}</td>
-                      <td className="p-3 text-center">{item.quantity}</td>
+                      <td className="p-3 pl-6 font-medium text-slate-800">{item.product?.name || "Deleted Product"}</td>
+                      <td className="p-3 text-xs text-slate-600">
+                        {item.product?.brand?.name || item.product?.brandName ? (
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-800 rounded text-[11px] font-semibold border border-amber-200">
+                            {item.product?.brand?.name || item.product?.brandName}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className="p-3 text-center text-xs font-semibold text-emerald-700">
+                        {item.size || item.product?.size || 'Free Size'}
+                      </td>
+                      <td className="p-3 text-center font-bold">{item.quantity}</td>
                       <td className="p-3 text-right">₹{parseFloat(item.unitCost).toFixed(2)}</td>
                       <td className="p-3 text-right pr-6 font-medium">₹{(item.quantity * item.unitCost).toFixed(2)}</td>
                     </tr>

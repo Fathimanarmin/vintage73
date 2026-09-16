@@ -108,8 +108,9 @@ exports.createPurchase = asyncHandler(async (req, res) => {
       totalAmount += total;
 
       return {
-        productId: item.productId,
-        quantity: qty,
+        productId: parseInt(item.productId),
+        size: item.size || null,
+        quantity: Math.round(qty),
         unitCost: cost,
         totalCost: total
       };
@@ -135,7 +136,11 @@ exports.createPurchase = asyncHandler(async (req, res) => {
       include: {
         supplier: true,
         items: {
-          include: { product: true }
+          include: {
+            product: {
+              include: { brand: true }
+            }
+          }
         }
       }
     });
@@ -170,6 +175,60 @@ exports.createPurchase = asyncHandler(async (req, res) => {
             quantity: item.quantity
           }
         });
+      }
+
+      // Size-level stock increment
+      if (item.size) {
+        const prod = await tx.product.findUnique({
+          where: { id: productId },
+          select: { id: true, sizeStocks: true, size: true }
+        });
+        if (prod) {
+          let pSizeStocks = prod.sizeStocks;
+          if (typeof pSizeStocks === 'string') {
+            try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = []; }
+          }
+          if (Array.isArray(pSizeStocks) && pSizeStocks.length > 0) {
+            let matched = false;
+            const updatedSizeStocks = pSizeStocks.map(s => {
+              if (String(s.size).trim().toLowerCase() === String(item.size).trim().toLowerCase()) {
+                matched = true;
+                const cur = parseInt(s.stock, 10) || 0;
+                return { ...s, stock: cur + item.quantity };
+              }
+              return s;
+            });
+            if (!matched) {
+              updatedSizeStocks.push({ size: item.size, stock: item.quantity });
+            }
+            await tx.product.update({
+              where: { id: prod.id },
+              data: { sizeStocks: updatedSizeStocks }
+            });
+          } else {
+            const prevBaseStock = existingStock ? existingStock.quantity : 0;
+            let baseList = [];
+            if (prod.size) {
+              const sList = prod.size.includes(',') ? prod.size.split(',').map(s => s.trim()).filter(Boolean) : [prod.size.trim()];
+              baseList = sList.map(s => ({ size: s, stock: 0 }));
+            }
+            let matched = false;
+            const updatedSizeStocks = baseList.map(s => {
+              if (String(s.size).trim().toLowerCase() === String(item.size).trim().toLowerCase()) {
+                matched = true;
+                return { ...s, stock: (prevBaseStock && baseList.length === 1 ? prevBaseStock : 0) + item.quantity };
+              }
+              return s;
+            });
+            if (!matched) {
+              updatedSizeStocks.push({ size: item.size, stock: (prevBaseStock && baseList.length <= 1 ? prevBaseStock : 0) + item.quantity });
+            }
+            await tx.product.update({
+              where: { id: prod.id },
+              data: { sizeStocks: updatedSizeStocks }
+            });
+          }
+        }
       }
     }
 
@@ -214,7 +273,13 @@ exports.getPurchases = asyncHandler(async (req, res) => {
     where,
     include: {
       supplier: true,
-      items: { include: { product: true } }
+      items: {
+        include: {
+          product: {
+            include: { brand: true }
+          }
+        }
+      }
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -255,6 +320,33 @@ exports.deletePurchase = asyncHandler(async (req, res) => {
           quantity: { decrement: item.quantity }
         }
       });
+
+      // Reverse size stock if item had size
+      if (item.size) {
+        const prod = await tx.product.findUnique({
+          where: { id: item.productId },
+          select: { id: true, sizeStocks: true }
+        });
+        if (prod && prod.sizeStocks) {
+          let pSizeStocks = prod.sizeStocks;
+          if (typeof pSizeStocks === 'string') {
+            try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = []; }
+          }
+          if (Array.isArray(pSizeStocks)) {
+            const updatedSizeStocks = pSizeStocks.map(s => {
+              if (String(s.size).trim().toLowerCase() === String(item.size).trim().toLowerCase()) {
+                const cur = parseInt(s.stock, 10) || 0;
+                return { ...s, stock: Math.max(0, cur - item.quantity) };
+              }
+              return s;
+            });
+            await tx.product.update({
+              where: { id: prod.id },
+              data: { sizeStocks: updatedSizeStocks }
+            });
+          }
+        }
+      }
     }
 
     // 2. Void Accounting Vouchers
