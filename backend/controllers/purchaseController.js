@@ -177,20 +177,70 @@ exports.createPurchase = asyncHandler(async (req, res) => {
         });
       }
 
-      // Size-level stock increment
+      // Size & Brand-level stock increment
       if (item.size) {
+        const rawItem = items.find(i => parseInt(i.productId) === productId && (i.size === item.size || (!i.size && !item.size)));
+        const itemBrandId = rawItem?.brandId || null;
+
         const prod = await tx.product.findUnique({
           where: { id: productId },
-          select: { id: true, sizeStocks: true, size: true }
+          select: { id: true, sizeStocks: true, size: true, brandPrices: true, brandId: true }
         });
         if (prod) {
+          let parsedBrandPrices = prod.brandPrices;
+          if (typeof parsedBrandPrices === 'string') {
+            try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = null; }
+          }
+
+          const targetBrandId = itemBrandId || prod.brandId;
+          let brandPricesUpdated = false;
+
+          if (parsedBrandPrices && typeof parsedBrandPrices === 'object' && targetBrandId) {
+            const bKey = String(targetBrandId);
+            if (parsedBrandPrices[bKey]) {
+              let bSizeStocks = parsedBrandPrices[bKey].sizeStocks;
+              if (typeof bSizeStocks === 'string') {
+                try { bSizeStocks = JSON.parse(bSizeStocks); } catch (e) { bSizeStocks = []; }
+              }
+              if (!Array.isArray(bSizeStocks)) bSizeStocks = [];
+
+              let matched = false;
+              const updatedBSizeStocks = bSizeStocks.map(s => {
+                if (String(s.size).trim().toLowerCase() === String(item.size).trim().toLowerCase()) {
+                  matched = true;
+                  const cur = parseInt(s.stock, 10) || 0;
+                  return { ...s, stock: cur + item.quantity };
+                }
+                return s;
+              });
+
+              if (!matched && item.size) {
+                updatedBSizeStocks.push({ size: item.size, stock: item.quantity });
+              }
+
+              parsedBrandPrices[bKey].sizeStocks = updatedBSizeStocks;
+
+              // Ensure sizes array is also kept in sync
+              let bSizes = parsedBrandPrices[bKey].sizes || [];
+              if (!Array.isArray(bSizes)) bSizes = [];
+              if (item.size && !bSizes.some(sz => String(sz).trim().toLowerCase() === String(item.size).trim().toLowerCase())) {
+                bSizes.push(item.size);
+              }
+              parsedBrandPrices[bKey].sizes = bSizes;
+              brandPricesUpdated = true;
+            }
+          }
+
+          // Root sizeStocks update
           let pSizeStocks = prod.sizeStocks;
           if (typeof pSizeStocks === 'string') {
             try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = []; }
           }
+
+          let updatedRootSizeStocks = [];
           if (Array.isArray(pSizeStocks) && pSizeStocks.length > 0) {
             let matched = false;
-            const updatedSizeStocks = pSizeStocks.map(s => {
+            updatedRootSizeStocks = pSizeStocks.map(s => {
               if (String(s.size).trim().toLowerCase() === String(item.size).trim().toLowerCase()) {
                 matched = true;
                 const cur = parseInt(s.stock, 10) || 0;
@@ -199,12 +249,8 @@ exports.createPurchase = asyncHandler(async (req, res) => {
               return s;
             });
             if (!matched) {
-              updatedSizeStocks.push({ size: item.size, stock: item.quantity });
+              updatedRootSizeStocks.push({ size: item.size, stock: item.quantity });
             }
-            await tx.product.update({
-              where: { id: prod.id },
-              data: { sizeStocks: updatedSizeStocks }
-            });
           } else {
             const prevBaseStock = existingStock ? existingStock.quantity : 0;
             let baseList = [];
@@ -213,7 +259,7 @@ exports.createPurchase = asyncHandler(async (req, res) => {
               baseList = sList.map(s => ({ size: s, stock: 0 }));
             }
             let matched = false;
-            const updatedSizeStocks = baseList.map(s => {
+            updatedRootSizeStocks = baseList.map(s => {
               if (String(s.size).trim().toLowerCase() === String(item.size).trim().toLowerCase()) {
                 matched = true;
                 return { ...s, stock: (prevBaseStock && baseList.length === 1 ? prevBaseStock : 0) + item.quantity };
@@ -221,11 +267,22 @@ exports.createPurchase = asyncHandler(async (req, res) => {
               return s;
             });
             if (!matched) {
-              updatedSizeStocks.push({ size: item.size, stock: (prevBaseStock && baseList.length <= 1 ? prevBaseStock : 0) + item.quantity });
+              updatedRootSizeStocks.push({ size: item.size, stock: (prevBaseStock && baseList.length <= 1 ? prevBaseStock : 0) + item.quantity });
             }
+          }
+
+          const updateData = {};
+          if (brandPricesUpdated) {
+            updateData.brandPrices = parsedBrandPrices;
+          }
+          if (updatedRootSizeStocks.length > 0) {
+            updateData.sizeStocks = updatedRootSizeStocks;
+          }
+
+          if (Object.keys(updateData).length > 0) {
             await tx.product.update({
               where: { id: prod.id },
-              data: { sizeStocks: updatedSizeStocks }
+              data: updateData
             });
           }
         }

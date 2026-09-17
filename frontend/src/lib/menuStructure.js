@@ -4,7 +4,7 @@ import {
   FiDollarSign, FiBook, FiPackage, FiBriefcase, FiCheckCircle, FiLayers, FiCreditCard, FiClock,
   FiDatabase, FiTarget, FiShoppingCart, FiUsers as FiUserGroup, FiArchive, FiFileText,
   FiPieChart, FiClipboard, FiRefreshCw, FiList, FiActivity, FiCalendar, FiArrowDownLeft, FiArrowUpRight, FiKey, FiDroplet,
-  FiLock, FiMessageSquare, FiMonitor, FiTrendingUp
+  FiLock, FiMessageSquare, FiMonitor, FiTrendingUp, FiTag
 } from 'react-icons/fi';
 import { TbBarcode, TbReportAnalytics, TbReceipt } from 'react-icons/tb';
 
@@ -78,6 +78,7 @@ export const MENU_STRUCTURE = [
     icon: FiDatabase,
     items: [
       { name: 'Bank Master', icon: FiCreditCard, path: '/master/banks' },
+      { name: 'Brand Master', icon: FiTag, path: '/master/brands' },
       { name: 'Branches', icon: FiHome, path: '/branches' },
       { name: 'Category Master', icon: FiGrid, path: '/master/categories' },
       { name: 'Product Types', icon: FiLayers, path: '/master/product-types' },

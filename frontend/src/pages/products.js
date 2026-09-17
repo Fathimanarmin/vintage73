@@ -4,7 +4,7 @@ import { FiPlus, FiPrinter, FiSearch, FiEdit, FiTrash2, FiBox, FiToggleLeft, FiT
 import Barcode from 'react-barcode';
 import { toast } from 'react-toastify';
 import SearchableSelect from '@/components/SearchableSelect';
-import { printZplViaQz } from '@/lib/qzTray';
+import { printZplViaQz, connectQZ, isQzConnected, getAvailablePrinters } from '@/lib/qzTray';
 
 const DEFAULT_GENDERS = ['Men', 'Women', 'Boy', 'Girl', 'Unisex'];
 
@@ -49,7 +49,8 @@ export default function Products() {
     minDiscount: '',
     maxDiscount: '',
     isTaxInclusive: false,
-    isActive: true
+    isActive: true,
+    brandPrices: {}
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -57,6 +58,9 @@ export default function Products() {
   const [imagePreview, setImagePreview] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusTarget, setStatusTarget] = useState(null);
+  const [customSizeInput, setCustomSizeInput] = useState('');
+
+  const DEFAULT_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '28', '30', '32', '34', '36', '38', '40', '42', '44', 'Free Size'];
 
   // Barcode Label Resolution, Preview & Print State
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -68,8 +72,54 @@ export default function Products() {
   const [resolvedZpl, setResolvedZpl] = useState('');
   const [printTargetProduct, setPrintTargetProduct] = useState(null);
   const [printQuantity, setPrintQuantity] = useState(1);
+  const [selectedPrintBranchId, setSelectedPrintBranchId] = useState('');
   const [selectedPrintBrandId, setSelectedPrintBrandId] = useState('');
+  const [selectedPrintSize, setSelectedPrintSize] = useState('');
+  const [availablePrintSizes, setAvailablePrintSizes] = useState([]);
   const [printExecuting, setPrintExecuting] = useState(false);
+
+  // QZ Tray Setup & Live Printer Selection State
+  const [qzConnected, setQzConnected] = useState(false);
+  const [qzConnecting, setQzConnecting] = useState(false);
+  const [printerList, setPrinterList] = useState([]);
+  const [selectedPrinter, setSelectedPrinter] = useState('');
+
+  const checkAndLoadQzPrinters = async () => {
+    const connected = isQzConnected();
+    setQzConnected(connected);
+    if (connected) {
+      try {
+        const printers = await getAvailablePrinters();
+        setPrinterList(printers);
+        if (printers.length > 0 && !selectedPrinter) {
+          const zebra = printers.find(p => p.toLowerCase().includes('zebra'));
+          setSelectedPrinter(zebra || printers[0]);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
+  const handleConnectQzTray = async () => {
+    setQzConnecting(true);
+    try {
+      await connectQZ();
+      setQzConnected(true);
+      toast.success('Connected to QZ Tray!');
+      const printers = await getAvailablePrinters();
+      setPrinterList(printers);
+      if (printers.length > 0 && !selectedPrinter) {
+        const zebra = printers.find(p => p.toLowerCase().includes('zebra'));
+        setSelectedPrinter(zebra || printers[0]);
+      }
+    } catch (err) {
+      toast.error('Could not connect to QZ Tray. Make sure QZ Tray is running on your computer.');
+      setQzConnected(false);
+    } finally {
+      setQzConnecting(false);
+    }
+  };
 
   const [barcodeSettings, setBarcodeSettings] = useState({
     nameFontSize: 20,
@@ -96,27 +146,45 @@ export default function Products() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterProductType, setFilterProductType] = useState('');
   const [filterStock, setFilterStock] = useState('all'); // all, low, out
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState('all');
 
-  const fetchProducts = async () => {
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const u = JSON.parse(storedUser);
+      if (u.branchId) {
+        setSelectedBranch(u.branchId.toString());
+      }
+    }
+  }, []);
+
+  const fetchProducts = async (targetBranch) => {
     try {
       const storedUser = localStorage.getItem('user');
-      const branchId = storedUser ? JSON.parse(storedUser).branchId : null;
-      const [prodRes, compRes, catRes, ptRes, brandRes] = await Promise.all([
-        api.get('/products', { params: { branchId } }),
+      const userObj = storedUser ? JSON.parse(storedUser) : null;
+      
+      const activeBranchFilter = targetBranch !== undefined ? targetBranch : selectedBranch;
+      const branchIdParam = activeBranchFilter === 'all' ? undefined : activeBranchFilter;
+
+      const [prodRes, compRes, catRes, ptRes, brandRes, branchRes] = await Promise.all([
+        api.get('/products', { params: { branchId: branchIdParam } }),
         api.get('/company'),
         api.get('/categories'),
         api.get('/product-types'),
-        api.get('/brands')
+        api.get('/brands'),
+        api.get('/branches').catch(() => ({ data: [] }))
       ]);
       setProducts(prodRes.data);
       setCompanyProfile(compRes.data);
       setCategories(catRes.data);
       setProductTypes(ptRes.data);
       setBrands(brandRes.data || []);
+      setBranches(branchRes.data || []);
 
-      if (branchId) {
+      if (branchIdParam) {
         try {
-          const { data: bSetting } = await api.get(`/barcode-settings/${branchId}`);
+          const { data: bSetting } = await api.get(`/barcode-settings/${branchIdParam}`);
           if (bSetting) {
             setBarcodeSettings(prev => ({
               ...prev,
@@ -140,13 +208,128 @@ export default function Products() {
     }
   };
 
-  const generateZplAndPreview = async (product, brandId, labelTemplate) => {
-    // 1. Resolve Brand & Barcode
+  const getAvailableBrandsForProduct = (product, brandsList) => {
+    if (!product) return [];
+
+    let parsedBrandPrices = product.brandPrices;
+    if (typeof parsedBrandPrices === 'string') {
+      try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = {}; }
+    }
+
+    const bMap = new Map();
+
+    if (parsedBrandPrices && typeof parsedBrandPrices === 'object') {
+      Object.keys(parsedBrandPrices).forEach(bIdStr => {
+        const bId = parseInt(bIdStr, 10);
+        if (!isNaN(bId)) {
+          const matchedBrand = (brandsList || []).find(b => b.id === bId);
+          bMap.set(bId, {
+            id: bId,
+            name: matchedBrand ? matchedBrand.name : (product.brandName || `Brand #${bId}`)
+          });
+        }
+      });
+    }
+
+    const primaryId = product.brandId || product.brand?.id;
+    const primaryName = product.brandName || product.brand?.name;
+    if (primaryId && !bMap.has(primaryId)) {
+      const matchedBrand = (brandsList || []).find(b => b.id === primaryId);
+      bMap.set(primaryId, { id: primaryId, name: matchedBrand ? matchedBrand.name : (primaryName || `Brand #${primaryId}`) });
+    }
+
+    const list = Array.from(bMap.values());
+    if (list.length === 0 && primaryName) {
+      list.push({ id: primaryId || null, name: primaryName });
+    }
+
+    return list;
+  };
+
+  const getSizesForBrand = (product, brandId) => {
+    if (!product) return [];
+
+    let parsedBrandPrices = product.brandPrices;
+    if (typeof parsedBrandPrices === 'string') {
+      try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = null; }
+    }
+
+    if (parsedBrandPrices && brandId && parsedBrandPrices[brandId]) {
+      const bEntry = parsedBrandPrices[brandId];
+      let bSizeStocks = bEntry.sizeStocks;
+      if (typeof bSizeStocks === 'string') {
+        try { bSizeStocks = JSON.parse(bSizeStocks); } catch (e) { bSizeStocks = []; }
+      }
+
+      if (Array.isArray(bSizeStocks) && bSizeStocks.length > 0) {
+        return bSizeStocks.map(s => ({
+          size: s.size,
+          currentStock: parseInt(s.stock, 10) || 0,
+          quantity: 0
+        }));
+      }
+
+      if (Array.isArray(bEntry.sizes) && bEntry.sizes.length > 0) {
+        return bEntry.sizes.map(sz => ({
+          size: sz,
+          currentStock: 0,
+          quantity: 0
+        }));
+      }
+    }
+
+    // Fallback to product root sizeStocks
+    let rootSizeStocks = product.sizeStocks;
+    if (typeof rootSizeStocks === 'string') {
+      try { rootSizeStocks = JSON.parse(rootSizeStocks); } catch (e) { rootSizeStocks = []; }
+    }
+
+    if (Array.isArray(rootSizeStocks) && rootSizeStocks.length > 0) {
+      return rootSizeStocks.map(s => ({
+        size: s.size,
+        currentStock: parseInt(s.stock, 10) || 0,
+        quantity: 0
+      }));
+    }
+
+    if (product.size) {
+      const rawSizes = product.size.includes(',')
+        ? product.size.split(',').map(s => s.trim()).filter(Boolean)
+        : [product.size.trim()];
+      return rawSizes.map(sz => ({
+        size: sz,
+        currentStock: parseInt(product.stock, 10) || 0,
+        quantity: 0
+      }));
+    }
+
+    return [{
+      size: 'Free Size',
+      currentStock: parseInt(product.stock, 10) || 0,
+      quantity: 0
+    }];
+  };
+
+  const generateZplAndPreview = async (product, brandId, branchId, selectedSize, labelTemplate) => {
+    // 1. Resolve Brand, Barcode & Price
     let activeBarcode = product.barcode || '';
+    let activePrice = product.price !== undefined && product.price !== null ? String(product.price) : '0';
+
+    let parsedBrandPrices = product.brandPrices;
+    if (typeof parsedBrandPrices === 'string') {
+      try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = null; }
+    }
+
     if (brandId) {
-      const bObj = brands.find(b => String(b.id) === String(brandId));
-      if (bObj && bObj.barcode) {
-        activeBarcode = bObj.barcode;
+      if (parsedBrandPrices && parsedBrandPrices[brandId]) {
+        const bData = parsedBrandPrices[brandId];
+        if (bData.barcode) activeBarcode = bData.barcode;
+        if (bData.price) activePrice = String(bData.price);
+      } else {
+        const bObj = brands.find(b => String(b.id) === String(brandId));
+        if (bObj && bObj.barcode) {
+          activeBarcode = bObj.barcode;
+        }
       }
     }
 
@@ -154,29 +337,33 @@ export default function Products() {
       activeBarcode = 'BC' + Date.now().toString().slice(-10);
     }
 
-    // 2. Base ZPL template with 38mm x 25mm dimensions
+    // 2. Resolve Branch Name
+    let selectedBranchObj = null;
+    if (branchId) {
+      selectedBranchObj = branches.find(b => String(b.id) === String(branchId));
+    }
+    const branchNameStr = selectedBranchObj ? selectedBranchObj.name : '';
+
+    // 3. Resolve Size
+    const sizeStr = selectedSize || product.size || '';
+
+    // 4. Base ZPL template for 38mm x 25mm dimensions (304 x 200 dots at 203 DPI)
     let zpl = labelTemplate?.rawZpl;
     if (!zpl || !zpl.trim()) {
       zpl = `^XA
 ^PW304
 ^LL200
 ^CI28
-^FO20,15^A0N,22,22^FD{{barcode}}^FS
-^BY1.5,3,40^FO20,40^BCN,42,N,N,N^FD{{barcode}}^FS
-^FO20,92^A0N,20,20^FD{{productName}}^FS
-^FO20,118^A0N,20,20^FDMRP: ₹{{price}}^FS
+^FO15,10^A0N,18,18^FD{{barcode}}^FS
+^BY1.5,3,38^FO15,28^BCN,38,N,N,N^FD{{barcode}}^FS
+^FO15,72^A0N,18,18^FD{{productName}}^FS
+^FO15,93^A0N,18,18^FDMRP: ₹{{price}}^FS
+^FO15,114^A0N,18,18^FDSIZE: {{size}}^FS
+^FO15,135^A0N,18,18^FD{{branchName}}^FS
 ^PQ1,0,0,N
 ^XZ`;
     }
 
-    // Ensure 38mm x 25mm dimensions (304 x 200 dots at 203 DPI)
-    if (!/\^PW\d+/i.test(zpl)) {
-      zpl = zpl.replace(/\^XA/i, '^XA\n^PW304\n^LL200');
-    } else {
-      zpl = zpl.replace(/\^PW\d+/gi, '^PW304').replace(/\^LL\d+/gi, '^LL200');
-    }
-
-    const priceStr = product.price !== undefined && product.price !== null ? String(product.price) : '0';
     const pName = product.name || '';
 
     const replacements = {
@@ -189,13 +376,16 @@ export default function Products() {
       barcode_number: activeBarcode,
       'barcode number': activeBarcode,
       sku: activeBarcode,
-      price: priceStr,
-      mrp: priceStr,
-      'price/mrp': priceStr,
-      price_mrp: priceStr,
-      sellingPrice: priceStr,
-      selling_price: priceStr,
-      size: product.size || '',
+      price: activePrice,
+      mrp: activePrice,
+      'price/mrp': activePrice,
+      price_mrp: activePrice,
+      sellingPrice: activePrice,
+      selling_price: activePrice,
+      size: sizeStr,
+      branchName: branchNameStr,
+      branch_name: branchNameStr,
+      branch: branchNameStr,
       category: product.categoryName || '',
       company: companyProfile?.companyName || ''
     };
@@ -215,7 +405,7 @@ export default function Products() {
       zpl = zpl.replace(/PENDANT/g, pName);
     }
     if (product.price && zpl.includes('^FD1500^FS')) {
-      zpl = zpl.replace(/\^FD1500\^FS/g, `^FD${product.price}^FS`);
+      zpl = zpl.replace(/\^FD1500\^FS/g, `^FD${activePrice}^FS`);
     }
 
     setResolvedZpl(zpl);
@@ -230,7 +420,9 @@ export default function Products() {
         sampleProduct: {
           name: pName,
           barcode: activeBarcode,
-          price: priceStr
+          price: activePrice,
+          size: sizeStr,
+          branchName: branchNameStr
         }
       });
 
@@ -283,33 +475,57 @@ export default function Products() {
       }
     }
 
-    // 2. Resolve initial Brand from product
-    let initialBrandId = '';
-    if (product.brandId) {
-      initialBrandId = String(product.brandId);
-    } else if (product.brand?.id) {
-      initialBrandId = String(product.brand.id);
-    } else if (product.brandName) {
-      const match = brands.find(b => b.name?.toLowerCase() === product.brandName.toLowerCase());
-      if (match) initialBrandId = String(match.id);
-    }
+    // 2. Resolve initial Branch
+    const storedUser = localStorage.getItem('user');
+    const uBranchId = storedUser ? JSON.parse(storedUser).branchId : null;
+    const initialBranchId = uBranchId ? String(uBranchId) : (selectedBranch !== 'all' ? selectedBranch : (branches[0]?.id ? String(branches[0].id) : ''));
+
+    // 3. Resolve initial Brand
+    const availableBrands = getAvailableBrandsForProduct(product, brands);
+    const initialBrandId = availableBrands[0]?.id ? String(availableBrands[0].id) : (product.brandId ? String(product.brandId) : '');
+
+    // 4. Resolve initial Sizes for the selected Brand
+    const sizes = getSizesForBrand(product, initialBrandId);
+    const firstSizeStr = sizes.length > 0 ? (typeof sizes[0] === 'object' ? sizes[0].size : sizes[0]) : (product.size || '');
 
     setPrintTargetProduct(product);
+    setSelectedPrintBranchId(initialBranchId);
     setSelectedPrintBrandId(initialBrandId);
+    setAvailablePrintSizes(sizes);
+    setSelectedPrintSize(firstSizeStr);
     setResolvedLabelTemplate(labelTemplate);
     setPrintQuantity(1);
     setPreviewImage(null);
     setPreviewDimensions(null);
     setShowPreviewModal(true);
 
-    // 3. Generate ZPL and render 38x25mm preview
-    await generateZplAndPreview(product, initialBrandId, labelTemplate);
+    checkAndLoadQzPrinters();
+
+    await generateZplAndPreview(product, initialBrandId, initialBranchId, firstSizeStr, labelTemplate);
+  };
+
+  const handlePrintBranchChange = async (newBranchId) => {
+    setSelectedPrintBranchId(newBranchId);
+    if (printTargetProduct) {
+      await generateZplAndPreview(printTargetProduct, selectedPrintBrandId, newBranchId, selectedPrintSize, resolvedLabelTemplate);
+    }
   };
 
   const handlePrintBrandChange = async (newBrandId) => {
     setSelectedPrintBrandId(newBrandId);
     if (printTargetProduct) {
-      await generateZplAndPreview(printTargetProduct, newBrandId, resolvedLabelTemplate);
+      const sizes = getSizesForBrand(printTargetProduct, newBrandId);
+      setAvailablePrintSizes(sizes);
+      const newFirstSize = sizes.length > 0 ? (typeof sizes[0] === 'object' ? sizes[0].size : sizes[0]) : '';
+      setSelectedPrintSize(newFirstSize);
+      await generateZplAndPreview(printTargetProduct, newBrandId, selectedPrintBranchId, newFirstSize, resolvedLabelTemplate);
+    }
+  };
+
+  const handlePrintSizeChange = async (newSize) => {
+    setSelectedPrintSize(newSize);
+    if (printTargetProduct) {
+      await generateZplAndPreview(printTargetProduct, selectedPrintBrandId, selectedPrintBranchId, newSize, resolvedLabelTemplate);
     }
   };
 
@@ -334,7 +550,7 @@ export default function Products() {
 
     setPrintExecuting(true);
     try {
-      const result = await printZplViaQz(resolvedZpl, qty);
+      const result = await printZplViaQz(resolvedZpl, qty, selectedPrinter || null);
       toast.success(result.message || `Sent ${qty} label(s) for "${product.name}" to printer via QZ Tray.`);
       setShowPreviewModal(false);
     } catch (err) {
@@ -374,6 +590,14 @@ export default function Products() {
     );
   }, [formData.categoryId, productTypes]);
 
+  // Filtered Brands based on selected Category in modal
+  const categoryBrands = useMemo(() => {
+    if (!formData.categoryId) return brands;
+    return brands.filter(
+      b => !b.categoryId || String(b.categoryId) === String(formData.categoryId)
+    );
+  }, [formData.categoryId, brands]);
+
   // Selected Product Type object
   const selectedProductTypeObj = useMemo(() => {
     if (!formData.productTypeId) return null;
@@ -396,13 +620,73 @@ export default function Products() {
     return [];
   }, [selectedProductTypeObj]);
 
-  // Configured Sizes from selected product type
+  // Configured Sizes from selected product type or default
   const configuredSizes = useMemo(() => {
-    if (selectedProductTypeObj && Array.isArray(selectedProductTypeObj.sizes)) {
+    if (selectedProductTypeObj && Array.isArray(selectedProductTypeObj.sizes) && selectedProductTypeObj.sizes.length > 0) {
       return selectedProductTypeObj.sizes;
     }
     return [];
   }, [selectedProductTypeObj]);
+
+  const availableSizeOptions = useMemo(() => {
+    if (configuredSizes && configuredSizes.length > 0) {
+      return configuredSizes;
+    }
+    return [];
+  }, [configuredSizes]);
+
+  // Calculate total aggregated stock for a size across all brand-specific size stocks
+  const getAggregatedSizeStock = (sizeName, fallbackStock = 0) => {
+    let sum = 0;
+    let hasBrandStock = false;
+    if (formData.brandPrices && Object.keys(formData.brandPrices).length > 0) {
+      Object.values(formData.brandPrices).forEach(entry => {
+        if (entry && Array.isArray(entry.sizeStocks)) {
+          const sizeItem = entry.sizeStocks.find(s => s.size === sizeName);
+          if (sizeItem) {
+            sum += (parseInt(sizeItem.stock, 10) || 0);
+            hasBrandStock = true;
+          }
+        }
+      });
+    }
+    return hasBrandStock ? sum : (parseInt(fallbackStock, 10) || 0);
+  };
+
+  const handleToggleSize = (sizeName) => {
+    setFormData(prev => {
+      const existingIdx = (prev.sizeStocks || []).findIndex(item => item.size === sizeName);
+      let updatedList = [...(prev.sizeStocks || [])];
+
+      if (existingIdx >= 0) {
+        updatedList.splice(existingIdx, 1);
+      } else {
+        updatedList.push({ size: sizeName, stock: 0 });
+      }
+
+      const totalCalculatedStock = updatedList.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+      const sizeStr = updatedList.map(item => item.size).join(', ');
+
+      return {
+        ...prev,
+        sizeStocks: updatedList,
+        stock: totalCalculatedStock.toString(),
+        size: sizeStr
+      };
+    });
+  };
+
+  const handleAddCustomSize = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = customSizeInput.trim();
+    if (!trimmed) return;
+
+    const isSelected = (formData.sizeStocks || []).some(s => s.size.toLowerCase() === trimmed.toLowerCase());
+    if (!isSelected) {
+      handleToggleSize(trimmed);
+    }
+    setCustomSizeInput('');
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -420,14 +704,169 @@ export default function Products() {
     setShowModal(true);
   };
 
-  // Handle Brand change
+  // Handle Brand change (loads brand price, brand barcode, and brand sizes & stocks)
   const handleBrandChange = (val) => {
     const selected = brands.find(b => b.id.toString() === val?.toString());
-    setFormData(prev => ({
-      ...prev,
-      brandId: val || '',
-      brandName: selected ? selected.name : ''
-    }));
+    const bIdStr = val ? val.toString() : '';
+    setFormData(prev => {
+      const brandData = prev.brandPrices?.[bIdStr];
+      let brandPriceVal = '';
+      let brandBarcodeVal = '';
+      let brandSizeStocks = [];
+      let brandSizeStr = '';
+
+      if (typeof brandData === 'object' && brandData !== null) {
+        brandPriceVal = brandData.price || '';
+        brandBarcodeVal = brandData.barcode || '';
+        brandSizeStocks = Array.isArray(brandData.sizeStocks) ? brandData.sizeStocks : [];
+        brandSizeStr = brandSizeStocks.map(s => s.size).join(', ');
+      } else if (brandData !== undefined && brandData !== '') {
+        brandPriceVal = brandData.toString();
+      }
+
+      const totalBrandStock = brandSizeStocks.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+
+      return {
+        ...prev,
+        brandId: bIdStr,
+        brandName: selected ? selected.name : '',
+        price: brandPriceVal || prev.price,
+        barcode: brandBarcodeVal || prev.barcode,
+        sizeStocks: brandSizeStocks.length > 0 ? brandSizeStocks : prev.sizeStocks,
+        size: brandSizeStr || prev.size,
+        stock: brandSizeStocks.length > 0 ? totalBrandStock.toString() : prev.stock
+      };
+    });
+  };
+
+  // Handle Brand Price / Barcode change
+  const handleBrandFieldChange = (brandIdVal, fieldKey, fieldValue) => {
+    const bIdStr = String(brandIdVal);
+    setFormData(prev => {
+      const currentEntry = prev.brandPrices?.[bIdStr];
+      let brandObj = { price: '', barcode: '', sizeStocks: [] };
+      if (typeof currentEntry === 'object' && currentEntry !== null) {
+        brandObj = { ...currentEntry };
+      } else if (currentEntry !== undefined && currentEntry !== '') {
+        brandObj.price = currentEntry.toString();
+      }
+
+      brandObj[fieldKey] = fieldValue;
+
+      if (fieldKey === 'price' && fieldValue && !brandObj.barcode) {
+        brandObj.barcode = 'BC' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 100).toString();
+      }
+
+      const updatedBrandPrices = {
+        ...(prev.brandPrices || {}),
+        [bIdStr]: brandObj
+      };
+
+      const isSelectedBrand = String(prev.brandId) === bIdStr;
+      return {
+        ...prev,
+        brandPrices: updatedBrandPrices,
+        price: isSelectedBrand && fieldKey === 'price' ? fieldValue : prev.price,
+        barcode: isSelectedBrand && fieldKey === 'barcode' ? fieldValue : (isSelectedBrand && brandObj.barcode ? brandObj.barcode : prev.barcode)
+      };
+    });
+  };
+
+  // Toggle Size for a specific Brand
+  const handleToggleBrandSize = (brandIdVal, sizeName) => {
+    const bIdStr = String(brandIdVal);
+    setFormData(prev => {
+      const currentEntry = prev.brandPrices?.[bIdStr];
+      let brandObj = { price: '', barcode: '', sizeStocks: [] };
+      if (typeof currentEntry === 'object' && currentEntry !== null) {
+        brandObj = { ...currentEntry, sizeStocks: Array.isArray(currentEntry.sizeStocks) ? [...currentEntry.sizeStocks] : [] };
+      } else if (currentEntry !== undefined && currentEntry !== '') {
+        brandObj.price = currentEntry.toString();
+      }
+
+      const existingIdx = brandObj.sizeStocks.findIndex(item => item.size === sizeName);
+      if (existingIdx >= 0) {
+        brandObj.sizeStocks.splice(existingIdx, 1);
+      } else {
+        brandObj.sizeStocks.push({ size: sizeName, stock: 0 });
+      }
+
+      const updatedBrandPrices = {
+        ...(prev.brandPrices || {}),
+        [bIdStr]: brandObj
+      };
+
+      const isSelectedBrand = String(prev.brandId) === bIdStr;
+      const totalBrandStock = brandObj.sizeStocks.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+      const brandSizeStr = brandObj.sizeStocks.map(s => s.size).join(', ');
+
+      let totalAllBrandsStock = 0;
+      Object.values(updatedBrandPrices).forEach(bEntry => {
+        if (bEntry && Array.isArray(bEntry.sizeStocks)) {
+          totalAllBrandsStock += bEntry.sizeStocks.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+        }
+      });
+
+      return {
+        ...prev,
+        brandPrices: updatedBrandPrices,
+        sizeStocks: isSelectedBrand ? brandObj.sizeStocks : prev.sizeStocks,
+        size: isSelectedBrand ? brandSizeStr : prev.size,
+        stock: totalAllBrandsStock > 0 ? totalAllBrandsStock.toString() : (isSelectedBrand ? totalBrandStock.toString() : prev.stock)
+      };
+    });
+  };
+
+  // Change individual size stock for a specific Brand
+  const handleBrandSizeStockChange = (brandIdVal, sizeName, qty) => {
+    const bIdStr = String(brandIdVal);
+    const parsedQty = Math.max(0, parseInt(qty, 10) || 0);
+
+    setFormData(prev => {
+      const currentEntry = prev.brandPrices?.[bIdStr];
+      let brandObj = { price: '', barcode: '', sizeStocks: [] };
+      if (typeof currentEntry === 'object' && currentEntry !== null) {
+        brandObj = { ...currentEntry, sizeStocks: Array.isArray(currentEntry.sizeStocks) ? [...currentEntry.sizeStocks] : [] };
+      } else if (currentEntry !== undefined && currentEntry !== '') {
+        brandObj.price = currentEntry.toString();
+      }
+
+      const existingIdx = brandObj.sizeStocks.findIndex(item => item.size === sizeName);
+      if (existingIdx >= 0) {
+        brandObj.sizeStocks[existingIdx] = { size: sizeName, stock: parsedQty };
+      } else {
+        brandObj.sizeStocks.push({ size: sizeName, stock: parsedQty });
+      }
+
+      const updatedBrandPrices = {
+        ...(prev.brandPrices || {}),
+        [bIdStr]: brandObj
+      };
+
+      const isSelectedBrand = String(prev.brandId) === bIdStr;
+      const totalBrandStock = brandObj.sizeStocks.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+      const brandSizeStr = brandObj.sizeStocks.map(s => s.size).join(', ');
+
+      let totalAllBrandsStock = 0;
+      Object.values(updatedBrandPrices).forEach(bEntry => {
+        if (bEntry && Array.isArray(bEntry.sizeStocks)) {
+          totalAllBrandsStock += bEntry.sizeStocks.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+        }
+      });
+
+      return {
+        ...prev,
+        brandPrices: updatedBrandPrices,
+        sizeStocks: isSelectedBrand ? brandObj.sizeStocks : prev.sizeStocks,
+        size: isSelectedBrand ? brandSizeStr : prev.size,
+        stock: totalAllBrandsStock > 0 ? totalAllBrandsStock.toString() : (isSelectedBrand ? totalBrandStock.toString() : prev.stock)
+      };
+    });
+  };
+
+  const handleGenerateBrandBarcode = (brandIdVal) => {
+    const newBarcode = 'BC' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 100).toString();
+    handleBrandFieldChange(brandIdVal, 'barcode', newBarcode);
   };
 
   // Handle Add Brand modal submission with duplicate validation
@@ -481,6 +920,9 @@ export default function Products() {
     let parsedSizeStocks = [];
     if (product.sizeStocks) {
       parsedSizeStocks = typeof product.sizeStocks === 'string' ? JSON.parse(product.sizeStocks) : product.sizeStocks;
+    }    let parsedBrandPrices = {};
+    if (product.brandPrices) {
+      parsedBrandPrices = typeof product.brandPrices === 'string' ? JSON.parse(product.brandPrices) : product.brandPrices;
     }
 
     const hasMultiSizes = Array.isArray(parsedSizeStocks) && parsedSizeStocks.length > 1;
@@ -502,6 +944,7 @@ export default function Products() {
       sizeStocks: parsedSizeStocks || [],
       stock: product.stock !== undefined ? product.stock.toString() : '0',
       price: product.price ? product.price.toString() : '',
+      brandPrices: parsedBrandPrices || {},
       costPrice: product.costPrice ? product.costPrice.toString() : '',
       taxRate: product.taxRate !== undefined ? product.taxRate.toString() : '0',
       taxPercent: product.taxPercent !== undefined ? product.taxPercent.toString() : '0',
@@ -528,6 +971,8 @@ export default function Products() {
       ...prev,
       categoryId: val,
       categoryName: selectedCat ? selectedCat.name : '',
+      brandId: '',
+      brandName: '',
       productTypeId: '',
       productTypeName: '',
       gender: '',
@@ -620,6 +1065,10 @@ export default function Products() {
     data.append('categoryId', formData.categoryId);
     data.append('categoryName', formData.categoryName || '');
     data.append('price', formData.price || '0');
+
+    if (formData.brandPrices && Object.keys(formData.brandPrices).length > 0) {
+      data.append('brandPrices', JSON.stringify(formData.brandPrices));
+    }
     data.append('costPrice', formData.costPrice || '');
     data.append('taxRate', formData.taxRate || '0');
     data.append('taxPercent', formData.taxRate || '0');
@@ -719,7 +1168,7 @@ export default function Products() {
 
       {/* Search & Filters */}
       <div className="card mb-6 p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
             <FiSearch className="text-slate-400" />
             <input
@@ -746,6 +1195,21 @@ export default function Products() {
               value={filterProductType}
               onChange={setFilterProductType}
               placeholder="Filter by Product Type..."
+            />
+          </div>
+
+          <div>
+            <SearchableSelect
+              options={[
+                { label: 'All Branches (Total Stock)', value: 'all' },
+                ...branches.map(b => ({ label: `${b.name} ${b.code ? `[${b.code}]` : ''}`, value: b.id.toString() }))
+              ]}
+              value={selectedBranch}
+              onChange={val => {
+                setSelectedBranch(val);
+                fetchProducts(val);
+              }}
+              placeholder="Filter by Branch..."
             />
           </div>
 
@@ -893,20 +1357,21 @@ export default function Products() {
 
                       {/* Stock */}
                       <td>
-                        {hasMultiSizes ? (
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-xs text-slate-800">
-                              {product.stock} units
-                            </span>
-                            <div className="text-[10px] text-slate-500">
-                              {parsedSizeStocks.map(s => `${s.size}:${s.stock}`).join(' | ')}
-                            </div>
-                          </div>
-                        ) : (
+                        <div className="flex flex-col gap-0.5">
                           <span className="font-semibold text-xs text-slate-800">
                             {product.stock} units
                           </span>
-                        )}
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {selectedBranch !== 'all'
+                              ? (branches.find(b => b.id.toString() === selectedBranch)?.name || 'Branch Stock')
+                              : 'Total Stock'}
+                          </span>
+                          {hasMultiSizes && (
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {parsedSizeStocks.map(s => `${s.size}:${s.stock}`).join(' | ')}
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Stock Status */}
@@ -1036,16 +1501,16 @@ export default function Products() {
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-slate-700">
-                          Brand
+                          Brand {formData.categoryId && <span className="text-xs text-primary font-normal">(Filtered for Category)</span>}
                         </label>
                       </div>
                       <div className="flex gap-2 items-center">
                         <div className="flex-1">
                           <SearchableSelect
-                            options={(brands || []).map(b => ({ label: b.name, value: b.id }))}
+                            options={(categoryBrands || []).map(b => ({ label: b.name, value: b.id }))}
                             value={formData.brandId}
                             onChange={handleBrandChange}
-                            placeholder="Select Brand..."
+                            placeholder={formData.categoryId ? "Select Brand for Category..." : "Select Brand..."}
                             zIndex={100005}
                           />
                         </div>
@@ -1145,50 +1610,257 @@ export default function Products() {
                   )}
                 </div>
 
-                {/* SIZE & STOCK MANAGEMENT SECTION */}
-                <div className="border border-emerald-100 bg-emerald-50/30 rounded-2xl p-5 space-y-4">
-                  <div className="flex items-center gap-2 text-emerald-950 font-bold text-sm">
-                    <FiTag className="text-emerald-600" /> Size & Stock Configuration
+                {/* SIZE & INDIVIDUAL STOCK MANAGEMENT SECTION */}
+                <div className="border border-emerald-100 bg-emerald-50/40 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-emerald-950 font-bold text-sm">
+                      <FiTag className="text-emerald-600" /> Size & Individual Stock Configuration
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200">
+                      Total Opening Stock: {formData.stock || 0} units
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Select Size / Variant</label>
-                      {configuredSizes.length > 0 ? (
-                        <select
-                          className="input w-full text-xs"
-                          value={formData.size}
-                          onChange={e => setFormData({ ...formData, size: e.target.value })}
-                        >
-                          <option value="">Select Size</option>
-                          {configuredSizes.map(s => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          className="input w-full text-xs"
-                          placeholder="e.g. M, L, XL, 32"
-                          value={formData.size}
-                          onChange={e => setFormData({ ...formData, size: e.target.value })}
-                        />
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Opening Stock Quantity</label>
-                      <input
-                        type="number"
-                        min="0"
-                        className="input w-full text-xs font-bold text-slate-800"
-                        placeholder="0"
-                        value={formData.stock}
-                        onChange={e => setFormData({ ...formData, stock: e.target.value })}
-                      />
-                    </div>
+                  {/* Selectable Size Badges */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-2">
+                      Select Sizes for this Product (Click badges to add/remove size)
+                    </label>
+                    {availableSizeOptions.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 items-center">
+                        {availableSizeOptions.map(sizeOpt => {
+                          const isSelected = (formData.sizeStocks || []).some(item => item.size === sizeOpt);
+                          return (
+                            <button
+                              key={sizeOpt}
+                              type="button"
+                              onClick={() => handleToggleSize(sizeOpt)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                isSelected
+                                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm scale-105'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                              }`}
+                            >
+                              {sizeOpt} {isSelected && '✓'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium">
+                        No sizes configured for the selected Product Type. Please configure sizes under Product Type master settings.
+                      </div>
+                    )}
                   </div>
+
+                  {/* Individual Stock Quantity for Selected Sizes (Read-Only Total Stock Across Brands) */}
+                  {(formData.sizeStocks || []).length > 0 ? (
+                    <div className="pt-3 border-t border-emerald-200/60">
+                      <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
+                        <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                          Individual Size Stock Quantities ({(formData.sizeStocks || []).length} sizes selected)
+                        </label>
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300">
+                          Read-Only (Complete stock across all brands)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {(formData.sizeStocks || []).map((item, idx) => {
+                          const totalBrandStockForSize = getAggregatedSizeStock(item.size, item.stock);
+                          return (
+                            <div key={idx} className="bg-white p-3 rounded-xl border border-emerald-200/80 shadow-2xs space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-emerald-950 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                  Size: {item.size}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleSize(item.size)}
+                                  className="text-[10px] text-red-500 hover:text-red-700 font-semibold"
+                                  title="Remove size"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              <div>
+                                <div className="flex items-center justify-between mb-0.5">
+                                  <label className="block text-[10px] font-semibold text-slate-500">Stock Quantity</label>
+                                  <span className="text-[9px] font-bold text-slate-400">All Brands</span>
+                                </div>
+                                <input
+                                  type="number"
+                                  readOnly
+                                  className="input w-full !py-1 text-xs font-bold text-slate-700 bg-slate-100 border-slate-200 cursor-not-allowed select-none"
+                                  placeholder="0"
+                                  value={totalBrandStockForSize}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-white/80 rounded-xl border border-dashed border-emerald-300 text-xs text-slate-500 text-center">
+                      Click size badges above to select sizes for this product type.
+                    </div>
+                  )}
                 </div>
+
+                {/* BRAND SPECIFIC CONFIGURATION (PRICES, BARCODES, SIZES & STOCKS) */}
+                {categoryBrands.length > 0 && (
+                  <div className="border border-amber-200 bg-amber-50/40 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-950 font-bold text-sm">
+                        <FiTag className="text-amber-600" /> Brand Specific Prices, Barcodes & Sizes
+                      </div>
+                      <span className="text-[11px] text-amber-800 font-medium">Configure individual price, barcode, sizes & stock for each brand</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {categoryBrands.map(b => {
+                        const bIdStr = String(b.id);
+                        const entry = formData.brandPrices?.[bIdStr];
+                        let priceVal = '';
+                        let barcodeVal = '';
+                        let brandSizeStocks = [];
+
+                        if (typeof entry === 'object' && entry !== null) {
+                          priceVal = entry.price || '';
+                          barcodeVal = entry.barcode || '';
+                          brandSizeStocks = Array.isArray(entry.sizeStocks) ? entry.sizeStocks : [];
+                        } else if (entry !== undefined && entry !== '') {
+                          priceVal = entry.toString();
+                        }
+
+                        if (!priceVal && String(formData.brandId) === bIdStr) priceVal = formData.price;
+                        if (!barcodeVal && String(formData.brandId) === bIdStr) barcodeVal = formData.barcode;
+                        if (brandSizeStocks.length === 0 && String(formData.brandId) === bIdStr && Array.isArray(formData.sizeStocks)) {
+                          brandSizeStocks = formData.sizeStocks;
+                        }
+
+                        const isSelected = String(formData.brandId) === bIdStr;
+                        const brandTotalStock = brandSizeStocks.reduce((sum, item) => sum + (parseInt(item.stock, 10) || 0), 0);
+
+                        return (
+                          <div key={b.id} className={`p-4 rounded-xl border transition-all space-y-3 ${isSelected ? 'bg-white border-amber-400 shadow-md ring-2 ring-amber-400/20' : 'bg-white/90 border-slate-200'}`}>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-slate-800">{b.name}</span>
+                                {isSelected && <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Selected Brand</span>}
+                              </div>
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                Total Stock: {brandTotalStock} units
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {/* Selling Price */}
+                              <div>
+                                <label className="block text-xs font-semibold text-slate-600 mb-1">Selling Price (₹)</label>
+                                <div className="relative">
+                                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">₹</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    className="input w-full !pl-6 !py-1 text-xs font-bold text-slate-800"
+                                    value={priceVal}
+                                    onChange={e => handleBrandFieldChange(b.id, 'price', e.target.value)}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Barcode */}
+                              <div>
+                                <div className="flex items-center justify-between mb-1">
+                                  <label className="block text-xs font-semibold text-slate-600">Brand Barcode</label>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleGenerateBrandBarcode(b.id)}
+                                    className="text-[10px] text-amber-700 hover:text-amber-900 font-semibold underline"
+                                  >
+                                    Generate Barcode
+                                  </button>
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="Barcode..."
+                                  className="input w-full !py-1 text-xs font-mono text-slate-800"
+                                  value={barcodeVal}
+                                  onChange={e => handleBrandFieldChange(b.id, 'barcode', e.target.value)}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Brand Specific Sizes Selection */}
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                Select Sizes for {b.name} (Click badges to toggle size)
+                              </label>
+                              <div className="flex flex-wrap gap-1.5 items-center">
+                                {availableSizeOptions.map(sizeOpt => {
+                                  const isSizeSelected = brandSizeStocks.some(item => item.size === sizeOpt);
+                                  return (
+                                    <button
+                                      key={sizeOpt}
+                                      type="button"
+                                      onClick={() => handleToggleBrandSize(b.id, sizeOpt)}
+                                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                                        isSizeSelected
+                                          ? 'bg-amber-500 text-white border-amber-500 shadow-2xs scale-105'
+                                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50'
+                                      }`}
+                                    >
+                                      {sizeOpt} {isSizeSelected && '✓'}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                             {/* Brand Specific Individual Size Stock Quantities (Read-Only Auto Stock) */}
+                            {brandSizeStocks.length > 0 && (
+                              <div className="pt-2 border-t border-slate-100">
+                                <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
+                                  <label className="block text-[11px] font-bold text-slate-700">
+                                    Individual Size Stock Quantities for {b.name}
+                                  </label>
+                                  <span className="text-[9px] font-semibold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-200">
+                                    Read-Only (Auto-updated via Purchases & Sales)
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                                  {brandSizeStocks.map((item, sIdx) => (
+                                    <div key={sIdx} className="bg-slate-50 p-2 rounded-lg border border-slate-200 space-y-1">
+                                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
+                                        <span>Size {item.size}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleBrandSize(b.id, item.size)}
+                                          className="text-red-500 hover:text-red-700 text-[9px]"
+                                          title="Remove size badge"
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
+                                      <input
+                                        type="number"
+                                        readOnly
+                                        className="input w-full !py-0.5 text-xs font-bold text-slate-700 bg-slate-100 border-slate-200 text-center cursor-not-allowed select-none"
+                                        value={item.stock}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* PRICING & TAX SECTION */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1449,31 +2121,105 @@ export default function Products() {
 
             {/* Modal Body */}
             <div className="p-5 space-y-4">
-              {/* Product and Brand Selection */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Branch, Brand, and Size Selection */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Product</label>
-                  <input
-                    type="text"
-                    readOnly
-                    disabled
-                    className="input w-full text-xs font-medium bg-slate-50 text-slate-700 truncate"
-                    value={printTargetProduct.name}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Brand</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Branch</label>
                   <select
-                    className="input w-full text-xs font-medium bg-white border rounded"
-                    value={selectedPrintBrandId}
-                    onChange={e => handlePrintBrandChange(e.target.value)}
+                    className="input w-full text-xs font-medium bg-white border rounded p-2"
+                    value={selectedPrintBranchId}
+                    onChange={e => handlePrintBranchChange(e.target.value)}
                   >
-                    <option value="">-- Select Brand --</option>
-                    {brands.map(b => (
+                    <option value="">-- Select Branch --</option>
+                    {branches.map(b => (
                       <option key={b.id} value={b.id}>{b.name}</option>
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Brand</label>
+                  <select
+                    className="input w-full text-xs font-medium bg-white border rounded p-2"
+                    value={selectedPrintBrandId}
+                    onChange={e => handlePrintBrandChange(e.target.value)}
+                  >
+                    <option value="">-- Select Brand --</option>
+                    {getAvailableBrandsForProduct(printTargetProduct, brands).map(b => (
+                      <option key={b.id || b.name} value={b.id || ''}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Size</label>
+                  <select
+                    className="input w-full text-xs font-medium bg-white border rounded p-2"
+                    value={selectedPrintSize}
+                    onChange={e => handlePrintSizeChange(e.target.value)}
+                  >
+                    <option value="">-- Select Size --</option>
+                    {availablePrintSizes.map((sObj, idx) => {
+                      const sz = typeof sObj === 'object' ? sObj.size : sObj;
+                      const stk = typeof sObj === 'object' ? sObj.currentStock : null;
+                      return (
+                        <option key={idx} value={sz}>
+                          {sz} {stk !== null && stk !== undefined ? `(${stk})` : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              {/* QZ Tray Printer Setup & Select Box */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block uppercase tracking-wider">QZ Tray Setup</span>
+                    <span className="text-[11px]">
+                      {qzConnected ? (
+                        <span className="text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span> Connected to QZ Tray
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 font-medium flex items-center gap-1 mt-0.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Not connected to QZ Tray
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleConnectQzTray}
+                    disabled={qzConnecting}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
+                      qzConnected
+                        ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        : 'bg-slate-900 text-white hover:bg-slate-800 shadow-sm'
+                    }`}
+                  >
+                    {qzConnecting ? 'Connecting...' : qzConnected ? 'Re-Connect' : 'Connect QZ Tray'}
+                  </button>
+                </div>
+
+                {qzConnected && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Select Printer ({printerList.length} Available)
+                    </label>
+                    <select
+                      className="input w-full text-xs font-semibold bg-white border border-slate-300 rounded-lg p-2"
+                      value={selectedPrinter}
+                      onChange={e => setSelectedPrinter(e.target.value)}
+                    >
+                      <option value="">-- Automatic (Default Zebra Printer) --</option>
+                      {printerList.map((pName, pIdx) => (
+                        <option key={pIdx} value={pName}>
+                          {pName} {pName.toLowerCase().includes('zebra') ? '★ (Zebra Thermal)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Number of Labels */}

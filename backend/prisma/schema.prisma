@@ -208,6 +208,7 @@ model Category {
   defaultLabelDesign   BarcodeTemplate? @relation(fields: [defaultLabelDesignId], references: [id], onDelete: SetNull)
   products             Product[]
   productTypes         ProductType[]
+  brands               Brand[]
 }
 
 model ProductType {
@@ -227,12 +228,16 @@ model ProductType {
 }
 
 model Brand {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  barcode   String?   @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  products  Product[]
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  barcode      String?   @unique
+  categoryId   Int?
+  categoryName String?
+  categoryIds  Json?     @default("[]")
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
 }
 
 model Product {
@@ -249,6 +254,7 @@ model Product {
   size            String?
   sizeStocks      Json?
   price           Decimal               @db.Decimal(10, 2)
+  brandPrices     Json?
   costPrice       Decimal?              @db.Decimal(10, 2)
   taxRate         Decimal               @default(0) @db.Decimal(5, 2)
   taxPercent      Decimal?              @db.Decimal(5, 2)

@@ -255,6 +255,9 @@ exports.Prisma.BrandScalarFieldEnum = {
   id: 'id',
   name: 'name',
   barcode: 'barcode',
+  categoryId: 'categoryId',
+  categoryName: 'categoryName',
+  categoryIds: 'categoryIds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -273,6 +276,7 @@ exports.Prisma.ProductScalarFieldEnum = {
   size: 'size',
   sizeStocks: 'sizeStocks',
   price: 'price',
+  brandPrices: 'brandPrices',
   costPrice: 'costPrice',
   taxRate: 'taxRate',
   taxPercent: 'taxPercent',

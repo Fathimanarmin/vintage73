@@ -1,17 +1,43 @@
 const prisma = require('../config/prisma');
 const asyncHandler = require('../middleware/asyncHandler');
 
-// Get All Brands
+// Helper to safely parse JSON if string
+const safeJsonParse = (val) => {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'object') return val;
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return null;
+  }
+};
+
+// Get All Brands (optional filtering by categoryId)
 exports.getBrands = asyncHandler(async (req, res) => {
+  const { categoryId } = req.query;
+
+  const where = {};
+  if (categoryId && !isNaN(parseInt(categoryId))) {
+    const catId = parseInt(categoryId);
+    where.OR = [
+      { categoryId: catId },
+      { categoryId: null }
+    ];
+  }
+
   const brands = await prisma.brand.findMany({
+    where,
+    include: {
+      category: true
+    },
     orderBy: { name: 'asc' }
   });
   res.json(brands);
 });
 
-// Create Brand with trimmed, case-insensitive duplicate check
+// Create Brand with Category association
 exports.createBrand = asyncHandler(async (req, res) => {
-  const { name } = req.body;
+  const { name, categoryId, categoryName, categoryIds } = req.body;
   if (!name || !name.trim()) {
     res.status(400);
     throw new Error('Brand name is required');
@@ -35,16 +61,93 @@ exports.createBrand = asyncHandler(async (req, res) => {
   }
 
   let brandBarcode = req.body.barcode ? req.body.barcode.trim() : null;
-  if (!brandBarcode) {
-    brandBarcode = 'BC' + Date.now().toString().slice(-10) + Math.floor(Math.random() * 1000).toString();
+
+  let resolvedCatId = categoryId && !isNaN(parseInt(categoryId)) ? parseInt(categoryId) : null;
+  let resolvedCatName = categoryName || null;
+
+  if (resolvedCatId && !resolvedCatName) {
+    const cat = await prisma.category.findUnique({ where: { id: resolvedCatId } });
+    if (cat) resolvedCatName = cat.name;
   }
 
+  const data = {
+    name: trimmedName,
+    barcode: brandBarcode,
+    categoryId: resolvedCatId,
+    categoryName: resolvedCatName,
+    categoryIds: safeJsonParse(categoryIds) || (resolvedCatId ? [resolvedCatId] : [])
+  };
+
   const brand = await prisma.brand.create({
-    data: {
-      name: trimmedName,
-      barcode: brandBarcode
+    data,
+    include: {
+      category: true
     }
   });
 
   res.status(201).json(brand);
+});
+
+// Update Brand
+exports.updateBrand = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, barcode, categoryId, categoryName, categoryIds } = req.body;
+
+  const dataToUpdate = {};
+
+  if (name && name.trim()) {
+    const trimmedName = name.trim();
+    // Check duplicate if name changed
+    const existing = await prisma.brand.findFirst({
+      where: {
+        name: { equals: trimmedName, mode: 'insensitive' },
+        NOT: { id: parseInt(id) }
+      }
+    });
+
+    if (existing) {
+      res.status(400);
+      throw new Error('Brand with this name already exists');
+    }
+    dataToUpdate.name = trimmedName;
+  }
+
+  if (barcode !== undefined) {
+    dataToUpdate.barcode = barcode ? barcode.trim() : null;
+  }
+
+  if (categoryId !== undefined) {
+    if (categoryId && !isNaN(parseInt(categoryId))) {
+      const catId = parseInt(categoryId);
+      const cat = await prisma.category.findUnique({ where: { id: catId } });
+      dataToUpdate.categoryId = catId;
+      dataToUpdate.categoryName = cat?.name || categoryName || null;
+    } else {
+      dataToUpdate.categoryId = null;
+      dataToUpdate.categoryName = null;
+    }
+  }
+
+  if (categoryIds !== undefined) {
+    dataToUpdate.categoryIds = safeJsonParse(categoryIds);
+  }
+
+  const brand = await prisma.brand.update({
+    where: { id: parseInt(id) },
+    data: dataToUpdate,
+    include: {
+      category: true
+    }
+  });
+
+  res.json(brand);
+});
+
+// Delete Brand
+exports.deleteBrand = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await prisma.brand.delete({
+    where: { id: parseInt(id) }
+  });
+  res.json({ message: 'Brand deleted successfully' });
 });

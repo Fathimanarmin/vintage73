@@ -9,12 +9,14 @@ export default function Purchase() {
   const [activeTab, setActiveTab] = useState('entry'); // 'entry' | 'history'
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [purchases, setPurchases] = useState([]);
 
   const initialRow = {
     productId: '',
     brand: '',
     brandId: null,
+    availableBrands: [],
     sizes: [],
     totalQuantity: 0,
     quantity: 0,
@@ -67,15 +69,118 @@ export default function Purchase() {
       const storedUser = localStorage.getItem('user');
       const branchId = storedUser ? JSON.parse(storedUser).branchId : null;
 
-      const [prodRes, supRes] = await Promise.all([
+      const [prodRes, supRes, brandRes] = await Promise.all([
         api.get('/products', { params: { branchId } }),
-        api.get('/suppliers')
+        api.get('/suppliers'),
+        api.get('/brands')
       ]);
       setProducts(prodRes.data);
       setSuppliers(supRes.data);
+      setBrands(brandRes.data || []);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const getAvailableBrandsForProduct = (product, brandsList) => {
+    if (!product) return [];
+
+    let parsedBrandPrices = product.brandPrices;
+    if (typeof parsedBrandPrices === 'string') {
+      try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = {}; }
+    }
+
+    const bMap = new Map();
+
+    if (parsedBrandPrices && typeof parsedBrandPrices === 'object') {
+      Object.keys(parsedBrandPrices).forEach(bIdStr => {
+        const bId = parseInt(bIdStr, 10);
+        if (!isNaN(bId)) {
+          const matchedBrand = brandsList.find(b => b.id === bId);
+          bMap.set(bId, {
+            id: bId,
+            name: matchedBrand ? matchedBrand.name : (product.brandName || `Brand #${bId}`)
+          });
+        }
+      });
+    }
+
+    const primaryId = product.brandId || product.brand?.id;
+    const primaryName = product.brandName || product.brand?.name;
+    if (primaryId && !bMap.has(primaryId)) {
+      bMap.set(primaryId, { id: primaryId, name: primaryName || `Brand #${primaryId}` });
+    }
+
+    const list = Array.from(bMap.values());
+    if (list.length === 0 && primaryName) {
+      list.push({ id: primaryId || null, name: primaryName });
+    }
+
+    return list;
+  };
+
+  const getSizesForBrand = (product, brandId) => {
+    if (!product) return [];
+
+    let parsedBrandPrices = product.brandPrices;
+    if (typeof parsedBrandPrices === 'string') {
+      try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = null; }
+    }
+
+    if (parsedBrandPrices && brandId && parsedBrandPrices[brandId]) {
+      const bEntry = parsedBrandPrices[brandId];
+      let bSizeStocks = bEntry.sizeStocks;
+      if (typeof bSizeStocks === 'string') {
+        try { bSizeStocks = JSON.parse(bSizeStocks); } catch (e) { bSizeStocks = []; }
+      }
+
+      if (Array.isArray(bSizeStocks) && bSizeStocks.length > 0) {
+        return bSizeStocks.map(s => ({
+          size: s.size,
+          currentStock: parseInt(s.stock, 10) || 0,
+          quantity: 0
+        }));
+      }
+
+      if (Array.isArray(bEntry.sizes) && bEntry.sizes.length > 0) {
+        return bEntry.sizes.map(sz => ({
+          size: sz,
+          currentStock: 0,
+          quantity: 0
+        }));
+      }
+    }
+
+    // Fallback to product root sizeStocks
+    let rootSizeStocks = product.sizeStocks;
+    if (typeof rootSizeStocks === 'string') {
+      try { rootSizeStocks = JSON.parse(rootSizeStocks); } catch (e) { rootSizeStocks = []; }
+    }
+
+    if (Array.isArray(rootSizeStocks) && rootSizeStocks.length > 0) {
+      return rootSizeStocks.map(s => ({
+        size: s.size,
+        currentStock: parseInt(s.stock, 10) || 0,
+        quantity: 0
+      }));
+    }
+
+    if (product.size) {
+      const rawSizes = product.size.includes(',')
+        ? product.size.split(',').map(s => s.trim()).filter(Boolean)
+        : [product.size.trim()];
+      return rawSizes.map(sz => ({
+        size: sz,
+        currentStock: parseInt(product.stock, 10) || 0,
+        quantity: 0
+      }));
+    }
+
+    return [{
+      size: 'Free Size',
+      currentStock: parseInt(product.stock, 10) || 0,
+      quantity: 0
+    }];
   };
 
   const fetchHistory = async () => {
@@ -120,63 +225,41 @@ export default function Purchase() {
           newRows[index].unitCost = parseFloat(product.costPrice);
         }
 
-        // Set product's brand
-        const bName = product.brand?.name || product.brandName || '';
-        newRows[index].brand = bName;
-        newRows[index].brandId = product.brandId || product.brand?.id || null;
+        const availableBrands = getAvailableBrandsForProduct(product, brands);
+        const selectedBrandObj = availableBrands[0] || null;
+        const selectedBrandId = selectedBrandObj ? selectedBrandObj.id : null;
+        const selectedBrandName = selectedBrandObj ? selectedBrandObj.name : '';
 
-        // Dynamically load sizes strictly configured for this specific product with current stock
-        let parsedSizeStocks = product.sizeStocks;
-        if (typeof parsedSizeStocks === 'string') {
-          try { parsedSizeStocks = JSON.parse(parsedSizeStocks); } catch (e) { parsedSizeStocks = []; }
-        }
+        newRows[index].availableBrands = availableBrands;
+        newRows[index].brandId = selectedBrandId;
+        newRows[index].brand = selectedBrandName;
 
-        let configuredSizes = [];
-
-        if (Array.isArray(parsedSizeStocks) && parsedSizeStocks.length > 0) {
-          configuredSizes = parsedSizeStocks.map(s => ({
-            size: s.size,
-            currentStock: parseInt(s.stock, 10) || 0,
-            quantity: 0
-          }));
-        }
-
-        // If product has size string, merge any sizes not already in parsedSizeStocks
-        if (product.size) {
-          const rawSizes = product.size.includes(',')
-            ? product.size.split(',').map(s => s.trim()).filter(Boolean)
-            : [product.size.trim()];
-
-          const existingNames = new Set(configuredSizes.map(s => s.size.toLowerCase()));
-          rawSizes.forEach(sz => {
-            if (!existingNames.has(sz.toLowerCase())) {
-              configuredSizes.push({
-                size: sz,
-                currentStock: configuredSizes.length === 0 ? (parseInt(product.stock, 10) || 0) : 0,
-                quantity: 0
-              });
-              existingNames.add(sz.toLowerCase());
-            }
-          });
-        }
-
-        // If still empty, default to Free Size with current stock from product.stock
-        if (configuredSizes.length === 0) {
-          configuredSizes = [{
-            size: 'Free Size',
-            currentStock: parseInt(product.stock, 10) || 0,
-            quantity: 0
-          }];
-        }
-
-        newRows[index].sizes = configuredSizes;
+        const sizes = getSizesForBrand(product, selectedBrandId);
+        newRows[index].sizes = sizes;
         newRows[index].totalQuantity = 0;
         newRows[index].quantity = 0;
         newRows[index].total = 0;
       } else {
+        newRows[index].availableBrands = [];
         newRows[index].brand = '';
         newRows[index].brandId = null;
         newRows[index].sizes = [];
+        newRows[index].totalQuantity = 0;
+        newRows[index].quantity = 0;
+        newRows[index].total = 0;
+      }
+    } else if (field === 'brandId') {
+      const product = products.find(p => p.id === parseInt(newRows[index].productId));
+      if (product) {
+        const selectedBrandId = value ? parseInt(value, 10) : null;
+        const brandObj = (newRows[index].availableBrands || []).find(b => b.id === selectedBrandId) ||
+                         brands.find(b => b.id === selectedBrandId);
+        
+        newRows[index].brandId = selectedBrandId;
+        newRows[index].brand = brandObj ? brandObj.name : '';
+
+        const sizes = getSizesForBrand(product, selectedBrandId);
+        newRows[index].sizes = sizes;
         newRows[index].totalQuantity = 0;
         newRows[index].quantity = 0;
         newRows[index].total = 0;
@@ -254,6 +337,8 @@ export default function Purchase() {
           for (const s of activeSizes) {
             itemsToSubmit.push({
               productId: parseInt(r.productId),
+              brandId: r.brandId ? parseInt(r.brandId) : null,
+              brandName: r.brand || null,
               size: s.size || null,
               quantity: parseInt(s.quantity),
               unitCost: parseFloat(r.unitCost || 0),
@@ -263,6 +348,8 @@ export default function Purchase() {
         } else if ((r.totalQuantity || r.quantity) > 0) {
           itemsToSubmit.push({
             productId: parseInt(r.productId),
+            brandId: r.brandId ? parseInt(r.brandId) : null,
+            brandName: r.brand || null,
             size: r.size || null,
             quantity: parseInt(r.totalQuantity || r.quantity),
             unitCost: parseFloat(r.unitCost || 0),
@@ -447,15 +534,21 @@ export default function Purchase() {
                     </td>
                     <td className="p-2 align-top">
                       <select
-                        className="input w-full p-2 border rounded text-xs bg-slate-50 cursor-default"
-                        value={row.brand || ''}
-                        onChange={e => handleRowChange(index, 'brand', e.target.value)}
+                        className="input w-full p-2 border rounded text-xs bg-white font-medium"
+                        value={row.brandId || ''}
+                        onChange={e => handleRowChange(index, 'brandId', e.target.value)}
                         disabled={!row.productId}
                       >
-                        {row.brand ? (
-                          <option value={row.brand}>{row.brand}</option>
+                        {!row.productId ? (
+                          <option value="">-</option>
+                        ) : row.availableBrands && row.availableBrands.length > 0 ? (
+                          row.availableBrands.map(b => (
+                            <option key={b.id || b.name} value={b.id || ''}>
+                              {b.name}
+                            </option>
+                          ))
                         ) : (
-                          <option value="">{row.productId ? 'No Brand' : '-'}</option>
+                          <option value="">No Brand</option>
                         )}
                       </select>
                     </td>
@@ -465,14 +558,14 @@ export default function Purchase() {
                       ) : (
                         <div className="bg-slate-50/90 rounded-lg p-2.5 border border-slate-200">
                           <div className="grid grid-cols-2 gap-3 text-[11px] font-bold text-slate-600 pb-1 mb-1.5 border-b border-slate-200 uppercase tracking-wider">
-                            <span>Size</span>
+                            <span>Size (Stock)</span>
                             <span className="text-right pr-1">Purchase Qty</span>
                           </div>
                           <div className="space-y-1.5 max-h-48 overflow-y-auto">
                             {(row.sizes || []).map((sItem, sIdx) => (
                               <div key={sIdx} className="grid grid-cols-2 gap-3 items-center text-xs">
                                 <span className="font-semibold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 text-center truncate">
-                                  {sItem.size}
+                                  {sItem.size} <span className="text-[10px] text-slate-400 font-normal">({sItem.currentStock || 0})</span>
                                 </span>
                                 <div className="text-right">
                                   <input

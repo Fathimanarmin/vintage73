@@ -7,5 +7,7 @@ router.use(authMiddleware);
 
 router.get('/', brandController.getBrands);
 router.post('/', brandController.createBrand);
+router.put('/:id', brandController.updateBrand);
+router.delete('/:id', brandController.deleteBrand);
 
 module.exports = router;

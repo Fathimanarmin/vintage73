@@ -162,9 +162,26 @@ export const printZplViaQz = async (zpl, quantity = 1, preferredPrinter = null) 
   };
 };
 
+/**
+ * Get list of all installed printers via QZ Tray
+ */
+export const getAvailablePrinters = async () => {
+  if (!isQzConnected()) {
+    await connectQZ();
+  }
+  try {
+    const list = await qz.printers.find();
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    console.warn('Error fetching printers from QZ Tray:', e);
+    return [];
+  }
+};
+
 export default {
   connectQZ,
   isQzConnected,
   resolvePrinter,
-  printZplViaQz
+  printZplViaQz,
+  getAvailablePrinters
 };

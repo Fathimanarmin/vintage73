@@ -181,6 +181,9 @@ exports.renderPreview = asyncHandler(async (req, res) => {
         sellingPrice: pPrice,
         selling_price: pPrice,
         size: prod.size || '',
+        branchName: prod.branchName || prod.branch_name || prod.branch || '',
+        branch_name: prod.branchName || prod.branch_name || prod.branch || '',
+        branch: prod.branchName || prod.branch_name || prod.branch || '',
         category: prod.categoryName || ''
     };
 

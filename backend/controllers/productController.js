@@ -99,14 +99,11 @@ exports.createProduct = asyncHandler(async (req, res) => {
     imageUrl = '/uploads/' + req.file.filename;
   }
 
-  // If brand is selected, resolve Brand's barcode
+  // If brand is selected, resolve Brand's name
   if (brandId && !isNaN(parseInt(brandId))) {
     const assignedBrand = await prisma.brand.findUnique({ where: { id: parseInt(brandId) } });
     if (assignedBrand) {
       brandName = assignedBrand.name;
-      if (assignedBrand.barcode) {
-        barcode = assignedBrand.barcode;
-      }
     }
   }
 
@@ -122,6 +119,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
   // Parse complex JSON fields
   const parsedAttributes = safeJsonParse(attributes);
   const parsedSizeStocks = safeJsonParse(sizeStocks);
+  const parsedBrandPrices = safeJsonParse(req.body.brandPrices);
 
   // Determine stock quantity
   let totalStockQty = 0;
@@ -143,6 +141,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
       attributes: parsedAttributes || undefined,
       size: size || null,
       sizeStocks: parsedSizeStocks || undefined,
+      brandPrices: parsedBrandPrices || undefined,
       price: !isNaN(priceDecimal) ? priceDecimal : 0,
       taxType,
       taxRate: taxRateDecimal,
@@ -268,9 +267,6 @@ exports.updateProduct = asyncHandler(async (req, res) => {
       const assignedBrand = await prisma.brand.findUnique({ where: { id: parseInt(brandId) } });
       dataToUpdate.brand = { connect: { id: parseInt(brandId) } };
       dataToUpdate.brandName = assignedBrand?.name || brandName || null;
-      if (assignedBrand?.barcode) {
-        dataToUpdate.barcode = assignedBrand.barcode;
-      }
     } else {
       dataToUpdate.brand = { disconnect: true };
       dataToUpdate.brandName = null;
@@ -285,6 +281,10 @@ exports.updateProduct = asyncHandler(async (req, res) => {
 
   if (sizeStocks !== undefined) {
     dataToUpdate.sizeStocks = safeJsonParse(sizeStocks);
+  }
+
+  if (req.body.brandPrices !== undefined) {
+    dataToUpdate.brandPrices = safeJsonParse(req.body.brandPrices);
   }
 
   if (price !== undefined && !isNaN(parseFloat(price))) {
