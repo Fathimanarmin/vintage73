@@ -7,6 +7,7 @@ import {
     FiTrash2, FiCode, FiFileText, FiRefreshCw, FiCheckCircle, FiEye, FiX, FiSliders
 } from 'react-icons/fi';
 import { toast } from 'react-toastify';
+import { printZplViaQz, printImageViaQz, connectQZ, isQzConnected } from '@/lib/qzTray';
 
 const EXAMPLE_ZPL = `^XA
 ^PRC
@@ -318,6 +319,25 @@ export default function BarcodeCreator() {
         setShowZplPrintModal(false);
 
         try {
+            // Priority 1: Print via QZ Tray (Pixel/Image for non-Zebra or ZPL for Zebra)
+            try {
+                if (!isQzConnected()) {
+                    await connectQZ();
+                }
+                if (isQzConnected()) {
+                    let res;
+                    if (previewImage) {
+                        res = await printImageViaQz(previewImage, qty);
+                    } else {
+                        res = await printZplViaQz(zplToPrint, qty);
+                    }
+                    toast.success(res.message || `Sent ${qty} label(s) to printer via QZ Tray.`);
+                    return;
+                }
+            } catch (qzErr) {
+                console.warn('QZ Tray print fallback to backend socket:', qzErr?.message || qzErr);
+            }
+
             let localSent = false;
             try {
                 if (typeof window !== 'undefined') {
