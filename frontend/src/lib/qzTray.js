@@ -157,9 +157,12 @@ export const printZplViaQz = async (zpl, quantity = 1, preferredPrinter = null) 
     finalZpl = `${finalZpl}\n^PQ${qty},0,0,N\n^XZ`;
   }
 
-  // Create QZ config with exact copies
+  // Create QZ config with exact copies and programmatic paper size
   const config = qz.configs.create(printer, {
-    copies: 1 // Quantity already embedded into Zebra ^PQ command for hardware-level replication
+    copies: 1, // Quantity already embedded into Zebra ^PQ command for hardware-level replication
+    size: { width: 38, height: 25 },
+    units: 'mm',
+    scaleContent: true
   });
 
   const printData = [
@@ -185,8 +188,9 @@ export const printZplViaQz = async (zpl, quantity = 1, preferredPrinter = null) 
  * @param {string} imageDataUrl - Base64 data URL or raw base64 string
  * @param {number} quantity - Number of physical label copies
  * @param {string} [preferredPrinter] - Optional target printer name
+ * @param {object} [dimensions] - Optional { width, height } in mm (defaults to 38x25)
  */
-export const printImageViaQz = async (imageDataUrl, quantity = 1, preferredPrinter = null) => {
+export const printImageViaQz = async (imageDataUrl, quantity = 1, preferredPrinter = null, dimensions = null) => {
   const qty = parseInt(quantity, 10);
   if (isNaN(qty) || qty <= 0) {
     throw new Error('Invalid print quantity. Must be at least 1.');
@@ -208,8 +212,13 @@ export const printImageViaQz = async (imageDataUrl, quantity = 1, preferredPrint
     base64Data = base64Data.split(',')[1];
   }
 
+  const widthMm = parseFloat(dimensions?.width || dimensions?.labelWidth) || 38;
+  const heightMm = parseFloat(dimensions?.height || dimensions?.labelHeight) || 25;
+
   const config = qz.configs.create(printer, {
     copies: qty,
+    size: { width: widthMm, height: heightMm },
+    units: 'mm',
     scaleContent: true
   });
 

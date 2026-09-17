@@ -354,12 +354,12 @@ export default function Products() {
 ^PW304
 ^LL200
 ^CI28
-^FO15,10^A0N,18,18^FD{{barcode}}^FS
-^BY1.5,3,38^FO15,28^BCN,38,N,N,N^FD{{barcode}}^FS
-^FO15,72^A0N,18,18^FD{{productName}}^FS
-^FO15,93^A0N,18,18^FDMRP: ₹{{price}}^FS
-^FO15,114^A0N,18,18^FDSIZE: {{size}}^FS
-^FO15,135^A0N,18,18^FD{{branchName}}^FS
+^FO15,8^A0N,16,16^FD{{productName}}^FS
+^BY1.5,2.5,35^FO15,26^BCN,35,N,N,N^FD{{barcode}}^FS
+^FO15,65^A0N,14,14^FD{{barcode}}^FS
+^FO15,82^A0N,16,16^FDPRICE: AED {{price}}^FS
+^FO15,100^A0N,16,16^FDSIZE: {{size}}^FS
+^FO15,118^A0N,14,14^FD{{branchName}}^FS
 ^PQ1,0,0,N
 ^XZ`;
     }
@@ -552,16 +552,17 @@ export default function Products() {
     try {
       let result;
       const targetPrinterLower = selectedPrinter ? selectedPrinter.toLowerCase() : '';
+      const dims = previewDimensions || { width: 38, height: 25 };
       // If the target printer is TSC or a non-Zebra thermal printer, print raster image rendered from preview
       if (previewImage && (targetPrinterLower.includes('tsc') || (!targetPrinterLower.includes('zebra') && targetPrinterLower.length > 0))) {
-        result = await printImageViaQz(previewImage, qty, selectedPrinter || null);
+        result = await printImageViaQz(previewImage, qty, selectedPrinter || null, dims);
       } else {
         try {
           result = await printZplViaQz(resolvedZpl, qty, selectedPrinter || null);
         } catch (zplErr) {
           // If ZPL raw mode fails or prints blank on non-Zebra hardware, fallback to image printing if preview image exists
           if (previewImage) {
-            result = await printImageViaQz(previewImage, qty, selectedPrinter || null);
+            result = await printImageViaQz(previewImage, qty, selectedPrinter || null, dims);
           } else {
             throw zplErr;
           }
