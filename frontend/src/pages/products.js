@@ -4,7 +4,7 @@ import { FiPlus, FiPrinter, FiSearch, FiEdit, FiTrash2, FiBox, FiToggleLeft, FiT
 import Barcode from 'react-barcode';
 import { toast } from 'react-toastify';
 import SearchableSelect from '@/components/SearchableSelect';
-import { printZplViaQz, connectQZ, isQzConnected, getAvailablePrinters } from '@/lib/qzTray';
+import { printZplViaQz, printImageViaQz, connectQZ, isQzConnected, getAvailablePrinters } from '@/lib/qzTray';
 
 const DEFAULT_GENDERS = ['Men', 'Women', 'Boy', 'Girl', 'Unisex'];
 
@@ -550,7 +550,23 @@ export default function Products() {
 
     setPrintExecuting(true);
     try {
-      const result = await printZplViaQz(resolvedZpl, qty, selectedPrinter || null);
+      let result;
+      const targetPrinterLower = selectedPrinter ? selectedPrinter.toLowerCase() : '';
+      // If the target printer is TSC or a non-Zebra thermal printer, print raster image rendered from preview
+      if (previewImage && (targetPrinterLower.includes('tsc') || (!targetPrinterLower.includes('zebra') && targetPrinterLower.length > 0))) {
+        result = await printImageViaQz(previewImage, qty, selectedPrinter || null);
+      } else {
+        try {
+          result = await printZplViaQz(resolvedZpl, qty, selectedPrinter || null);
+        } catch (zplErr) {
+          // If ZPL raw mode fails or prints blank on non-Zebra hardware, fallback to image printing if preview image exists
+          if (previewImage) {
+            result = await printImageViaQz(previewImage, qty, selectedPrinter || null);
+          } else {
+            throw zplErr;
+          }
+        }
+      }
       toast.success(result.message || `Sent ${qty} label(s) for "${product.name}" to printer via QZ Tray.`);
       setShowPreviewModal(false);
     } catch (err) {
@@ -558,7 +574,7 @@ export default function Products() {
       if (err.message === 'QZ_NOT_CONNECTED' || err.message?.includes('QZ')) {
         toast.error('QZ Tray is not connected. Please make sure QZ Tray is running on your computer to print labels.');
       } else if (err.message === 'NO_PRINTER_FOUND') {
-        toast.error('No Zebra printer found in QZ Tray. Please check your printer connection.');
+        toast.error('No printer found in QZ Tray. Please check your printer connection.');
       } else {
         toast.error('Print request failed: ' + (err.message || 'Unknown printer error'));
       }

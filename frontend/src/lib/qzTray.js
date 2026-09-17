@@ -71,10 +71,16 @@ export const resolvePrinter = async (preferredName) => {
     }
   }
 
-  // 2. Look for any Zebra branded printer
+  // 2. Look for Zebra or TSC branded printer
   try {
     const zebra = await qz.printers.find('Zebra');
     if (zebra) return zebra;
+  } catch (e) {
+    // Fallback
+  }
+  try {
+    const tsc = await qz.printers.find('TSC');
+    if (tsc) return tsc;
   } catch (e) {
     // Fallback
   }
@@ -163,6 +169,57 @@ export const printZplViaQz = async (zpl, quantity = 1, preferredPrinter = null) 
 };
 
 /**
+ * Print raster image via QZ Tray (works on ALL thermal & Windows printers including TSC, Xprinter, Zebra)
+ * @param {string} imageDataUrl - Base64 data URL or raw base64 string
+ * @param {number} quantity - Number of physical label copies
+ * @param {string} [preferredPrinter] - Optional target printer name
+ */
+export const printImageViaQz = async (imageDataUrl, quantity = 1, preferredPrinter = null) => {
+  const qty = parseInt(quantity, 10);
+  if (isNaN(qty) || qty <= 0) {
+    throw new Error('Invalid print quantity. Must be at least 1.');
+  }
+
+  if (!isQzConnected()) {
+    await connectQZ();
+  }
+
+  let printer;
+  try {
+    printer = await resolvePrinter(preferredPrinter);
+  } catch (err) {
+    throw new Error('NO_PRINTER_FOUND');
+  }
+
+  let base64Data = imageDataUrl;
+  if (base64Data.includes(',')) {
+    base64Data = base64Data.split(',')[1];
+  }
+
+  const config = qz.configs.create(printer, {
+    copies: qty,
+    scaleContent: true
+  });
+
+  const printData = [
+    {
+      type: 'pixel',
+      format: 'image',
+      flavor: 'base64',
+      data: base64Data
+    }
+  ];
+
+  await qz.print(config, printData);
+  return {
+    success: true,
+    printer,
+    quantity: qty,
+    message: `Printed ${qty} label(s) on "${printer}" via QZ Tray.`
+  };
+};
+
+/**
  * Get list of all installed printers via QZ Tray
  */
 export const getAvailablePrinters = async () => {
@@ -183,5 +240,6 @@ export default {
   isQzConnected,
   resolvePrinter,
   printZplViaQz,
+  printImageViaQz,
   getAvailablePrinters
 };
