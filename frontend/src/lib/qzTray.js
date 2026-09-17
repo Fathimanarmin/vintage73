@@ -61,43 +61,55 @@ export const resolvePrinter = async (preferredName) => {
     await connectQZ();
   }
 
+  const cleanPrinter = (res) => {
+    if (Array.isArray(res)) {
+      return res.length > 0 ? res[0] : null;
+    }
+    return typeof res === 'string' ? res : null;
+  };
+
   // 1. If preferred name provided, check if it exists
   if (preferredName) {
     try {
-      const matched = await qz.printers.find(preferredName);
+      const matched = cleanPrinter(await qz.printers.find(preferredName));
       if (matched) return matched;
     } catch (e) {
       // Fallback
     }
   }
 
-  // 2. Look for Zebra or TSC branded printer
+  // 2. Look for TSC branded printer
   try {
-    const zebra = await qz.printers.find('Zebra');
-    if (zebra) return zebra;
-  } catch (e) {
-    // Fallback
-  }
-  try {
-    const tsc = await qz.printers.find('TSC');
+    const tsc = cleanPrinter(await qz.printers.find('TSC'));
     if (tsc) return tsc;
   } catch (e) {
     // Fallback
   }
 
-  // 3. Fallback to system default printer
+  // 3. Look for Zebra branded printer
   try {
-    const defaultPrinter = await qz.printers.getDefault();
-    if (defaultPrinter) return defaultPrinter;
+    const zebra = cleanPrinter(await qz.printers.find('Zebra'));
+    if (zebra) return zebra;
   } catch (e) {
     // Fallback
   }
 
-  // 4. Fallback to first available printer
+  // 4. Fallback to system default printer if not Generic / Text Only
+  try {
+    const defaultPrinter = cleanPrinter(await qz.printers.getDefault());
+    if (defaultPrinter && !defaultPrinter.toLowerCase().includes('generic')) {
+      return defaultPrinter;
+    }
+  } catch (e) {
+    // Fallback
+  }
+
+  // 5. Fallback to first non-generic available printer
   try {
     const allPrinters = await qz.printers.find();
     if (Array.isArray(allPrinters) && allPrinters.length > 0) {
-      return allPrinters[0];
+      const nonGeneric = allPrinters.find(p => typeof p === 'string' && !p.toLowerCase().includes('generic'));
+      return nonGeneric || allPrinters[0];
     }
   } catch (e) {
     // Fallback
