@@ -353,13 +353,14 @@ export default function Products() {
       zpl = `^XA
 ^PW304
 ^LL200
+^LT30
 ^CI28
-^FO15,8^A0N,16,16^FD{{productName}}^FS
-^BY1.5,2.5,35^FO15,26^BCN,35,N,N,N^FD{{barcode}}^FS
-^FO15,65^A0N,14,14^FD{{barcode}}^FS
-^FO15,82^A0N,16,16^FDPRICE: AED {{price}}^FS
-^FO15,100^A0N,16,16^FDSIZE: {{size}}^FS
-^FO15,118^A0N,14,14^FD{{branchName}}^FS
+^FO15,15^A0N,16,16^FD{{productName}}^FS
+^BY1.5,2.5,32^FO15,35^BCN,32,N,N,N^FD{{barcode}}^FS
+^FO15,72^A0N,14,14^FD{{barcode}}^FS
+^FO15,90^A0N,16,16^FDPRICE: AED {{price}}^FS
+^FO15,110^A0N,16,16^FDSIZE: {{size}}^FS
+^FO15,130^A0N,14,14^FD{{branchName}}^FS
 ^PQ1,0,0,N
 ^XZ`;
     }
