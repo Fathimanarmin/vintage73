@@ -393,15 +393,20 @@ h2 {
     background: rgba(0, 0, 0, 0.03);
   }
   .scroll-line::-webkit-scrollbar-thumb {
-    background: rgba(16, 185, 129, 0.2); /* Subtle primary color */
+    background: rgba(16, 185, 129, 0.3); /* Subtle primary color */
     border-radius: 10px;
   }
 
+  /* Form responsive spacing utilities */
+  .form-responsive-row {
+    @apply flex flex-col sm:flex-row gap-4 w-full;
+  }
+
   @media (min-width: 1024px) {
-    .lg:no-scrollbar::-webkit-scrollbar {
+    .lg\:no-scrollbar::-webkit-scrollbar {
       display: none;
     }
-    .lg:no-scrollbar {
+    .lg\:no-scrollbar {
       -ms-overflow-style: none;
       scrollbar-width: none;
     }

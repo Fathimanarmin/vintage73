@@ -148,7 +148,7 @@ export default function Suppliers() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[100000] flex items-start justify-center bg-slate-900/50 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[99999] flex items-start justify-center bg-slate-900/50 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl w-full sm:max-w-lg max-h-[95vh] flex flex-col mt-20 sm:my-auto">
             <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl">
               <h2 className="text-lg sm:text-xl font-semibold text-slate-800">{isEdit ? 'Edit Supplier' : 'Add Supplier'}</h2>

@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
 import api from '@/lib/api';
 import { 
@@ -503,9 +504,10 @@ export default function Ticketing() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showCreateModal && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showCreateModal && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden border border-slate-200">
               <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
@@ -643,15 +645,18 @@ export default function Ticketing() {
                 </button>
               </form>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* ─── DETAIL MODAL ─── */}
       {/* (rest of the file stays same) */}
-      <AnimatePresence>
-        {showDetailModal && t && (
-          <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-start md:items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showDetailModal && t && (
+            <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-md flex items-start md:items-center justify-center p-2 sm:p-4 overflow-y-auto">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-6xl bg-white rounded-2xl shadow-xl flex flex-col lg:flex-row border border-slate-200 my-2 sm:my-4 min-h-[90vh] lg:h-[90vh] lg:overflow-hidden">
               
@@ -926,14 +931,16 @@ export default function Ticketing() {
                  </div>
                </div>
              </motion.div>
-           </div>
-         )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* ─── REASSIGN MODAL ─── */}
       <AnimatePresence>
         {showReassignModal && (
-          <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/20 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/20 backdrop-blur-sm p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200">
               <form onSubmit={handleReassign} className="space-y-4">
@@ -969,7 +976,7 @@ export default function Ticketing() {
       <AnimatePresence>
         {previewFile && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10005] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 md:p-8">
+            className="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 md:p-8">
             <button onClick={() => setPreviewFile(null)} className="absolute top-6 right-6 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-2 rounded-full transition-all">
               <FiXCircle size={28} />
             </button>
@@ -986,7 +993,7 @@ export default function Ticketing() {
       {/* ─── ADD CATEGORY MODAL ─── */}
       <AnimatePresence>
         {showCategoryModal && (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200">
               <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">

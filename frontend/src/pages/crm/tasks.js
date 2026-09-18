@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '@/lib/api';
 import { toast } from 'react-toastify';
 import { FiPlus, FiCheckCircle, FiCircle, FiCalendar, FiUser, FiLink, FiX } from 'react-icons/fi';
@@ -172,8 +173,8 @@ export default function CRMTasks() {
             </div>
 
             {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            {showModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                     <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col mx-auto">
 
                         {/* ── Header ── */}
@@ -305,7 +306,8 @@ export default function CRMTasks() {
 
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
