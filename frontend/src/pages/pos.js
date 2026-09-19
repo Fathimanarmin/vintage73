@@ -457,112 +457,162 @@ const CURRENCY_SYMBOLS = {
         const groups = new Map();
 
         products.forEach(p => {
+            if (p.isActive === false) return;
+
             const rawName = (p.name || '').trim();
-            const normName = rawName.toLowerCase();
             const typeId = (p.productTypeId || p.productType?.id) ? String(p.productTypeId || p.productType?.id) : null;
             const typeName = (p.productTypeName || p.productType?.name || '').trim();
-            const normTypeName = typeName.toLowerCase();
 
-            // Grouping key: Same Product + Same Product Type -> 1 card
-            // Same Product Name + Different Product Type -> Different cards
-            let groupKey;
-            if (typeId) {
-                groupKey = `${normName}___typeid_${typeId}`;
-            } else if (normTypeName) {
-                groupKey = `${normName}___typename_${normTypeName}`;
-            } else {
-                groupKey = `${normName}___notype_cat_${p.categoryId || 'none'}`;
+            let bPrices = p.brandPrices;
+            if (typeof bPrices === 'string') {
+                try { bPrices = JSON.parse(bPrices); } catch(e) { bPrices = null; }
             }
 
-            if (!groups.has(groupKey)) {
+            const activeBrandEntries = (bPrices && typeof bPrices === 'object')
+                ? Object.values(bPrices).filter(b => b && !b.isDeleted)
+                : [];
+
+            if (activeBrandEntries.length > 0) {
+                activeBrandEntries.forEach(bEntry => {
+                    const brandName = bEntry.brandName || p.brandName || (p.brand?.id === bEntry.brandId ? p.brand?.name : '') || '';
+                    const groupKey = `${rawName.toLowerCase()}___brand_${bEntry.brandId}___type_${typeId || typeName || 'none'}`;
+
+                    let bSizeStocks = bEntry.sizeStocks;
+                    if (typeof bSizeStocks === 'string') {
+                        try { bSizeStocks = JSON.parse(bSizeStocks); } catch(e) { bSizeStocks = null; }
+                    }
+
+                    if (!Array.isArray(bSizeStocks) || bSizeStocks.length === 0) {
+                        let pSizeStocks = p.sizeStocks;
+                        if (typeof pSizeStocks === 'string') {
+                            try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = null; }
+                        }
+                        if (Array.isArray(pSizeStocks) && pSizeStocks.length > 0) {
+                            bSizeStocks = pSizeStocks;
+                        }
+                    }
+
+                    const brandBarcode = bEntry.barcode ? String(bEntry.barcode).trim() : (p.brand?.id === bEntry.brandId && p.brand?.barcode ? String(p.brand.barcode).trim() : null);
+                    const productBarcode = p.barcode ? String(p.barcode).trim() : null;
+                    const primaryBarcode = brandBarcode || productBarcode;
+
+                    const sizeMap = new Map();
+                    if (Array.isArray(bSizeStocks) && bSizeStocks.length > 0) {
+                        bSizeStocks.forEach(item => {
+                            const sName = String(item.size || '').trim();
+                            if (!sName) return;
+                            sizeMap.set(sName, {
+                                size: sName,
+                                stock: parseInt(item.stock, 10) || 0,
+                                productId: p.id,
+                                barcode: item.barcode ? String(item.barcode).trim() : primaryBarcode,
+                                brandId: bEntry.brandId,
+                                brandName: brandName
+                            });
+                        });
+                    }
+
+                    const variants = Array.from(sizeMap.values());
+                    const hasSizes = variants.length > 0;
+                    const totalStock = hasSizes
+                        ? variants.reduce((sum, v) => sum + v.stock, 0)
+                        : (parseInt(p.stock, 10) || 0);
+
+                    groups.set(groupKey, {
+                        groupKey,
+                        id: p.id,
+                        name: brandName ? `${rawName} (${brandName})` : rawName,
+                        baseName: rawName,
+                        brandId: bEntry.brandId,
+                        brandName: brandName,
+                        productTypeId: p.productTypeId,
+                        productTypeName: typeName || null,
+                        gender: p.gender || (p.productType?.genders && p.productType.genders[0]) || null,
+                        price: parseFloat(bEntry.price || p.price || 0),
+                        imageUrl: p.imageUrl,
+                        barcode: primaryBarcode,
+                        brandBarcode: brandBarcode,
+                        productBarcode: productBarcode,
+                        hasBarcode: !!primaryBarcode,
+                        taxRate: p.taxRate,
+                        taxPercent: p.taxPercent,
+                        isTaxInclusive: p.isTaxInclusive,
+                        minDiscount: p.minDiscount,
+                        maxDiscount: p.maxDiscount,
+                        sizeMap,
+                        variants,
+                        hasSizes,
+                        stock: totalStock,
+                        totalStock
+                    });
+                });
+            } else {
+                const normName = rawName.toLowerCase();
+                let groupKey = `${normName}___nobrand___type_${typeId || typeName || 'none'}`;
+
+                const brandName = p.brandName || p.brand?.name || '';
+                const brandBarcode = p.brand?.barcode ? String(p.brand.barcode).trim() : null;
+                const productBarcode = p.barcode ? String(p.barcode).trim() : null;
+                const primaryBarcode = productBarcode || brandBarcode;
+
+                let sizeMap = new Map();
+                let pSizeStocks = p.sizeStocks;
+                if (typeof pSizeStocks === 'string') {
+                    try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = null; }
+                }
+
+                if (Array.isArray(pSizeStocks) && pSizeStocks.length > 0) {
+                    pSizeStocks.forEach(item => {
+                        const sName = (item.size || '').trim();
+                        if (!sName) return;
+                        sizeMap.set(sName, {
+                            size: sName,
+                            stock: parseInt(item.stock, 10) || 0,
+                            productId: p.id,
+                            barcode: item.barcode ? String(item.barcode).trim() : primaryBarcode,
+                            brandId: p.brandId || null,
+                            brandName: brandName
+                        });
+                    });
+                }
+
+                const variants = Array.from(sizeMap.values());
+                const hasSizes = variants.length > 0;
+                const totalStock = hasSizes
+                    ? variants.reduce((sum, v) => sum + v.stock, 0)
+                    : (parseInt(p.stock, 10) || 0);
+
                 groups.set(groupKey, {
                     groupKey,
                     id: p.id,
-                    name: rawName,
+                    name: brandName ? `${rawName} (${brandName})` : rawName,
+                    baseName: rawName,
+                    brandId: p.brandId || null,
+                    brandName: brandName,
                     productTypeId: p.productTypeId,
                     productTypeName: typeName || null,
-                    gender: p.gender || (p.productType?.genders && p.productType.genders[0]) || null,
-                    price: p.price,
+                    gender: p.gender,
+                    price: parseFloat(p.price || 0),
                     imageUrl: p.imageUrl,
-                    barcode: p.barcode,
-                    hasBarcode: p.hasBarcode,
+                    barcode: primaryBarcode,
+                    brandBarcode: brandBarcode,
+                    productBarcode: productBarcode,
+                    hasBarcode: !!primaryBarcode,
                     taxRate: p.taxRate,
                     taxPercent: p.taxPercent,
                     isTaxInclusive: p.isTaxInclusive,
                     minDiscount: p.minDiscount,
                     maxDiscount: p.maxDiscount,
-                    rawProducts: [],
-                    sizeMap: new Map(), // sizeName -> { size, stock, productId, barcode }
-                    hasSizes: false,
-                    totalRawStock: 0
+                    sizeMap,
+                    variants,
+                    hasSizes,
+                    stock: totalStock,
+                    totalStock
                 });
-            }
-
-            const group = groups.get(groupKey);
-            group.rawProducts.push(p);
-            group.totalRawStock += (parseInt(p.stock, 10) || 0);
-
-            // 1. Initialize from productType.sizes if defined
-            let ptSizes = p.productType?.sizes;
-            if (typeof ptSizes === 'string') {
-                try { ptSizes = JSON.parse(ptSizes); } catch (e) { ptSizes = null; }
-            }
-            if (Array.isArray(ptSizes) && ptSizes.length > 0) {
-                group.hasSizes = true;
-                ptSizes.forEach(s => {
-                    const sName = String(s || '').trim();
-                    if (!sName) return;
-                    if (!group.sizeMap.has(sName)) {
-                        group.sizeMap.set(sName, { size: sName, stock: 0, productId: p.id, barcode: p.barcode });
-                    }
-                });
-            }
-
-            // 2. Parse sizeStocks
-            let pSizeStocks = p.sizeStocks;
-            if (typeof pSizeStocks === 'string') {
-                try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = null; }
-            }
-
-            if (Array.isArray(pSizeStocks) && pSizeStocks.length > 0) {
-                group.hasSizes = true;
-                pSizeStocks.forEach(item => {
-                    const sName = (item.size || '').trim();
-                    if (!sName) return;
-                    const existing = group.sizeMap.get(sName) || { size: sName, stock: 0, productId: p.id, barcode: p.barcode };
-                    existing.stock = (existing.stock || 0) + (parseInt(item.stock, 10) || 0);
-                    group.sizeMap.set(sName, existing);
-                });
-            } else if (p.size && typeof p.size === 'string' && p.size.trim()) {
-                const sizes = p.size.split(',').map(s => s.trim()).filter(Boolean);
-                if (sizes.length > 0) {
-                    group.hasSizes = true;
-                    sizes.forEach(sName => {
-                        const existing = group.sizeMap.get(sName) || { size: sName, stock: 0, productId: p.id, barcode: p.barcode };
-                        existing.stock += (sizes.length === 1 ? (parseInt(p.stock, 10) || 0) : 0);
-                        group.sizeMap.set(sName, existing);
-                    });
-                }
-            }
-
-            if (group.sizeMap.size > 0) {
-                group.hasSizes = true;
             }
         });
 
-        return Array.from(groups.values()).map(g => {
-            const variants = Array.from(g.sizeMap.values());
-            const finalStock = g.hasSizes
-                ? variants.reduce((sum, v) => sum + v.stock, 0)
-                : g.totalRawStock;
-
-            return {
-                ...g,
-                variants,
-                stock: finalStock,
-                totalStock: finalStock
-            };
-        });
+        return Array.from(groups.values());
     }, [products]);
 
     const handleProductCardClick = (product) => {
@@ -592,7 +642,8 @@ const CURRENCY_SYMBOLS = {
 
     const handleScan = (e) => {
         if (e.key === 'Enter') {
-            const query = search.trim();
+            const rawQuery = search;
+            const query = rawQuery.trim().toLowerCase();
             if (!query) return;
 
             if (!customerId) {
@@ -600,14 +651,30 @@ const CURRENCY_SYMBOLS = {
                 return;
             }
 
-            const foundGroup = groupedProducts.find(p => 
-                (p.barcode && p.barcode.toLowerCase() === query.toLowerCase()) || 
-                p.variants?.some(v => v.barcode && v.barcode.toLowerCase() === query.toLowerCase()) ||
-                p.name.toLowerCase() === query.toLowerCase()
-            );
+            const foundGroup = groupedProducts.find(p => {
+                const bCode = p.barcode ? String(p.barcode).trim().toLowerCase() : '';
+                const brandCode = p.brandBarcode ? String(p.brandBarcode).trim().toLowerCase() : '';
+                const prodCode = p.productBarcode ? String(p.productBarcode).trim().toLowerCase() : '';
+                const pName = p.name ? p.name.toLowerCase() : '';
+                const baseName = p.baseName ? p.baseName.toLowerCase() : '';
+
+                if (bCode === query || brandCode === query || prodCode === query || pName === query || baseName === query) {
+                    return true;
+                }
+
+                if (p.variants && p.variants.length > 0) {
+                    return p.variants.some(v => v.barcode && String(v.barcode).trim().toLowerCase() === query);
+                }
+
+                return false;
+            });
 
             if (foundGroup) {
-                const matchedVariant = foundGroup.variants?.find(v => v.barcode && v.barcode.toLowerCase() === query.toLowerCase());
+                const matchedVariant = foundGroup.variants?.find(v => 
+                    v.barcode && String(v.barcode).trim().toLowerCase() === query && 
+                    String(v.barcode).trim().toLowerCase() !== String(foundGroup.barcode || '').trim().toLowerCase()
+                );
+
                 if (matchedVariant) {
                     if ((parseInt(matchedVariant.stock, 10) || 0) <= 0) {
                         toast.error(`"${foundGroup.name}" (${matchedVariant.size}) is out of stock (Stock: 0)`);
@@ -638,21 +705,7 @@ const CURRENCY_SYMBOLS = {
                 }
                 setSearch('');
             } else {
-                const rawProd = products.find(p => 
-                    (p.barcode && p.barcode.toLowerCase() === query.toLowerCase()) || 
-                    p.name.toLowerCase() === query.toLowerCase()
-                );
-                if (rawProd) {
-                    const isStockEnabled = branchSettings.stockIncluded !== false && branchSettings.stockIncluded !== 'false';
-                    if (isStockEnabled && (parseInt(rawProd.stock, 10) || 0) <= 0) {
-                        toast.error(`"${rawProd.name}" is out of stock in your branch.`);
-                    } else {
-                        addToCart(rawProd, null);
-                    }
-                    setSearch('');
-                } else {
-                    toast.error(`No product found with barcode or name "${query}"`);
-                }
+                toast.error(`No product found with barcode or name "${rawQuery.trim()}"`);
             }
         }
     };
@@ -687,8 +740,8 @@ const CURRENCY_SYMBOLS = {
             return;
         }
 
-        const cartKey = `${representativeProductId}_${selectedSize || 'nosize'}`;
-        const existing = cart.find(item => (item.cartItemId || `${item.id}_${item.selectedSize || 'nosize'}`) === cartKey);
+        const cartKey = `${representativeProductId}_${product.brandId || 'nobrand'}_${selectedSize || 'nosize'}`;
+        const existing = cart.find(item => (item.cartItemId || `${item.id}_${item.brandId || 'nobrand'}_${item.selectedSize || 'nosize'}`) === cartKey);
 
         if (existing && isStockEnabled && (existing.quantity + 1) > availableStock) {
             toast.error(`Only ${availableStock} units available in stock`);
@@ -700,7 +753,7 @@ const CURRENCY_SYMBOLS = {
         const freshIsInclusive = product.isTaxInclusive === true || product.isTaxInclusive === 'true';
 
         if (existing) {
-            setCart(cart.map(item => ((item.cartItemId || `${item.id}_${item.selectedSize || 'nosize'}`) === cartKey) ? {
+            setCart(cart.map(item => ((item.cartItemId || `${item.id}_${item.brandId || 'nobrand'}_${item.selectedSize || 'nosize'}`) === cartKey) ? {
                 ...item,
                 quantity: item.quantity + 1,
                 price: item.isPriceOverridden ? item.price : freshPrice,
@@ -713,6 +766,8 @@ const CURRENCY_SYMBOLS = {
                 ...product,
                 cartItemId: cartKey,
                 id: representativeProductId,
+                brandId: product.brandId || null,
+                brandName: product.brandName || null,
                 name: product.name,
                 productTypeName: product.productTypeName || product.productType?.name || '',
                 selectedSize: selectedSize || null,
@@ -1140,11 +1195,16 @@ const CURRENCY_SYMBOLS = {
                 <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
                     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                         {groupedProducts.filter(p => {
-                            const q = search.toLowerCase();
+                            const q = search.trim().toLowerCase();
+                            if (!q) return true;
                             return p.name.toLowerCase().includes(q) ||
+                                (p.baseName && p.baseName.toLowerCase().includes(q)) ||
                                 (p.productTypeName && p.productTypeName.toLowerCase().includes(q)) ||
-                                (p.barcode && p.barcode.toLowerCase().includes(q)) ||
-                                (p.variants && p.variants.some(v => v.size.toLowerCase().includes(q) || (v.barcode && v.barcode.toLowerCase().includes(q))));
+                                (p.brandName && p.brandName.toLowerCase().includes(q)) ||
+                                (p.barcode && String(p.barcode).trim().toLowerCase().includes(q)) ||
+                                (p.brandBarcode && String(p.brandBarcode).trim().toLowerCase().includes(q)) ||
+                                (p.productBarcode && String(p.productBarcode).trim().toLowerCase().includes(q)) ||
+                                (p.variants && p.variants.some(v => v.size.toLowerCase().includes(q) || (v.barcode && String(v.barcode).trim().toLowerCase().includes(q))));
                         }).map(product => {
                             const hasSaleableVariant = product.hasSizes ? product.variants?.some(v => (parseInt(v.stock, 10) || 0) > 0) : true;
                             const isOutOfStock = product.hasSizes ? !hasSaleableVariant : (parseInt(product.stock, 10) || 0) <= 0;

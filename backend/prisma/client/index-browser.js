@@ -258,6 +258,7 @@ exports.Prisma.BrandScalarFieldEnum = {
   categoryId: 'categoryId',
   categoryName: 'categoryName',
   categoryIds: 'categoryIds',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

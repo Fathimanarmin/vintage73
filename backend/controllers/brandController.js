@@ -14,14 +14,22 @@ const safeJsonParse = (val) => {
 
 // Get All Brands (optional filtering by categoryId)
 exports.getBrands = asyncHandler(async (req, res) => {
-  const { categoryId } = req.query;
+  const { categoryId, includeInactive } = req.query;
 
   const where = {};
+  if (includeInactive !== 'true') {
+    where.isActive = true;
+  }
+
   if (categoryId && !isNaN(parseInt(categoryId))) {
     const catId = parseInt(categoryId);
-    where.OR = [
-      { categoryId: catId },
-      { categoryId: null }
+    where.AND = [
+      {
+        OR: [
+          { categoryId: catId },
+          { categoryId: null }
+        ]
+      }
     ];
   }
 
@@ -143,11 +151,12 @@ exports.updateBrand = asyncHandler(async (req, res) => {
   res.json(brand);
 });
 
-// Delete Brand
+// Delete Brand (Soft Delete)
 exports.deleteBrand = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  await prisma.brand.delete({
-    where: { id: parseInt(id) }
+  await prisma.brand.update({
+    where: { id: parseInt(id) },
+    data: { isActive: false }
   });
   res.json({ message: 'Brand deleted successfully' });
 });

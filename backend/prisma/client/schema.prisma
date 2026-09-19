@@ -235,6 +235,7 @@ model Brand {
   categoryName String?
   categoryIds  Json?     @default("[]")
   category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   products     Product[]

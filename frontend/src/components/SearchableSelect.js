@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { FiSearch, FiChevronDown } from 'react-icons/fi';
+import { FiSearch, FiChevronDown, FiCheck } from 'react-icons/fi';
 import { useTheme } from '@/context/ThemeContext';
 
 const SearchableSelect = ({
@@ -12,6 +12,7 @@ const SearchableSelect = ({
     triggerClassName = "",
     direction = 'down',   // 'down' | 'up' | 'auto'
     zIndex = 100005,
+    isMulti = false,
 }) => {
     const { theme } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
@@ -27,6 +28,15 @@ const SearchableSelect = ({
     const panelRef  = useRef(null);
     const inputRef  = useRef(null);
 
+    const isSelected = (val) => {
+        if (isMulti) {
+            const arr = Array.isArray(value) ? value : [];
+            return arr.map(String).includes(String(val));
+        }
+        return value == val;
+    };
+
+    const selectedOptions = (options || []).filter(opt => isSelected(opt.value));
     const selectedOption = (options || []).find(opt => opt.value == value);
 
     // ── Compute fixed-position coordinates ───────────────────────────────────
@@ -112,14 +122,48 @@ const SearchableSelect = ({
     );
 
     const handleSelect = (val) => {
-        onChange(val);
-        setIsOpen(false);
-        setSearchTerm('');
+        if (isMulti) {
+            const arr = Array.isArray(value) ? [...value] : [];
+            const strVal = String(val);
+            const existsIdx = arr.findIndex(v => String(v) === strVal);
+            if (existsIdx >= 0) {
+                arr.splice(existsIdx, 1);
+            } else {
+                arr.push(val);
+            }
+            onChange(arr);
+        } else {
+            onChange(val);
+            setIsOpen(false);
+            setSearchTerm('');
+        }
     };
 
     const toggleOpen = () => {
         if (!isOpen) computePanel();
         setIsOpen(prev => !prev);
+    };
+
+    const renderTriggerText = () => {
+        if (isMulti) {
+            if (selectedOptions.length === 0) {
+                return <span className="text-slate-400 font-medium text-sm truncate">{placeholder}</span>;
+            }
+            return (
+                <div className="flex flex-wrap gap-1 items-center max-w-full overflow-hidden py-0.5">
+                    {selectedOptions.map(opt => (
+                        <span key={opt.value} className="px-2 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 rounded text-xs font-semibold shrink-0">
+                            {opt.label}
+                        </span>
+                    ))}
+                </div>
+            );
+        }
+        return (
+            <span className={`text-sm truncate ${selectedOption ? 'text-slate-800 font-semibold' : 'text-slate-400 font-medium'}`}>
+                {selectedOption ? selectedOption.label : placeholder}
+            </span>
+        );
     };
 
     return (
@@ -135,9 +179,9 @@ const SearchableSelect = ({
                     } ${triggerClassName || 'min-h-[48px]'}`}
                     style={isOpen ? { borderColor: theme.primaryColor, boxShadow: `0 0 0 2px ${theme.primaryColor}33` } : {}}
                 >
-                    <span className={`text-sm truncate ${selectedOption ? 'text-slate-800 font-semibold' : 'text-slate-400 font-medium'}`}>
-                        {selectedOption ? selectedOption.label : placeholder}
-                    </span>
+                    <div className="flex-1 overflow-hidden mr-2">
+                        {renderTriggerText()}
+                    </div>
                     <FiChevronDown
                         className={`text-slate-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
                         size={16}
@@ -172,20 +216,23 @@ const SearchableSelect = ({
                     {/* Options */}
                     <div className="overflow-y-auto custom-scrollbar py-1">
                         {filteredOptions.length > 0 ? (
-                            filteredOptions.map((opt) => (
-                                <div
-                                    key={opt.value}
-                                    onClick={() => handleSelect(opt.value)}
-                                    className={`px-3 py-2.5 text-[12px] cursor-pointer transition-colors border-b border-slate-50 last:border-0 ${
-                                        value == opt.value
-                                            ? 'bg-slate-100 font-semibold'
-                                            : 'hover:bg-slate-50 text-slate-700'
-                                    }`}
-                                    style={value == opt.value ? { color: theme.primaryColor } : {}}
-                                >
-                                    {opt.label}
-                                </div>
-                            ))
+                            filteredOptions.map((opt) => {
+                                const active = isSelected(opt.value);
+                                return (
+                                    <div
+                                        key={opt.value}
+                                        onClick={() => handleSelect(opt.value)}
+                                        className={`px-3 py-2.5 text-[12px] cursor-pointer transition-colors border-b border-slate-50 last:border-0 flex items-center justify-between ${
+                                            active
+                                                ? 'bg-amber-50/70 font-semibold text-amber-900'
+                                                : 'hover:bg-slate-50 text-slate-700'
+                                        }`}
+                                    >
+                                        <span>{opt.label}</span>
+                                        {active && <FiCheck className="text-amber-600" size={14} />}
+                                    </div>
+                                );
+                            })
                         ) : (
                             <div className="px-3 py-8 text-center text-xs text-slate-400 italic">
                                 No results found for "{searchTerm}"

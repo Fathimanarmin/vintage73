@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 const upload = require('../middleware/uploadMiddleware');
 
+router.get('/generate-barcode', productController.getUniqueBarcode);
 router.get('/', productController.getAllProducts);
 router.post('/', upload.single('image'), productController.createProduct);
 router.put('/:id', upload.single('image'), productController.updateProduct);

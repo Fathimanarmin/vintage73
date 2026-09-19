@@ -94,29 +94,27 @@ export default function Purchase() {
 
     if (parsedBrandPrices && typeof parsedBrandPrices === 'object') {
       Object.keys(parsedBrandPrices).forEach(bIdStr => {
-        const bId = parseInt(bIdStr, 10);
-        if (!isNaN(bId)) {
-          const matchedBrand = brandsList.find(b => b.id === bId);
-          bMap.set(bId, {
-            id: bId,
-            name: matchedBrand ? matchedBrand.name : (product.brandName || `Brand #${bId}`)
-          });
+        const entry = parsedBrandPrices[bIdStr];
+        if (entry && !entry.isDeleted) {
+          const bId = parseInt(bIdStr, 10);
+          if (!isNaN(bId)) {
+            const matchedBrand = brandsList.find(b => b.id === bId);
+            bMap.set(bId, {
+              id: bId,
+              name: matchedBrand ? matchedBrand.name : (entry.name || product.brandName || `Brand #${bId}`)
+            });
+          }
         }
       });
     }
 
-    const primaryId = product.brandId || product.brand?.id;
-    const primaryName = product.brandName || product.brand?.name;
-    if (primaryId && !bMap.has(primaryId)) {
+    if (bMap.size === 0 && (product.brandId || product.brand?.id)) {
+      const primaryId = product.brandId || product.brand?.id;
+      const primaryName = product.brandName || product.brand?.name;
       bMap.set(primaryId, { id: primaryId, name: primaryName || `Brand #${primaryId}` });
     }
 
-    const list = Array.from(bMap.values());
-    if (list.length === 0 && primaryName) {
-      list.push({ id: primaryId || null, name: primaryName });
-    }
-
-    return list;
+    return Array.from(bMap.values());
   };
 
   const getSizesForBrand = (product, brandId) => {
@@ -127,19 +125,22 @@ export default function Purchase() {
       try { parsedBrandPrices = JSON.parse(parsedBrandPrices); } catch (e) { parsedBrandPrices = null; }
     }
 
-    if (parsedBrandPrices && brandId && parsedBrandPrices[brandId]) {
-      const bEntry = parsedBrandPrices[brandId];
+    const bKey = brandId ? String(brandId) : null;
+    if (parsedBrandPrices && bKey && parsedBrandPrices[bKey]) {
+      const bEntry = parsedBrandPrices[bKey];
       let bSizeStocks = bEntry.sizeStocks;
       if (typeof bSizeStocks === 'string') {
         try { bSizeStocks = JSON.parse(bSizeStocks); } catch (e) { bSizeStocks = []; }
       }
 
       if (Array.isArray(bSizeStocks) && bSizeStocks.length > 0) {
-        return bSizeStocks.map(s => ({
-          size: s.size,
-          currentStock: parseInt(s.stock, 10) || 0,
-          quantity: 0
-        }));
+        return bSizeStocks
+          .filter(s => !s.isDeleted)
+          .map(s => ({
+            size: s.size,
+            currentStock: parseInt(s.stock, 10) || 0,
+            quantity: 0
+          }));
       }
 
       if (Array.isArray(bEntry.sizes) && bEntry.sizes.length > 0) {
@@ -151,34 +152,28 @@ export default function Purchase() {
       }
     }
 
-    // Fallback to product root sizeStocks
-    let rootSizeStocks = product.sizeStocks;
-    if (typeof rootSizeStocks === 'string') {
-      try { rootSizeStocks = JSON.parse(rootSizeStocks); } catch (e) { rootSizeStocks = []; }
+    let configuredSizes = [];
+    if (product.productType?.sizes) {
+      let ptSizes = product.productType.sizes;
+      if (typeof ptSizes === 'string') { try { ptSizes = JSON.parse(ptSizes); } catch (e) {} }
+      if (Array.isArray(ptSizes)) configuredSizes = ptSizes;
     }
 
-    if (Array.isArray(rootSizeStocks) && rootSizeStocks.length > 0) {
-      return rootSizeStocks.map(s => ({
-        size: s.size,
-        currentStock: parseInt(s.stock, 10) || 0,
-        quantity: 0
-      }));
+    if (configuredSizes.length === 0 && product.size) {
+      configuredSizes = product.size.split(',').map(s => s.trim()).filter(Boolean);
     }
 
-    if (product.size) {
-      const rawSizes = product.size.includes(',')
-        ? product.size.split(',').map(s => s.trim()).filter(Boolean)
-        : [product.size.trim()];
-      return rawSizes.map(sz => ({
+    if (configuredSizes.length > 0) {
+      return configuredSizes.map(sz => ({
         size: sz,
-        currentStock: parseInt(product.stock, 10) || 0,
+        currentStock: 0,
         quantity: 0
       }));
     }
 
     return [{
       size: 'Free Size',
-      currentStock: parseInt(product.stock, 10) || 0,
+      currentStock: 0,
       quantity: 0
     }];
   };

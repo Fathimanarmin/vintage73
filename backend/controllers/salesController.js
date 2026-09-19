@@ -299,27 +299,64 @@ exports.createSale = asyncHandler(async (req, res) => {
         update: { quantity: isReturn ? { increment: item.quantity } : { decrement: item.quantity } }
       });
 
-      // Deduct size-level stock if product has sizeStocks
+      // Deduct size-level stock if product has sizeStocks or brandPrices
       const selectedSize = item.size || item.selectedSize;
+      const targetBrandId = item.brandId ? String(item.brandId) : null;
       if (selectedSize) {
         const prod = await tx.product.findUnique({ where: { id: parseInt(item.productId) } });
-        if (prod && prod.sizeStocks) {
-          let pSizeStocks = prod.sizeStocks;
-          if (typeof pSizeStocks === 'string') {
-            try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = []; }
+        if (prod) {
+          let updateData = {};
+          if (prod.sizeStocks) {
+            let pSizeStocks = prod.sizeStocks;
+            if (typeof pSizeStocks === 'string') {
+              try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = []; }
+            }
+            if (Array.isArray(pSizeStocks)) {
+              updateData.sizeStocks = pSizeStocks.map(s => {
+                if (String(s.size).trim().toLowerCase() === String(selectedSize).trim().toLowerCase()) {
+                  const cur = parseInt(s.stock, 10) || 0;
+                  const newStock = isReturn ? (cur + item.quantity) : (cur - item.quantity);
+                  return { ...s, stock: Math.max(0, newStock) };
+                }
+                return s;
+              });
+            }
           }
-          if (Array.isArray(pSizeStocks)) {
-            const updatedSizeStocks = pSizeStocks.map(s => {
-              if (String(s.size).trim().toLowerCase() === String(selectedSize).trim().toLowerCase()) {
-                const cur = parseInt(s.stock, 10) || 0;
-                const newStock = isReturn ? (cur + item.quantity) : (cur - item.quantity);
-                return { ...s, stock: Math.max(0, newStock) };
+
+          if (prod.brandPrices) {
+            let bPrices = prod.brandPrices;
+            if (typeof bPrices === 'string') {
+              try { bPrices = JSON.parse(bPrices); } catch (e) { bPrices = null; }
+            }
+            if (bPrices && typeof bPrices === 'object') {
+              let bPricesModified = false;
+              let updatedBPrices = { ...bPrices };
+              Object.keys(updatedBPrices).forEach(bKey => {
+                if (!targetBrandId || targetBrandId === bKey) {
+                  const bEntry = updatedBPrices[bKey];
+                  if (bEntry && Array.isArray(bEntry.sizeStocks)) {
+                    bEntry.sizeStocks = bEntry.sizeStocks.map(s => {
+                      if (String(s.size).trim().toLowerCase() === String(selectedSize).trim().toLowerCase()) {
+                        const cur = parseInt(s.stock, 10) || 0;
+                        const newStock = isReturn ? (cur + item.quantity) : (cur - item.quantity);
+                        bPricesModified = true;
+                        return { ...s, stock: Math.max(0, newStock) };
+                      }
+                      return s;
+                    });
+                  }
+                }
+              });
+              if (bPricesModified) {
+                updateData.brandPrices = updatedBPrices;
               }
-              return s;
-            });
+            }
+          }
+
+          if (Object.keys(updateData).length > 0) {
             await tx.product.update({
               where: { id: prod.id },
-              data: { sizeStocks: updatedSizeStocks }
+              data: updateData
             });
           }
         }

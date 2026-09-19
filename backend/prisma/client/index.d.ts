@@ -19673,6 +19673,7 @@ export namespace Prisma {
     barcode: string | null
     categoryId: number | null
     categoryName: string | null
+    isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -19683,6 +19684,7 @@ export namespace Prisma {
     barcode: string | null
     categoryId: number | null
     categoryName: string | null
+    isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -19694,6 +19696,7 @@ export namespace Prisma {
     categoryId: number
     categoryName: number
     categoryIds: number
+    isActive: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -19716,6 +19719,7 @@ export namespace Prisma {
     barcode?: true
     categoryId?: true
     categoryName?: true
+    isActive?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -19726,6 +19730,7 @@ export namespace Prisma {
     barcode?: true
     categoryId?: true
     categoryName?: true
+    isActive?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -19737,6 +19742,7 @@ export namespace Prisma {
     categoryId?: true
     categoryName?: true
     categoryIds?: true
+    isActive?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -19835,6 +19841,7 @@ export namespace Prisma {
     categoryId: number | null
     categoryName: string | null
     categoryIds: JsonValue | null
+    isActive: boolean
     createdAt: Date
     updatedAt: Date
     _count: BrandCountAggregateOutputType | null
@@ -19865,6 +19872,7 @@ export namespace Prisma {
     categoryId?: boolean
     categoryName?: boolean
     categoryIds?: boolean
+    isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     category?: boolean | Brand$categoryArgs<ExtArgs>
@@ -19879,6 +19887,7 @@ export namespace Prisma {
     categoryId?: boolean
     categoryName?: boolean
     categoryIds?: boolean
+    isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -19903,6 +19912,7 @@ export namespace Prisma {
       categoryId: number | null
       categoryName: string | null
       categoryIds: Prisma.JsonValue | null
+      isActive: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["brand"]>
@@ -20308,6 +20318,7 @@ export namespace Prisma {
     readonly categoryId: FieldRef<"Brand", 'Int'>
     readonly categoryName: FieldRef<"Brand", 'String'>
     readonly categoryIds: FieldRef<"Brand", 'Json'>
+    readonly isActive: FieldRef<"Brand", 'Boolean'>
     readonly createdAt: FieldRef<"Brand", 'DateTime'>
     readonly updatedAt: FieldRef<"Brand", 'DateTime'>
   }
@@ -77050,6 +77061,7 @@ export namespace Prisma {
     categoryId: 'categoryId',
     categoryName: 'categoryName',
     categoryIds: 'categoryIds',
+    isActive: 'isActive',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -79202,6 +79214,7 @@ export namespace Prisma {
     categoryId?: IntNullableFilter<"Brand"> | number | null
     categoryName?: StringNullableFilter<"Brand"> | string | null
     categoryIds?: JsonNullableFilter<"Brand">
+    isActive?: BoolFilter<"Brand"> | boolean
     createdAt?: DateTimeFilter<"Brand"> | Date | string
     updatedAt?: DateTimeFilter<"Brand"> | Date | string
     category?: XOR<CategoryNullableRelationFilter, CategoryWhereInput> | null
@@ -79215,6 +79228,7 @@ export namespace Prisma {
     categoryId?: SortOrderInput | SortOrder
     categoryName?: SortOrderInput | SortOrder
     categoryIds?: SortOrderInput | SortOrder
+    isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     category?: CategoryOrderByWithRelationInput
@@ -79231,6 +79245,7 @@ export namespace Prisma {
     categoryId?: IntNullableFilter<"Brand"> | number | null
     categoryName?: StringNullableFilter<"Brand"> | string | null
     categoryIds?: JsonNullableFilter<"Brand">
+    isActive?: BoolFilter<"Brand"> | boolean
     createdAt?: DateTimeFilter<"Brand"> | Date | string
     updatedAt?: DateTimeFilter<"Brand"> | Date | string
     category?: XOR<CategoryNullableRelationFilter, CategoryWhereInput> | null
@@ -79244,6 +79259,7 @@ export namespace Prisma {
     categoryId?: SortOrderInput | SortOrder
     categoryName?: SortOrderInput | SortOrder
     categoryIds?: SortOrderInput | SortOrder
+    isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: BrandCountOrderByAggregateInput
@@ -79263,6 +79279,7 @@ export namespace Prisma {
     categoryId?: IntNullableWithAggregatesFilter<"Brand"> | number | null
     categoryName?: StringNullableWithAggregatesFilter<"Brand"> | string | null
     categoryIds?: JsonNullableWithAggregatesFilter<"Brand">
+    isActive?: BoolWithAggregatesFilter<"Brand"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Brand"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Brand"> | Date | string
   }
@@ -85485,6 +85502,7 @@ export namespace Prisma {
     barcode?: string | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     category?: CategoryCreateNestedOneWithoutBrandsInput
@@ -85498,6 +85516,7 @@ export namespace Prisma {
     categoryId?: number | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     products?: ProductUncheckedCreateNestedManyWithoutBrandInput
@@ -85508,6 +85527,7 @@ export namespace Prisma {
     barcode?: NullableStringFieldUpdateOperationsInput | string | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     category?: CategoryUpdateOneWithoutBrandsNestedInput
@@ -85521,6 +85541,7 @@ export namespace Prisma {
     categoryId?: NullableIntFieldUpdateOperationsInput | number | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: ProductUncheckedUpdateManyWithoutBrandNestedInput
@@ -85533,6 +85554,7 @@ export namespace Prisma {
     categoryId?: number | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -85542,6 +85564,7 @@ export namespace Prisma {
     barcode?: NullableStringFieldUpdateOperationsInput | string | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -85553,6 +85576,7 @@ export namespace Prisma {
     categoryId?: NullableIntFieldUpdateOperationsInput | number | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -91954,6 +91978,7 @@ export namespace Prisma {
     categoryId?: SortOrder
     categoryName?: SortOrder
     categoryIds?: SortOrder
+    isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -91969,6 +91994,7 @@ export namespace Prisma {
     barcode?: SortOrder
     categoryId?: SortOrder
     categoryName?: SortOrder
+    isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -91979,6 +92005,7 @@ export namespace Prisma {
     barcode?: SortOrder
     categoryId?: SortOrder
     categoryName?: SortOrder
+    isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -107783,6 +107810,7 @@ export namespace Prisma {
     barcode?: string | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     products?: ProductCreateNestedManyWithoutBrandInput
@@ -107794,6 +107822,7 @@ export namespace Prisma {
     barcode?: string | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     products?: ProductUncheckedCreateNestedManyWithoutBrandInput
@@ -107951,6 +107980,7 @@ export namespace Prisma {
     categoryId?: IntNullableFilter<"Brand"> | number | null
     categoryName?: StringNullableFilter<"Brand"> | string | null
     categoryIds?: JsonNullableFilter<"Brand">
+    isActive?: BoolFilter<"Brand"> | boolean
     createdAt?: DateTimeFilter<"Brand"> | Date | string
     updatedAt?: DateTimeFilter<"Brand"> | Date | string
   }
@@ -108303,6 +108333,7 @@ export namespace Prisma {
     barcode?: string | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     category?: CategoryCreateNestedOneWithoutBrandsInput
@@ -108315,6 +108346,7 @@ export namespace Prisma {
     categoryId?: number | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -108648,6 +108680,7 @@ export namespace Prisma {
     barcode?: NullableStringFieldUpdateOperationsInput | string | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     category?: CategoryUpdateOneWithoutBrandsNestedInput
@@ -108660,6 +108693,7 @@ export namespace Prisma {
     categoryId?: NullableIntFieldUpdateOperationsInput | number | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -130382,6 +130416,7 @@ export namespace Prisma {
     barcode?: string | null
     categoryName?: string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -130537,6 +130572,7 @@ export namespace Prisma {
     barcode?: NullableStringFieldUpdateOperationsInput | string | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: ProductUpdateManyWithoutBrandNestedInput
@@ -130548,6 +130584,7 @@ export namespace Prisma {
     barcode?: NullableStringFieldUpdateOperationsInput | string | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     products?: ProductUncheckedUpdateManyWithoutBrandNestedInput
@@ -130559,6 +130596,7 @@ export namespace Prisma {
     barcode?: NullableStringFieldUpdateOperationsInput | string | null
     categoryName?: NullableStringFieldUpdateOperationsInput | string | null
     categoryIds?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
