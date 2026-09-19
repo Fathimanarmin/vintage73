@@ -86,7 +86,6 @@ export default function InvoicesList() {
 
             if (!invoice) { toast.error('Invoice not found'); return; }
 
-            const branchTemplate = invoice.branch?.invoiceTemplate || invoice.branch?.invoiceSettings?.template;
             const baseSettings = invoice.isReturn ? returnSettings : salesSettings;
             const formattedData = {
                 ...invoice,
@@ -97,8 +96,7 @@ export default function InvoicesList() {
                 })),
                 settings: {
                     ...(baseSettings || {}),
-                    ...(invoice.branch?.invoiceSettings || {}),
-                    template: branchTemplate || (invoice.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                    template: (invoice.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
                 }
             };
             setPrintData(formattedData);   // set BEFORE opening modal
@@ -120,7 +118,6 @@ export default function InvoicesList() {
             const invoice = Array.isArray(data) ? data[0] : data;
             if (!invoice) { toast.error('Invoice not found'); return; }
 
-            const branchTemplate = invoice.branch?.invoiceTemplate || invoice.branch?.invoiceSettings?.template;
             const baseSettings = invoice.isReturn ? returnSettings : salesSettings;
             const formattedData = {
                 ...invoice,
@@ -131,8 +128,7 @@ export default function InvoicesList() {
                 })),
                 settings: {
                     ...(baseSettings || {}),
-                    ...(invoice.branch?.invoiceSettings || {}),
-                    template: branchTemplate || (invoice.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                    template: (invoice.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
                 }
             };
             setPrintData(formattedData);

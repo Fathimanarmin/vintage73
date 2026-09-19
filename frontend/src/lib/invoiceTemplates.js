@@ -26,12 +26,22 @@ export const INVOICE_TEMPLATES = [
         shortName: 'Bold', 
         type: 'Design 4',
         description: 'High-contrast header layout with prominent branding'
+    },
+    { 
+        id: 'boutique_a5', 
+        name: 'New Boutique Invoice', 
+        shortName: 'New Boutique', 
+        type: 'Design 5',
+        description: 'Clean, simple A5 portrait boutique invoice layout with item grid and totals'
     }
 ];
 
 export const getTemplateById = (id) => {
     if (!id) return null;
     const normalized = String(id).trim().toLowerCase();
+    if (['boutique_a5', 'new_boutique', 'new boutique'].includes(normalized)) {
+        return INVOICE_TEMPLATES.find(t => t.id === 'boutique_a5');
+    }
     if (normalized === 'boutique') return INVOICE_TEMPLATES.find(t => t.id === 'modern');
     if (normalized === 'simple') return INVOICE_TEMPLATES.find(t => t.id === 'minimal');
     return INVOICE_TEMPLATES.find(t => t.id.toLowerCase() === normalized) || null;
@@ -45,9 +55,10 @@ export const getTemplateName = (id) => {
 export const normalizeTemplateId = (id) => {
     if (!id) return 'modern';
     const normalized = String(id).trim().toLowerCase();
+    if (['boutique_a5', 'new_boutique', 'new boutique'].includes(normalized)) return 'boutique_a5';
     if (normalized === 'boutique') return 'modern';
     if (normalized === 'simple') return 'minimal';
-    if (['modern', 'minimal', 'classic', 'bold'].includes(normalized)) return normalized;
+    if (['modern', 'minimal', 'classic', 'bold', 'boutique_a5'].includes(normalized)) return normalized;
     return 'modern';
 };
 

@@ -1419,8 +1419,7 @@ export default function SalesReport() {
                         ...printSale, 
                         settings: {
                             ...(printSale?.isReturn ? returnSettings : salesSettings),
-                            ...(printSale?.branch?.invoiceSettings || {}),
-                            template: printSale?.branch?.invoiceTemplate || printSale?.branch?.invoiceSettings?.template || (printSale?.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                            template: (printSale?.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
                         }
                     }}
                     companyProfile={companyProfile}
