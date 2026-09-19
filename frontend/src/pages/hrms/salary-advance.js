@@ -98,7 +98,7 @@ export default function SalaryAdvance() {
         .reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-6 w-full space-y-6">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2 leading-tight">

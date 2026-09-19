@@ -96,7 +96,7 @@ export default function BankMaster() {
     );
 
     return (
-        <div className="p-6 max-w-[1600px] mx-auto">
+        <div className="w-full p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-800 tracking-tight">Bank Master</h1>

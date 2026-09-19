@@ -53,7 +53,7 @@ export default function Designations() {
     if (loading) return <div className="p-8">Loading...</div>;
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-6 w-full space-y-6">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-800 flex items-center gap-2 leading-tight">

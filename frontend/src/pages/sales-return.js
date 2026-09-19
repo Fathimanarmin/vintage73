@@ -159,7 +159,7 @@ export default function SalesReturn() {
         </div>
       </div>
 
-      <div className="card border-0 shadow-sm max-w-2xl mb-8 p-6 bg-white rounded-2xl">
+      <div className="card border-0 shadow-sm w-full mb-8 p-6 bg-white rounded-2xl">
         <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Original Invoice Number</label>
         <div className="flex gap-4">
           <input

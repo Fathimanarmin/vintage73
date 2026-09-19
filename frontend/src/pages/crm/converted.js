@@ -24,7 +24,7 @@ export default function WonLeads() {
     };
 
     return (
-        <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8 space-y-8 w-full">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Won Leads (Converted)</h1>
