@@ -42,7 +42,7 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-10">
+    <div className="w-full py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-slate-800">Security Settings</h1>
         <p className="text-slate-500 text-sm mt-1">Update your account password to stay secure</p>
@@ -115,7 +115,7 @@ export default function ChangePassword() {
             <button
               type="submit"
               disabled={loading}
-              className="bg-slate-900 text-white font-medium px-10 py-4 rounded-2xl hover:bg-black hover:shadow-2xl hover:shadow-slate-200 transition-all active:scale-95 text-sm uppercase tracking-widest flex items-center gap-2 disabled:opacity-50"
+              className="bg-primary text-white font-medium px-10 py-4 rounded-2xl hover:bg-primary/90 hover:shadow-2xl hover:shadow-primary/20 transition-all active:scale-95 text-sm uppercase tracking-widest flex items-center gap-2 disabled:opacity-50"
             >
               {loading ? 'Changing...' : 'Update Password'}
             </button>

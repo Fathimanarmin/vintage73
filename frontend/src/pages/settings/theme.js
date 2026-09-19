@@ -88,7 +88,7 @@ export default function ThemeSettings() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8">
+        <div className="w-full space-y-8">
             <div>
                 <h1 className="text-2xl font-semibold text-slate-800">Theme Settings</h1>
                 <p className="text-slate-500 text-sm">Customize the look and feel of the application.</p>

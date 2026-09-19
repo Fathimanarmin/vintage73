@@ -103,7 +103,7 @@ export default function WorkLogPage() {
     const isAdmin = user?.role === 'admin';
 
     return (
-        <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <div className="p-6 w-full space-y-6">
             {/* Header */}
             <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>

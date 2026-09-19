@@ -91,7 +91,7 @@ export default function StockReceipt() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="w-full p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Stock Receipt</h1>

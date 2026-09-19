@@ -47,7 +47,7 @@ export default function WhatsAppHistory() {
             animate={{ opacity: 1, y: 0 }}
             className="p-6 min-h-screen bg-slate-50"
         >
-            <div className="max-w-6xl mx-auto">
+            <div className="w-full">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-4">
                         <Link href="/settings/whatsapp">

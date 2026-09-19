@@ -89,7 +89,7 @@ export default function ScreenLayoutSettings() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-800">Screen Layout Settings</h1>
         <p className="text-slate-500 text-sm">Customize the default dashboard layout image.</p>

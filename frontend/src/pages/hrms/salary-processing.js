@@ -260,7 +260,7 @@ export default function SalaryProcessing() {
     const progressPercentage = bulkProgress.total > 0 ? (bulkProgress.current / bulkProgress.total) * 100 : 0;
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 w-full">
             <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-800 flex items-center gap-2">
