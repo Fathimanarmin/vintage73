@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
 import api from '@/lib/api';
 import { MENU_STRUCTURE } from '@/lib/menuStructure';
@@ -401,8 +402,8 @@ export default function Users() {
 
       {/* Add User Modal */}
       {
-        showModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 text-left">
+        showModal && typeof document !== 'undefined' && createPortal(
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 text-left">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
               <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30 flex-shrink-0">
                 <div>
@@ -888,14 +889,15 @@ export default function Users() {
                 </div>
               </form>
             </div>
-          </div >
+          </div>,
+          document.body
         )
       }
 
 
       {/* Custom Status Confirmation Modal */}
-      {showStatusModal && statusTarget && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      {showStatusModal && statusTarget && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
             <div className={`p-6 ${statusTarget.isActive ? 'bg-amber-50' : 'bg-green-50'}`}>
               <div className="flex items-center gap-4">
@@ -945,7 +947,8 @@ export default function Users() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div >
   );

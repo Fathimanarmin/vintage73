@@ -1451,7 +1451,7 @@ export default function Products() {
 
       {/* Add / Edit Product Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[50000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl shrink-0">
@@ -2062,7 +2062,7 @@ export default function Products() {
 
       {/* Custom Status Confirmation Modal */}
       {showStatusModal && statusTarget && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
             <div className={`p-6 ${statusTarget.isActive ? 'bg-amber-50' : 'bg-green-50'}`}>
               <div className="flex items-center gap-4">
@@ -2117,7 +2117,7 @@ export default function Products() {
 
       {/* Print Barcode Modal */}
       {showPreviewModal && printTargetProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[115] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[99999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150 border border-slate-100 flex flex-col">
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
@@ -2312,7 +2312,7 @@ export default function Products() {
 
       {/* Add Brand Modal */}
       {showAddBrandModal && (
-        <div className="fixed inset-0 z-[60000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
               <h3 className="text-base font-bold text-slate-800">Add Brand</h3>

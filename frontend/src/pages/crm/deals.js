@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { toast } from 'react-toastify';
+import { createPortal } from 'react-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { FiPlus, FiMoreHorizontal, FiDollarSign, FiCalendar, FiUser, FiArrowRight, FiX } from 'react-icons/fi';
 import SearchableSelect from '@/components/SearchableSelect';
@@ -207,8 +208,9 @@ export default function Deals() {
                     </div>
                 </div>
             </DragDropContext>
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            {/* Modal */}
+            {showModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200">
                     <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col mx-auto">
 
                         {/* ── Header ── */}
@@ -340,7 +342,8 @@ export default function Deals() {
 
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

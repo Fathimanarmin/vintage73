@@ -153,7 +153,7 @@ export default function TopNavigation() {
   }).filter(Boolean);
 
   return (
-    <nav className="bg-gradient-to-r from-primary-dark to-primary px-4 h-12 flex items-center justify-between gap-4 shadow-md relative z-[999]">
+    <nav className="bg-gradient-to-r from-primary-dark to-primary px-2 md:px-4 h-12 md:h-14 flex items-center justify-between gap-2 md:gap-4 shadow-md relative z-[999]">
         <div 
           ref={navRef}
           className="flex-1 flex items-center overflow-hidden"
@@ -161,7 +161,7 @@ export default function TopNavigation() {
           {/* Dynamic Menu Groups - Always in one line, scrolls if needed */}
           <div 
             ref={menuScrollRef}
-            className="flex items-center gap-1 overflow-x-auto scroll-line lg:no-scrollbar whitespace-nowrap py-1 w-full scroll-smooth"
+            className="flex items-center gap-1 md:gap-2 overflow-x-auto scroll-line lg:no-scrollbar whitespace-nowrap py-1 w-full scroll-smooth"
           >
             {filteredGroups.map((group, idx) => (
               <div
@@ -183,13 +183,13 @@ export default function TopNavigation() {
                           setActiveDropdown(group.title);
                       }
                   }}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold capitalize tracking-normal transition-all flex-shrink-0
+                  className={`flex items-center gap-1 md:gap-1.5 px-3 md:px-4 py-1.5 md:py-2 rounded-full text-sm font-semibold capitalize tracking-normal transition-all flex-shrink-0
                           ${activeDropdown === group.title
                       ? 'bg-white text-primary-dark shadow-sm transform scale-105'
                       : 'text-white/90 hover:bg-white/20 hover:text-white'}
                       `}
                 >
-                  {group.icon && <group.icon className="text-lg flex-shrink-0" />}
+                  {group.icon && <group.icon className="text-base md:text-lg flex-shrink-0" />}
                   <span className="flex-shrink-0">{group.title.toLowerCase()}</span>
                   <FiChevronDown className={`transition-transform duration-200 flex-shrink-0 ${activeDropdown === group.title ? 'rotate-180' : 'opacity-70'}`} />
                 </button>

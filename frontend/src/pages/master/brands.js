@@ -238,7 +238,7 @@ export default function BrandMaster() {
 
       {/* Add / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[50000] p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-slate-800">
