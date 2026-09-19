@@ -384,8 +384,9 @@ export default function Users() {
                           className="relative flex items-center cursor-pointer focus:outline-none group"
                           title={user.isActive ? 'Deactivate User Account' : 'Activate User Account'}
                         >
-                          <div className={`w-11 h-6 rounded-full transition-colors duration-300 ${user.isActive ? 'bg-primary shadow-inner' : 'bg-slate-200'}`}></div>
-                          <div className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform ${user.isActive ? 'translate-x-5' : 'translate-x-0'} shadow-md group-hover:scale-110`}></div>
+                          <div className={`relative shrink-0 w-11 h-6 rounded-full transition-colors duration-300 ${user.isActive ? 'bg-primary shadow-inner' : 'bg-slate-200'}`}>
+                            <div className={`absolute left-[2px] top-[2px] w-5 h-5 bg-white rounded-full transition-transform duration-300 transform ${user.isActive ? 'translate-x-full' : 'translate-x-0'} shadow-sm group-hover:scale-110`}></div>
+                          </div>
                         </button>
                       )}
                     </div>
@@ -611,7 +612,7 @@ export default function Users() {
                             onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
                             disabled={currentUser?.role !== 'admin'}
                           />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
+                          <div className="relative shrink-0 w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
                           <span className="ml-3 text-xs font-medium text-slate-700 uppercase tracking-tight">Account is Active</span>
                         </label>
                       </div>
@@ -636,7 +637,7 @@ export default function Users() {
                           onChange={() => toggleModule(dashboardModule)}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
+                        <div className="relative shrink-0 w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
                         <span className={`ml-3 text-[10px] font-medium tracking-tight uppercase ${formData.allowedModules?.includes(dashboardModule) ? 'text-primary-dark' : 'text-slate-500'}`}>DASHBOARD</span>
                       </label>
                     </div>
@@ -662,7 +663,7 @@ export default function Users() {
                                   onChange={() => toggleModule(group.title)}
                                   className="sr-only peer"
                                 />
-                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
+                                <div className="relative shrink-0 w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
                               </label>
                               <span className="font-semibold text-slate-700 text-[10px] uppercase tracking-wide">{group.title}</span>
                             </div>
@@ -683,7 +684,7 @@ export default function Users() {
                                         disabled={isParentSelected}
                                         className="sr-only peer"
                                       />
-                                      <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
+                                      <div className="relative shrink-0 w-7 h-4 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all after:shadow-sm peer-checked:bg-primary"></div>
                                     </div>
                                     <span className={`text-[11px] ${isSelected || isParentSelected ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.name}</span>
                                   </label>

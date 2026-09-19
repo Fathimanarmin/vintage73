@@ -114,7 +114,7 @@ export default function BankReconciliation() {
     );
 
     return (
-        <div className="p-6 max-w-[1400px] mx-auto min-h-screen bg-slate-50 animate-in fade-in duration-500">
+        <div className="p-4 sm:p-6 w-full min-h-screen bg-slate-50 animate-in fade-in duration-500">
             <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-800 flex items-center gap-3">

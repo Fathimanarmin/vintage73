@@ -96,7 +96,7 @@ export default function CreditManagement() {
     };
 
     return (
-        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-8 w-full">
             <div className="mb-8">
                 <span className="text-3xl font-extrabold text-slate-800 tracking-tight">{companyProfile?.currencySymbol || '₹'}{Number(stats.totalCredit).toFixed(0)}</span>
                 <p className="text-slate-500 mt-1 font-medium">Track outstanding payments and send reminders</p>

@@ -160,7 +160,7 @@ export default function TerminalMaster() {
     const isThisTerminal = (code) => code === thisTerminalId;
 
     return (
-        <div className="max-w-6xl mx-auto py-8 px-4">
+        <div className="w-full py-8 px-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-2">

@@ -81,7 +81,7 @@ export default function GSTSettings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
+    <div className="w-full pb-20">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-primary-light/10 flex items-center justify-center">
           <FiSettings className="text-primary" size={20} />

@@ -55,7 +55,7 @@ export default function HSNSummaryReport() {
                 <title>HSN Summary | POS</title>
             </Head>
 
-            <div className="max-w-7xl mx-auto">
+            <div className="w-full">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl font-semibold text-slate-800">HSN Summary</h1>

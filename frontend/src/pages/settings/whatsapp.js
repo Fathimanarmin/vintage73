@@ -63,7 +63,7 @@ export default function WhatsAppSettings() {
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-5xl mx-auto space-y-8 pb-12"
+            className="w-full space-y-8 pb-12"
         >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

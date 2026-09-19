@@ -54,7 +54,7 @@ export default function HRMSDashboard() {
     const isCheckedOut = !!status?.checkOut;
 
     return (
-        <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <div className="p-6 w-full space-y-6">
             <header>
                 <h1 className="text-2xl font-semibold text-slate-800">HRMS Dashboard</h1>
                 <p className="text-slate-500">Welcome, {user?.name}</p>

@@ -87,7 +87,7 @@ export default function CompanyProfile() {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="max-w-5xl mx-auto">
+      <div className="w-full">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-slate-800">Company Profile</h1>

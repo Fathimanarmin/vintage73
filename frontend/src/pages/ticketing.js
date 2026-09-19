@@ -333,7 +333,7 @@ export default function Ticketing() {
       <div className="fixed -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed -bottom-24 -left-24 w-96 h-96 bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20 pt-12 relative px-4 lg:px-8">
+      <div className="w-full space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20 pt-12 relative px-4 lg:px-8">
         
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div>
@@ -353,7 +353,7 @@ export default function Ticketing() {
             )}
             <button 
               onClick={() => { setNewTicket({ ...newTicket, branchId: user?.branchId || '' }); setShowCreateModal(true); }}
-              className="bg-slate-900 text-white px-6 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm hover:shadow-lg w-full sm:w-auto">
+              className="bg-primary text-white px-6 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-sm hover:shadow-lg w-full sm:w-auto">
               <FiPlus size={18} />
               <span>{user?.role === 'admin' ? 'New Ticket' : 'Create Ticket'}</span>
             </button>
@@ -486,7 +486,7 @@ export default function Ticketing() {
                         </div>
                      </td>
                     <td className="px-6 py-4 text-right">
-                       <button className="h-10 w-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all ml-auto">
+                       <button className="h-10 w-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center hover:bg-primary hover:text-white transition-all ml-auto">
                           <FiArrowRight size={18} />
                        </button>
                     </td>
@@ -620,7 +620,7 @@ export default function Ticketing() {
                    <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-100">
                      {priorities.map(p => (
                        <button key={p} type="button" onClick={() => setNewTicket({...newTicket, priority: p})}
-                         className={`flex-1 py-2 rounded-lg font-medium text-[10px] uppercase tracking-wider transition-all ${newTicket.priority === p ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{p}</button>
+                         className={`flex-1 py-2 rounded-lg font-medium text-[10px] uppercase tracking-wider transition-all ${newTicket.priority === p ? 'bg-primary text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{p}</button>
                      ))}
                    </div>
                 </div>
@@ -640,7 +640,7 @@ export default function Ticketing() {
                   </div>
                 </div>
 
-                <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-xl text-xs font-medium uppercase tracking-widest hover:bg-black transition-all active:scale-[0.98] mt-4 shadow-lg shadow-slate-200">
+                <button type="submit" className="w-full py-4 bg-primary text-white rounded-xl text-xs font-medium uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-[0.98] mt-4 shadow-lg shadow-primary/20">
                    Create Support Ticket
                 </button>
               </form>
@@ -664,7 +664,7 @@ export default function Ticketing() {
               <div className="flex-1 flex flex-col lg:overflow-hidden bg-white">
                 <div className="px-4 sm:px-8 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0 sticky top-0 z-10 rounded-t-2xl lg:rounded-none">
                   <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    <span className="px-2 py-1 rounded bg-slate-900 text-white text-[10px] font-medium tracking-wider">#{t.ticketId}</span>
+                    <span className="px-2 py-1 rounded bg-primary text-white text-[10px] font-medium tracking-wider">#{t.ticketId}</span>
                     <span className={`px-2 py-1 rounded text-[10px] font-medium uppercase border ${getStatusColor(t.status)}`}>{t.status}</span>
                   </div>
                   <button onClick={closeDetailAndClearUrl} className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"><FiXCircle size={22} /></button>

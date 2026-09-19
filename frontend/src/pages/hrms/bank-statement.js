@@ -59,7 +59,7 @@ export default function BankStatementPage() {
     const totalAmount = payrolls.reduce((s, p) => s + Number(p.netSalary), 0);
 
     return (
-        <div className="p-6 max-w-[1200px] mx-auto space-y-6">
+        <div className="p-6 w-full space-y-6">
             {/* Standard Header */}
             <header className="bg-slate-900 p-4 rounded-2xl shadow-lg border border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-4">

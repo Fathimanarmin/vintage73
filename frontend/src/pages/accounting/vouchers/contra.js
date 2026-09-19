@@ -199,7 +199,7 @@ export default function ContraEntry() {
     const selectedToAccount = ledgers.find(l => l.id == formData.toAccount);
 
     return (
-        <div className="max-w-6xl mx-auto p-4 md:p-6 animate-in fade-in duration-500">
+        <div className="w-full space-y-6 pb-12 animate-in fade-in duration-300">
             {printVoucher && (
                 <VoucherPrint
                     voucher={printVoucher}
@@ -207,27 +207,27 @@ export default function ContraEntry() {
                 />
             )}
 
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
                 <div>
-                    <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-md">
+                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 tracking-tight">
+                        <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-md">
                             <FiRefreshCw className="text-white" size={20} />
                         </div>
                         Contra Entry
                     </h1>
-                    <p className="text-slate-500 text-xs font-medium mt-1 uppercase tracking-wider">Transfer between cash and bank accounts</p>
+                    <p className="text-slate-400 text-xs font-semibold mt-1 uppercase tracking-wider">Transfer between cash and bank accounts</p>
                 </div>
 
-                <div className="flex bg-slate-100 p-1 rounded-lg w-fit shadow-inner">
+                <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit shadow-inner">
                     <button
                         onClick={() => { setActiveTab('create'); if (!editId) resetForm(); }}
-                        className={`px-5 py-2 rounded-lg text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'create' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                        className={`px-5 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'create' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                     >
                         <FiPlus /> {editId ? 'EDIT ENTRY' : 'NEW ENTRY'}
                     </button>
                     <button
                         onClick={() => setActiveTab('history')}
-                        className={`px-5 py-2 rounded-lg text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'history' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                        className={`px-5 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'history' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                     >
                         <FiList /> HISTORY
                     </button>
@@ -235,27 +235,27 @@ export default function ContraEntry() {
             </header>
 
             {activeTab === 'create' ? (
-                <div className="space-y-4">
-                    <div className="bg-white rounded-xl shadow-md border border-slate-200">
+                <div className="space-y-6">
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
                         {/* Status / Header Bar */}
-                        <div className={`px-6 py-2 flex justify-between items-center ${editId ? 'bg-blue-600' : 'bg-primary-dark'} transition-colors`}>
+                        <div className={`px-6 py-3 flex justify-between items-center ${editId ? 'bg-blue-600' : 'bg-primary-dark'} transition-colors`}>
                             <div className="flex items-center gap-4">
-                                <span className="text-[10px] font-medium text-white/70 uppercase tracking-widest">Type:</span>
-                                <span className="text-xs font-medium text-white uppercase tracking-wider">
+                                <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Type:</span>
+                                <span className="text-xs font-bold text-white uppercase tracking-wider">
                                     {editId ? 'AMENDMENT MODE' : 'INTERNAL BANK/CASH CONTRA'}
                                 </span>
                             </div>
                             {editId && (
-                                <button onClick={resetForm} className="text-[10px] font-medium text-white uppercase tracking-wider hover:underline flex items-center gap-1">
+                                <button onClick={resetForm} className="text-[10px] font-bold text-white uppercase tracking-wider hover:underline flex items-center gap-1">
                                     <FiX size={14} /> Cancel Editing
                                 </button>
                             )}
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6">
+                        <form onSubmit={handleSubmit} className="p-6 sm:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <label className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2">Voucher Date</label>
+                                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Voucher Date</label>
                                     <div className="relative group">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-primary transition-colors">
                                             <FiCalendar size={18} className="text-slate-400 group-focus-within:text-primary" />
@@ -263,32 +263,32 @@ export default function ContraEntry() {
                                         <input
                                             required
                                             type="date"
-                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm font-semibold transition-all"
+                                            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:border-primary text-sm font-semibold transition-all"
                                             value={formData.date}
                                             onChange={e => setFormData({ ...formData, date: e.target.value })}
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2">Reference No. (Optional)</label>
+                                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Reference No. (Optional)</label>
                                     <input
                                         type="text"
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm font-semibold transition-all font-mono"
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:border-primary text-sm font-semibold transition-all font-mono"
                                         value={formData.reference}
                                         onChange={e => setFormData({ ...formData, reference: e.target.value })}
                                         placeholder="EX: BK-1002, IMPS, etc."
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 text-primary">Transfer Amount (₹)</label>
+                                    <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2 text-primary">Transfer Amount (₹)</label>
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-primary">₹</span>
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-primary">₹</span>
                                         <input
                                             required
                                             type="number"
                                             step="0.01"
                                             min="0.01"
-                                            className="w-full pl-8 pr-4 py-3 bg-primary-light/30 border border-primary-light rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white text-lg font-medium text-primary tabular-nums transition-all"
+                                            className="w-full pl-8 pr-4 py-3 bg-primary-light/30 border border-primary-light rounded-2xl focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white text-lg font-bold text-primary tabular-nums transition-all"
                                             value={formData.amount}
                                             onChange={e => setFormData({ ...formData, amount: e.target.value })}
                                             placeholder="0.00"
@@ -297,16 +297,16 @@ export default function ContraEntry() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-                                <div className="flex-1 w-full p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                            <div className="flex flex-col lg:flex-row items-center gap-6 mb-8">
+                                <div className="flex-1 w-full p-5 rounded-2xl border border-slate-200/80 bg-slate-50/60">
                                     <div className="flex justify-between items-center mb-3">
-                                        <label className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                        <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                                             Transfer From (Credit)
                                         </label>
                                         {selectedFromAccount && (
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${selectedFromAccount.currentBalance >= 0 ? 'bg-primary' : 'bg-red-500'}`} />
-                                                <span className="text-[10px] font-medium text-slate-500">
+                                                <div className={`w-2 h-2 rounded-full ${selectedFromAccount.currentBalance >= 0 ? 'bg-primary' : 'bg-red-500'}`} />
+                                                <span className="text-[11px] font-semibold text-slate-600">
                                                     Bal: ₹{Math.abs(selectedFromAccount.currentBalance).toFixed(2)} {selectedFromAccount.currentBalance >= 0 ? 'Dr' : 'Cr'}
                                                 </span>
                                             </div>
@@ -321,19 +321,19 @@ export default function ContraEntry() {
                                     <p className="text-[10px] text-slate-400 mt-2 italic">Funds will be deducted from this ledger.</p>
                                 </div>
 
-                                <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm border border-slate-100 -mx-5 z-10 text-blue-500">
-                                    <FiRefreshCw size={18} />
+                                <div className="hidden lg:flex items-center justify-center w-12 h-12 rounded-2xl bg-white shadow-md border border-slate-100 -mx-6 z-10 text-primary">
+                                    <FiRefreshCw size={20} />
                                 </div>
 
-                                <div className="flex-1 w-full p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                                <div className="flex-1 w-full p-5 rounded-2xl border border-slate-200/80 bg-slate-50/60">
                                     <div className="flex justify-between items-center mb-3">
-                                        <label className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                        <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                                             Transfer To (Debit)
                                         </label>
                                         {selectedToAccount && (
                                             <div className="flex items-center gap-2">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${selectedToAccount.currentBalance >= 0 ? 'bg-primary' : 'bg-red-500'}`} />
-                                                <span className="text-[10px] font-medium text-slate-500">
+                                                <div className={`w-2 h-2 rounded-full ${selectedToAccount.currentBalance >= 0 ? 'bg-primary' : 'bg-red-500'}`} />
+                                                <span className="text-[11px] font-semibold text-slate-600">
                                                     Bal: ₹{Math.abs(selectedToAccount.currentBalance).toFixed(2)} {selectedToAccount.currentBalance >= 0 ? 'Dr' : 'Cr'}
                                                 </span>
                                             </div>
@@ -350,11 +350,11 @@ export default function ContraEntry() {
                             </div>
 
                             <div className="mb-8">
-                                <label className="block text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2">Detailed Narration</label>
+                                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Detailed Narration</label>
                                 <textarea
                                     required
                                     rows="2"
-                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-transparent focus:bg-white text-sm font-semibold text-slate-800 transition-all resize-none italic"
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-slate-900 focus:border-transparent focus:bg-white text-sm font-semibold text-slate-800 transition-all resize-none italic"
                                     value={formData.narration}
                                     onChange={e => setFormData({ ...formData, narration: e.target.value })}
                                     placeholder="E.g. Cash deposited in bank, internal fund transfer, etc..."
@@ -365,7 +365,7 @@ export default function ContraEntry() {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="flex-1 bg-slate-900 text-white py-3.5 rounded-lg font-medium text-xs uppercase tracking-widest hover:bg-slate-800 shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 bg-slate-900 text-white py-3.5 rounded-2xl font-semibold text-xs uppercase tracking-widest hover:bg-slate-800 shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                     <FiSave size={16} />
                                     {isSubmitting ? 'PROCESSING...' : (editId ? 'UPDATE ENTRY' : 'POST CONTRA ENTRY')}
@@ -374,7 +374,7 @@ export default function ContraEntry() {
                                     <button
                                         type="button"
                                         onClick={resetForm}
-                                        className="px-8 py-3.5 rounded-lg font-medium text-xs uppercase tracking-widest border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all"
+                                        className="px-8 py-3.5 rounded-2xl font-semibold text-xs uppercase tracking-widest border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all"
                                     >
                                         CANCEL
                                     </button>
@@ -383,36 +383,36 @@ export default function ContraEntry() {
                         </form>
                     </div>
 
-                    <div className="bg-slate-800 rounded-xl p-3 flex items-center gap-3 border-l-4 border-primary">
-                        <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary font-medium text-xs">!</div>
-                        <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
+                    <div className="bg-slate-900 rounded-2xl p-4 flex items-center gap-3 border-l-4 border-primary text-white shadow-sm">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">!</div>
+                        <p className="text-xs font-medium text-slate-300">
                             Contra entries are internal transfers. They do not affect the net worth of the business, only its liquidity distribution.
                         </p>
                     </div>
                 </div>
             ) : (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-visible">
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
                         {/* Filter Bar */}
-                        <div className="bg-slate-50/50 p-4 border-b border-slate-200 flex flex-wrap items-center gap-4">
+                        <div className="bg-slate-50/70 p-4 sm:p-5 border-b border-slate-200 flex flex-wrap items-end gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Date From</label>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date From</label>
                                     <div className="relative">
                                         <input 
                                             type="date" 
-                                            className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-md p-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/10 transition-all" 
+                                            className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl p-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all shadow-sm" 
                                             value={filterStartDate}
                                             onChange={e => setFilterStartDate(e.target.value)}
                                         />
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Date To</label>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date To</label>
                                     <div className="relative">
                                         <input 
                                             type="date" 
-                                            className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-md p-1.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary/10 transition-all" 
+                                            className="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl p-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all shadow-sm" 
                                             value={filterEndDate}
                                             onChange={e => setFilterEndDate(e.target.value)}
                                         />
@@ -420,8 +420,8 @@ export default function ContraEntry() {
                                 </div>
                             </div>
                             
-                            <div className="flex-1 min-w-[200px] flex flex-col gap-1">
-                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Account/Ledger</label>
+                            <div className="flex-1 min-w-[220px] flex flex-col gap-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account/Ledger</label>
                                 <SearchableSelect
                                     options={ledgers.map(l => ({ value: l.id, label: `${l.name} (${l.group?.name})` }))}
                                     value={filterLedgerId}
@@ -430,16 +430,16 @@ export default function ContraEntry() {
                                 />
                             </div>
 
-                            <div className="flex items-end gap-2 pt-4">
+                            <div className="flex items-center gap-2">
                                 <button 
                                     onClick={fetchHistory}
-                                    className="px-6 py-2 bg-slate-900 text-white text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-slate-800 shadow-sm hover:shadow transition-all active:scale-95 flex items-center gap-2"
+                                    className="px-6 py-2.5 bg-slate-900 text-white text-xs font-semibold rounded-xl uppercase tracking-wider hover:bg-slate-800 shadow-sm hover:shadow transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                                 >
-                                    <FiSearch size={12} /> Search
+                                    <FiSearch size={14} /> Search
                                 </button>
                                 <button 
                                     onClick={clearFilters}
-                                    className="px-6 py-2 border border-slate-200 text-slate-500 text-[10px] font-bold rounded-lg uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95"
+                                    className="px-5 py-2.5 border border-slate-200 bg-white text-slate-600 text-xs font-semibold rounded-xl uppercase tracking-wider hover:bg-slate-50 transition-all active:scale-95 cursor-pointer shadow-sm"
                                 >
                                     Reset
                                 </button>

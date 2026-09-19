@@ -210,7 +210,7 @@ export default function StockTransfer() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="w-full p-4 md:p-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Stock Transfer</h1>
@@ -240,7 +240,7 @@ export default function StockTransfer() {
       </div>
 
       {activeTab === 'new' ? (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 max-w-4xl">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2 whitespace-nowrap">From Branch</label>

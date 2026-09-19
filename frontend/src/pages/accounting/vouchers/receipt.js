@@ -224,7 +224,7 @@ export default function ReceiptVoucher() {
     const selectedIncomeAccount = ledgers.find(l => l.id == formData.incomeAccount);
 
     return (
-        <div className="max-w-6xl mx-auto p-4 md:p-6 animate-in fade-in duration-500">
+        <div className="w-full space-y-6 pb-12 animate-in fade-in duration-300">
             {printVoucher && (
                 <VoucherPrint
                     voucher={printVoucher}
