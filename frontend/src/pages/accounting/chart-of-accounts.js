@@ -286,14 +286,14 @@ export default function ChartOfAccounts() {
 
             {/* Add/Edit Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full">
-                        <div className="p-6 border-b border-slate-200">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[99999] p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col">
+                        <div className="p-6 border-b border-slate-200 shrink-0">
                             <h2 className="text-xl font-semibold text-slate-800">
                                 {editingId ? 'Edit Ledger' : 'Add New Ledger'}
                             </h2>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
                             <div>
                                 <label className="block text-xs font-medium text-slate-600 uppercase tracking-wide mb-2">
                                     Ledger Name *

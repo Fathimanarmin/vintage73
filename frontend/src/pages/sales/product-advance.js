@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '@/lib/api';
 import { FiPlus, FiCreditCard, FiSearch, FiClock, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -172,9 +173,9 @@ export default function ProductAdvance() {
                 </div>
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            {showModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
                             <h2 className="text-xl font-semibold text-slate-800">Add Advance</h2>
                             <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
@@ -243,11 +244,12 @@ export default function ProductAdvance() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
             {/* History Modal */}
-            {showHistoryModal && (
-                <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+            {showHistoryModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
                         <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
@@ -300,7 +302,8 @@ export default function ProductAdvance() {
                             <button className="btn btn-primary px-6" onClick={() => setShowHistoryModal(false)}>Close</button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

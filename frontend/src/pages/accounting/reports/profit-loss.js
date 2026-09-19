@@ -133,105 +133,105 @@ export default function ProfitLoss() {
                 <div className="text-center py-20 text-xs text-slate-400 uppercase tracking-widest font-normal animate-pulse">Analyzing Financial Records...</div>
             ) : data ? (
                 <div className="space-y-6 overflow-x-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                         {/* INCOME TABLE */}
-                        <div className="border border-slate-300 shadow-xl shadow-slate-200/50 bg-white table-container scroll-line lg:no-scrollbar overflow-x-auto">
-                            <div className="bg-gradient-to-r from-primary-dark to-primary px-4 py-3 border-b border-slate-300 text-xs text-white uppercase font-normal tracking-wider min-w-[300px]">
+                        <div className="border border-slate-300 shadow-xl shadow-slate-200/50 bg-white flex flex-col h-full rounded-xl overflow-hidden">
+                            <div className="bg-gradient-to-r from-primary-dark to-primary px-4 py-3 border-b border-slate-300 text-xs text-white uppercase font-normal tracking-wider shrink-0">
                                 Income Analysis
                             </div>
-                            <table className="w-full border-collapse min-w-[300px]">
-                                <thead className="bg-slate-50 text-[11px] uppercase text-slate-400 border-b border-slate-200">
-                                    <tr className="whitespace-nowrap">
-                                        <th className="px-4 py-1.5 text-left font-normal border-r border-slate-200 w-12">#</th>
-                                        <th className="px-4 py-1.5 text-left font-normal border-r border-slate-200">Particulars</th>
-                                        <th className="px-4 py-1.5 text-right font-normal">Amount (₹)</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 font-normal">
-                                    {filteredIncome.length === 0 ? (
-                                        <tr><td colSpan="3" className="px-4 py-10 text-center text-slate-300 text-xs uppercase tracking-widest font-normal">No Income Recorded</td></tr>
-                                    ) : (
-                                        filteredIncome.map((item, index) => (
-                                            <tr key={index} className="hover:bg-slate-50 transition-colors text-[13px] text-slate-600">
-                                                <td className="px-4 py-1.5 text-[10px] text-slate-400 border-r border-slate-100">{index + 1}</td>
-                                                <td className="px-4 py-1.5 border-r border-slate-100">
-                                                    <div className="font-normal">{item.ledgerName}</div>
-                                                    <div className="text-[10px] text-slate-400 uppercase tracking-tighter">{item.groupName}</div>
-                                                </td>
-                                                <td className="px-4 py-1.5 text-right tabular-nums text-primary-dark">
-                                                    {item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                    {/* Vertical Spacer */}
-                                    {[...Array(Math.max(0, 12 - filteredIncome.length))].map((_, i) => (
-                                        <tr key={`empty-inc-${i}`} className="h-9">
-                                            <td className="border-r border-slate-100"></td>
-                                            <td className="border-r border-slate-100"></td>
-                                            <td></td>
+                            <div className="flex-1 overflow-x-auto">
+                                <table className="w-full border-collapse min-w-[300px]">
+                                    <thead className="bg-slate-100 text-[11px] uppercase text-slate-600 font-medium border-b border-slate-200">
+                                        <tr className="whitespace-nowrap">
+                                            <th className="px-4 py-2.5 text-left font-medium border-r border-slate-200 w-12">#</th>
+                                            <th className="px-4 py-2.5 text-left font-medium border-r border-slate-200">Particulars</th>
+                                            <th className="px-4 py-2.5 text-right font-medium">Amount (₹)</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="bg-gradient-to-r from-primary-dark to-primary border-t border-slate-300">
-                                        <td className="px-4 py-3 font-normal text-white border-r border-white/10 uppercase text-xs" colSpan="2">Total Operating Income</td>
-                                        <td className="px-4 py-3 text-right tabular-nums text-white font-normal text-sm">
-                                            {data.totalIncome.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 font-normal">
+                                        {filteredIncome.length === 0 ? (
+                                            <tr><td colSpan="3" className="px-4 py-10 text-center text-slate-400 text-xs uppercase tracking-widest font-medium">No Income Recorded</td></tr>
+                                        ) : (
+                                            filteredIncome.map((item, index) => (
+                                                <tr key={index} className="hover:bg-slate-50 transition-colors text-[13px] text-slate-700">
+                                                    <td className="px-4 py-2 text-[10px] text-slate-500 border-r border-slate-100">{index + 1}</td>
+                                                    <td className="px-4 py-2 border-r border-slate-100">
+                                                        <div className="font-medium text-[13px]">{item.ledgerName}</div>
+                                                        <div className="text-[10px] text-slate-500 uppercase tracking-tighter mt-0.5">{item.groupName}</div>
+                                                    </td>
+                                                    <td className="px-4 py-2 text-right tabular-nums text-primary-dark font-medium">
+                                                        {item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                        {/* Vertical Spacer */}
+                                        {[...Array(Math.max(0, 12 - filteredIncome.length))].map((_, i) => (
+                                            <tr key={`empty-inc-${i}`} className="h-12">
+                                                <td className="border-r border-slate-100"></td>
+                                                <td className="border-r border-slate-100"></td>
+                                                <td></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="bg-gradient-to-r from-primary-dark to-primary border-t border-slate-300 px-4 py-3 flex justify-between items-center text-white shrink-0 mt-auto">
+                                <span className="font-normal uppercase text-xs">Total Operating Income</span>
+                                <span className="tabular-nums font-medium text-sm">
+                                    {data.totalIncome.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
                         </div>
 
                         {/* EXPENSES TABLE */}
-                        <div className="border border-slate-300 shadow-xl shadow-slate-200/50 bg-white table-container scroll-line lg:no-scrollbar overflow-x-auto">
-                            <div className="bg-gradient-to-r from-primary-dark to-primary px-4 py-3 border-b border-slate-300 text-xs text-white uppercase font-normal tracking-wider min-w-[300px]">
+                        <div className="border border-slate-300 shadow-xl shadow-slate-200/50 bg-white flex flex-col h-full rounded-xl overflow-hidden">
+                            <div className="bg-gradient-to-r from-primary-dark to-primary px-4 py-3 border-b border-slate-300 text-xs text-white uppercase font-normal tracking-wider shrink-0">
                                 Expense Analysis
                             </div>
-                            <table className="w-full border-collapse min-w-[300px]">
-                                <thead className="bg-slate-50 text-[11px] uppercase text-slate-400 border-b border-slate-200">
-                                    <tr className="whitespace-nowrap">
-                                        <th className="px-4 py-1.5 text-left font-normal border-r border-slate-200 w-12">#</th>
-                                        <th className="px-4 py-1.5 text-left font-normal border-r border-slate-200">Particulars</th>
-                                        <th className="px-4 py-1.5 text-right font-normal">Amount (₹)</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 font-normal">
-                                    {filteredExpenses.length === 0 ? (
-                                        <tr><td colSpan="3" className="px-4 py-10 text-center text-slate-300 text-xs uppercase tracking-widest font-normal">No Expenses Recorded</td></tr>
-                                    ) : (
-                                        filteredExpenses.map((item, index) => (
-                                            <tr key={index} className="hover:bg-slate-50 transition-colors text-[13px] text-slate-600">
-                                                <td className="px-4 py-1.5 text-[10px] text-slate-400 border-r border-slate-100">{index + 1}</td>
-                                                <td className="px-4 py-1.5 border-r border-slate-100">
-                                                    <div className="font-normal">{item.ledgerName}</div>
-                                                    <div className="text-[10px] text-slate-400 uppercase tracking-tighter">{item.groupName}</div>
-                                                </td>
-                                                <td className="px-4 py-1.5 text-right tabular-nums text-rose-600">
-                                                    {item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                    {/* Vertical Spacer */}
-                                    {[...Array(Math.max(0, 12 - filteredExpenses.length))].map((_, i) => (
-                                        <tr key={`empty-exp-${i}`} className="h-9">
-                                            <td className="border-r border-slate-100"></td>
-                                            <td className="border-r border-slate-100"></td>
-                                            <td></td>
+                            <div className="flex-1 overflow-x-auto">
+                                <table className="w-full border-collapse min-w-[300px]">
+                                    <thead className="bg-slate-100 text-[11px] uppercase text-slate-600 font-medium border-b border-slate-200">
+                                        <tr className="whitespace-nowrap">
+                                            <th className="px-4 py-2.5 text-left font-medium border-r border-slate-200 w-12">#</th>
+                                            <th className="px-4 py-2.5 text-left font-medium border-r border-slate-200">Particulars</th>
+                                            <th className="px-4 py-2.5 text-right font-medium">Amount (₹)</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="bg-gradient-to-r from-primary-dark to-primary border-t border-slate-300">
-                                        <td className="px-4 py-3 font-normal text-white border-r border-white/10 uppercase text-xs" colSpan="2">Total Operating Expenses</td>
-                                        <td className="px-4 py-3 text-right tabular-nums text-white font-normal text-sm">
-                                            {data.totalExpenses.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 font-normal">
+                                        {filteredExpenses.length === 0 ? (
+                                            <tr><td colSpan="3" className="px-4 py-10 text-center text-slate-400 text-xs uppercase tracking-widest font-medium">No Expenses Recorded</td></tr>
+                                        ) : (
+                                            filteredExpenses.map((item, index) => (
+                                                <tr key={index} className="hover:bg-slate-50 transition-colors text-[13px] text-slate-700">
+                                                    <td className="px-4 py-2 text-[10px] text-slate-500 border-r border-slate-100">{index + 1}</td>
+                                                    <td className="px-4 py-2 border-r border-slate-100">
+                                                        <div className="font-medium text-[13px]">{item.ledgerName}</div>
+                                                        <div className="text-[10px] text-slate-500 uppercase tracking-tighter mt-0.5">{item.groupName}</div>
+                                                    </td>
+                                                    <td className="px-4 py-2 text-right tabular-nums text-rose-600 font-medium">
+                                                        {item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                        {/* Vertical Spacer */}
+                                        {[...Array(Math.max(0, 12 - filteredExpenses.length))].map((_, i) => (
+                                            <tr key={`empty-exp-${i}`} className="h-12">
+                                                <td className="border-r border-slate-100"></td>
+                                                <td className="border-r border-slate-100"></td>
+                                                <td></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="bg-gradient-to-r from-primary-dark to-primary border-t border-slate-300 px-4 py-3 flex justify-between items-center text-white shrink-0 mt-auto">
+                                <span className="font-normal uppercase text-xs">Total Operating Expenses</span>
+                                <span className="tabular-nums font-medium text-sm">
+                                    {data.totalExpenses.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

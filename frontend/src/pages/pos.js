@@ -1632,7 +1632,7 @@ const CURRENCY_SYMBOLS = {
 
             {/* Payment Modal */}
             {showPaymentModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-300">
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-300">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
 
                         {/* Standard Header */}
@@ -1786,7 +1786,7 @@ const CURRENCY_SYMBOLS = {
             )}
             {/* Sales History Modal */}
             {showHistoryModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowHistoryModal(false)}>
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowHistoryModal(false)}>
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="p-4 border-b flex justify-between items-center bg-slate-50">
                             <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2"><FiClock /> Sales History</h2>
@@ -1949,7 +1949,7 @@ const CURRENCY_SYMBOLS = {
 
             {/* Add Customer Modal */}
             {showCustomerModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                             <h2 className="text-xl font-semibold text-slate-800">Add New Customer</h2>
@@ -1975,7 +1975,7 @@ const CURRENCY_SYMBOLS = {
 
             {/* Size Selection Modal */}
             {sizeModalProduct && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
                         {/* Header */}
                         <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">

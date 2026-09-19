@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '@/lib/api';
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiGrid, FiTag, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -347,8 +348,8 @@ export default function CategoryMaster() {
                 </div>
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+            {showModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-start justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg my-8">
                         <div className="p-5 border-b border-gray-100 flex justify-between items-center">
                             <h3 className="font-medium text-lg text-slate-800">
@@ -517,7 +518,8 @@ export default function CategoryMaster() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

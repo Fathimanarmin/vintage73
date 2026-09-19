@@ -92,7 +92,7 @@ export default function Layout({ children }) {
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col relative">
       {/* Global Screen Layout Wallpaper - Only visible on Main Menu */}
       {(router.pathname === '/' || router.pathname === '/dashboard') && theme.companyProfile?.dashboardImageUrl && (
-        <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none mt-24 pb-12 px-6">
+        <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none mt-24 pb-12 px-4 md:px-6">
           <img
             src={`${getServerUrl()}${theme.companyProfile.dashboardImageUrl}`}
             alt="Layout Background"
@@ -102,29 +102,29 @@ export default function Layout({ children }) {
       )}
 
       {showNavigation && (
-        <div className="flex flex-col bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-[9999]">
+        <div className="flex flex-col bg-white border-b border-gray-200 sticky top-0 z-[9999]">
           {/* 1. Global Header */}
-          <header className="h-14 flex items-center justify-between px-6 border-b border-gray-100">
+          <header className="h-14 flex items-center justify-between px-3 md:px-6 border-b border-gray-100">
             {/* Left - Logo */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {theme.companyProfile?.logoUrl ? (
                 <img
                   src={`${getServerUrl()}${theme.companyProfile.logoUrl}`}
                   alt="Company Logo"
-                  className="h-10 w-auto object-contain"
+                  className="h-8 md:h-10 w-auto object-contain"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-medium text-lg shadow-sm" style={{ backgroundColor: theme.primaryColor }}>
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-white font-medium text-base md:text-lg shadow-sm" style={{ backgroundColor: theme.primaryColor }}>
                   {(theme.companyProfile?.companyName || 'P').charAt(0).toUpperCase()}
                 </div>
               )}
-              <h1 className="text-xl font-semibold text-slate-800 tracking-tight">
+              <h1 className="text-lg md:text-xl font-semibold text-slate-800 tracking-tight truncate max-w-[120px] sm:max-w-none">
                 {theme.companyProfile?.companyName || 'Inventory'}
               </h1>
             </div>
 
             {/* Right - Profile & Global Actions */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 md:gap-6">
               {branch && (
                 <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-gray-50 text-slate-600 rounded-full border border-gray-200">
                   <FiMapPin className="text-xs" />
@@ -132,28 +132,28 @@ export default function Layout({ children }) {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
+              <div className="flex items-center gap-2 md:gap-3 md:pl-6 md:border-l md:border-gray-100">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-medium text-slate-800 leading-none">{user?.name || user?.username || 'Guest'}</p>
                   <p className="text-[10px] text-slate-400 font-medium mt-0.5">Logged in: {loginTime}</p>
                 </div>
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-sm border-2 border-white ring-2 ring-gray-100"
+                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-white font-medium text-xs md:text-sm border-2 border-white ring-2 ring-gray-100"
                   style={{ backgroundColor: theme.primaryColor }}
                 >
                   {(user?.name || user?.username || 'U').charAt(0).toUpperCase()}
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-1 md:gap-2 ml-1 md:ml-4">
                   {user?.role !== 'customer' && (
                     <button
                       onClick={() => setIsChatOpen(true)}
-                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+                      className="p-1.5 md:p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
                       title="Internal Chat"
                     >
-                      <IoChatbubbleEllipsesOutline className="text-2xl text-gray-600 dark:text-gray-300" />
+                      <IoChatbubbleEllipsesOutline className="text-xl md:text-2xl text-gray-600 dark:text-gray-300" />
                       {totalUnread > 0 && (
-                        <span className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-medium border-2 border-white dark:border-gray-800">
+                        <span className="absolute top-0 right-0 md:top-1 md:right-1 bg-blue-500 text-white text-[9px] md:text-[10px] w-3.5 h-3.5 md:w-4 md:h-4 flex items-center justify-center rounded-full font-medium border-2 border-white dark:border-gray-800">
                           {totalUnread}
                         </span>
                       )}
@@ -164,10 +164,10 @@ export default function Layout({ children }) {
 
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all ml-2"
+                  className="p-1.5 md:p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all ml-0 md:ml-2"
                   title="Logout"
                 >
-                  <FiLogOut className="text-xl" />
+                  <FiLogOut className="text-lg md:text-xl" />
                 </button>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function Layout({ children }) {
       )}
 
       {/* 4. Main Content Area */}
-      <main className="flex-1 overflow-x-hidden p-6 relative">
+      <main className="flex-1 overflow-x-hidden p-3 md:p-6 relative">
         <div className="max-w-[1920px] mx-auto">
           {children}
         </div>

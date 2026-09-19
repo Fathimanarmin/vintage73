@@ -354,12 +354,12 @@ export default function Products() {
 ^PW304
 ^LL200
 ^CI28
-^FO15,10^A0N,18,18^FD{{barcode}}^FS
-^BY1.5,3,38^FO15,28^BCN,38,N,N,N^FD{{barcode}}^FS
-^FO15,72^A0N,18,18^FD{{productName}}^FS
-^FO15,93^A0N,18,18^FDMRP: ₹{{price}}^FS
-^FO15,114^A0N,18,18^FDSIZE: {{size}}^FS
-^FO15,135^A0N,18,18^FD{{branchName}}^FS
+^FO15,25^A0N,16,16^FD{{productName}}^FS
+^BY1.5,2.5,30^FO15,45^BCN,30,N,N,N^FD{{barcode}}^FS
+^FO15,80^A0N,14,14^FD{{barcode}}^FS
+^FO15,100^A0N,16,16^FDPRICE: AED {{price}}^FS
+^FO15,120^A0N,16,16^FDSIZE: {{size}}^FS
+^FO15,140^A0N,14,14^FD{{branchName}}^FS
 ^PQ1,0,0,N
 ^XZ`;
     }
@@ -552,16 +552,17 @@ export default function Products() {
     try {
       let result;
       const targetPrinterLower = selectedPrinter ? selectedPrinter.toLowerCase() : '';
+      const dims = previewDimensions || { width: 38, height: 25 };
       // If the target printer is TSC or a non-Zebra thermal printer, print raster image rendered from preview
       if (previewImage && (targetPrinterLower.includes('tsc') || (!targetPrinterLower.includes('zebra') && targetPrinterLower.length > 0))) {
-        result = await printImageViaQz(previewImage, qty, selectedPrinter || null);
+        result = await printImageViaQz(previewImage, qty, selectedPrinter || null, dims);
       } else {
         try {
           result = await printZplViaQz(resolvedZpl, qty, selectedPrinter || null);
         } catch (zplErr) {
           // If ZPL raw mode fails or prints blank on non-Zebra hardware, fallback to image printing if preview image exists
           if (previewImage) {
-            result = await printImageViaQz(previewImage, qty, selectedPrinter || null);
+            result = await printImageViaQz(previewImage, qty, selectedPrinter || null, dims);
           } else {
             throw zplErr;
           }
@@ -1450,7 +1451,7 @@ export default function Products() {
 
       {/* Add / Edit Product Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[50000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-6 overflow-hidden">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[calc(100vh-48px)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl shrink-0">
@@ -2061,7 +2062,7 @@ export default function Products() {
 
       {/* Custom Status Confirmation Modal */}
       {showStatusModal && statusTarget && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in duration-200">
             <div className={`p-6 ${statusTarget.isActive ? 'bg-amber-50' : 'bg-green-50'}`}>
               <div className="flex items-center gap-4">
@@ -2116,7 +2117,7 @@ export default function Products() {
 
       {/* Print Barcode Modal */}
       {showPreviewModal && printTargetProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[115] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[99999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150 border border-slate-100 flex flex-col">
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between">
@@ -2311,7 +2312,7 @@ export default function Products() {
 
       {/* Add Brand Modal */}
       {showAddBrandModal && (
-        <div className="fixed inset-0 z-[60000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
             <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
               <h3 className="text-base font-bold text-slate-800">Add Brand</h3>

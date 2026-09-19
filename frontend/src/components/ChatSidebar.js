@@ -168,7 +168,7 @@ const ChatSidebar = ({ isOpen, onClose }) => {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 h-full w-[380px] bg-white shadow-2xl z-[70] flex flex-col"
+                        className="fixed top-0 right-0 h-full w-full max-w-[380px] sm:w-[380px] bg-white shadow-2xl z-[70] flex flex-col"
                     >
                         {/* Header */}
                         <div

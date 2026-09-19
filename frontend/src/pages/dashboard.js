@@ -125,19 +125,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8 font-sans relative">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-10">
+    <div className="space-y-6 md:space-y-8 font-sans relative">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-2 md:gap-4 relative z-10">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-800 tracking-tight">Main Menu</h1>
-          <p className="text-slate-500 mt-1">Welcome back, {userData?.name || userData?.username || 'User'}!</p>
+          <h1 className="text-2xl md:text-3xl font-semibold text-slate-800 tracking-tight">Main Menu</h1>
+          <p className="text-sm md:text-base text-slate-500 mt-1">Welcome back, {userData?.name || userData?.username || 'User'}!</p>
         </div>
-        <div className="text-sm text-slate-400 font-medium">
+        <div className="text-xs md:text-sm text-slate-400 font-medium mt-1 md:mt-0">
           {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </header>
 
       {/* Top Stats Grid - Dark Theme */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {hasAccess('SALES') && (
           <DarkStatCard
             title="Total Sales"
@@ -173,29 +173,29 @@ export default function Dashboard() {
       </div>
 
       {/* Middle Section: Recent Sales, Stock Balance & Fast Moving Products */}
-      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Recent Sales */}
         {hasAccess('SALES') && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col transition-all hover:shadow-md">
-            <div className="flex items-center space-x-2 mb-6 text-slate-800">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6 flex flex-col transition-all hover:shadow-md">
+            <div className="flex items-center space-x-2 mb-4 md:mb-6 text-slate-800">
               <FiShoppingBag className="text-primary" />
-              <h3 className="text-lg font-medium">Recent Sales</h3>
+              <h3 className="text-base md:text-lg font-medium">Recent Sales</h3>
             </div>
-            <div className="space-y-4 flex-1">
+            <div className="space-y-3 md:space-y-4 flex-1">
               {data.recentSales.length === 0 ? (
                 <p className="text-slate-400 text-sm">No recent sales</p>
               ) : (
                 data.recentSales.map(sale => (
                   <div key={sale.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-lg px-2 -mx-2 transition-colors group">
                     <div>
-                      <p className="font-medium text-slate-700 text-sm uppercase">INV-{new Date(sale.createdAt).getFullYear()}-{sale.id}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{new Date(sale.createdAt).toLocaleDateString()}</p>
+                      <p className="font-medium text-slate-700 text-[13px] md:text-sm uppercase truncate max-w-[140px] md:max-w-none">INV-{new Date(sale.createdAt).getFullYear()}-{sale.id}</p>
+                      <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">{new Date(sale.createdAt).toLocaleDateString()}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-primary text-sm">₹{Number(sale.totalAmount).toFixed(2)}</span>
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="font-medium text-primary text-[13px] md:text-sm">₹{Number(sale.totalAmount).toFixed(2)}</span>
                       <button
                         onClick={() => triggerPrint(sale)}
-                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary-light rounded-md transition-all opacity-0 group-hover:opacity-100"
+                        className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary-light rounded-md transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                         title="Print Invoice"
                       >
                         <FiPrinter size={14} />
@@ -210,24 +210,24 @@ export default function Dashboard() {
 
         {/* Stock Balance (Low Stock) */}
         {hasAccess('INVENTORY') && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col transition-all hover:shadow-md">
-            <div className="flex items-center space-x-2 mb-6 text-slate-800">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6 flex flex-col transition-all hover:shadow-md">
+            <div className="flex items-center space-x-2 mb-4 md:mb-6 text-slate-800">
               <FiBox className="text-blue-500" />
-              <h3 className="text-lg font-medium">Stock Balance</h3>
+              <h3 className="text-base md:text-lg font-medium">Stock Balance</h3>
             </div>
-            <div className="space-y-4 flex-1">
+            <div className="space-y-3 md:space-y-4 flex-1">
               {data.inventory.stockBalance.length === 0 ? (
                 <p className="text-slate-400 text-sm">No stock data</p>
               ) : (
                 data.inventory.stockBalance.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-lg px-2 -mx-2 transition-colors">
-                    <div className="max-w-[150px]">
-                      <p className="font-medium text-slate-700 text-sm truncate" title={item.name}>{item.name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{item.category || 'Uncategorized'}</p>
+                    <div className="flex-1 min-w-0 pr-2">
+                      <p className="font-medium text-slate-700 text-[13px] md:text-sm truncate" title={item.name}>{item.name}</p>
+                      <p className="text-[11px] md:text-xs text-slate-400 mt-0.5 truncate">{item.category || 'Uncategorized'}</p>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-medium text-sm ${item.stock < 10 ? 'text-red-500' : 'text-slate-800'}`}>{item.stock} units</p>
-                      <p className="text-xs text-slate-400 mt-0.5">₹{Number(item.price).toFixed(2)}</p>
+                    <div className="text-right whitespace-nowrap">
+                      <p className={`font-medium text-[13px] md:text-sm ${item.stock < 10 ? 'text-red-500' : 'text-slate-800'}`}>{item.stock} units</p>
+                      <p className="text-[11px] md:text-xs text-slate-400 mt-0.5">₹{Number(item.price).toFixed(2)}</p>
                     </div>
                   </div>
                 ))
@@ -238,29 +238,29 @@ export default function Dashboard() {
 
         {/* Fast Moving Products */}
         {(hasAccess('SALES') || hasAccess('REPORTS')) && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col transition-all hover:shadow-md">
-            <div className="flex items-center space-x-2 mb-6 text-slate-800">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 md:p-6 flex flex-col transition-all hover:shadow-md">
+            <div className="flex items-center space-x-2 mb-4 md:mb-6 text-slate-800">
               <FiTrendingUp className="text-purple-500" />
-              <h3 className="text-lg font-medium">Fast Moving</h3>
+              <h3 className="text-base md:text-lg font-medium">Fast Moving</h3>
             </div>
-            <div className="space-y-4 flex-1">
+            <div className="space-y-3 md:space-y-4 flex-1">
               {!data.fastMovingProducts || data.fastMovingProducts.length === 0 ? (
                 <p className="text-slate-400 text-sm">No sales data yet</p>
               ) : (
                 data.fastMovingProducts.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-lg px-2 -mx-2 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-xs font-medium text-purple-600 border border-purple-100">
+                  <div key={idx} className="flex justify-between items-center py-2 md:py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-lg px-2 -mx-2 transition-colors">
+                    <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0 pr-2">
+                      <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-purple-50 flex items-center justify-center text-[10px] md:text-xs font-medium text-purple-600 border border-purple-100 shrink-0">
                         {idx + 1}
                       </div>
-                      <div className="max-w-[120px]">
-                        <p className="font-medium text-slate-700 text-sm truncate" title={item.name}>{item.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{item.category}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-700 text-[13px] md:text-sm truncate" title={item.name}>{item.name}</p>
+                        <p className="text-[11px] md:text-xs text-slate-400 mt-0.5 truncate">{item.category}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-slate-800 text-sm">{item.sold} Sold</p>
-                      <div className="flex items-center justify-end text-[10px] text-primary font-medium mt-0.5">
+                    <div className="text-right whitespace-nowrap">
+                      <p className="font-medium text-slate-800 text-[13px] md:text-sm">{item.sold} Sold</p>
+                      <div className="flex items-center justify-end text-[9px] md:text-[10px] text-primary font-medium mt-0.5">
                         <FiArrowUpRight className="mr-0.5" />
                         TOP SELLER
                       </div>
@@ -276,8 +276,8 @@ export default function Dashboard() {
       {/* Financial Summary */}
       {hasAccess('ACCOUNTING') && (
         <div className="transition-all animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h3 className="text-lg font-medium text-slate-800 mb-4">Financial Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <h3 className="text-base md:text-lg font-medium text-slate-800 mb-3 md:mb-4">Financial Summary</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
             <FinanceCard
               label="Total Receipts"
               value={data.finance.receipts}
@@ -321,28 +321,28 @@ export default function Dashboard() {
 
 function DarkStatCard({ title, value, subtext, icon }) {
   return (
-    <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 relative overflow-hidden group hover:shadow-xl transition-shadow shadow-lg">
+    <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-4 md:p-6 relative overflow-hidden group hover:shadow-xl transition-shadow shadow-lg">
       <div className="relative z-10 flex justify-between items-start">
         <div>
-          <p className="text-white/90 text-sm font-medium mb-2">{title}</p>
-          <h2 className="text-3xl font-semibold tracking-tight mb-1 text-white">{value}</h2>
-          <p className="text-xs text-white/80 font-medium">{subtext}</p>
+          <p className="text-white/90 text-xs md:text-sm font-medium mb-1 md:mb-2">{title}</p>
+          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-1 text-white truncate max-w-[180px]">{value}</h2>
+          <p className="text-[10px] md:text-xs text-white/80 font-medium">{subtext}</p>
         </div>
-        <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors">
-          <span className="text-xl text-white">{icon}</span>
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:bg-white/30 transition-colors shrink-0">
+          <span className="text-lg md:text-xl text-white">{icon}</span>
         </div>
       </div>
       {/* Decorative */}
-      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/15 transition-colors"></div>
+      <div className="absolute -right-4 -bottom-4 w-20 h-20 md:w-24 md:h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/15 transition-colors"></div>
     </div>
   );
 }
 
 function FinanceCard({ label, value, color, bgColor }) {
   return (
-    <div className={`rounded-xl p-6 flex flex-col items-center justify-center text-center ${bgColor} border-2 border-white shadow-sm`}>
-      <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-2">{label}</p>
-      <p className={`text-2xl font-semibold ${color}`}>
+    <div className={`rounded-xl p-3 md:p-6 flex flex-col items-center justify-center text-center ${bgColor} border-2 border-white shadow-sm`}>
+      <p className="text-slate-500 text-[10px] md:text-xs font-medium uppercase tracking-wider mb-1 md:mb-2">{label}</p>
+      <p className={`text-lg md:text-2xl font-semibold ${color} truncate max-w-full`}>
         {Number(value) < 0 ? '-' : ''}₹{Math.abs(Number(value)).toFixed(2)}
       </p>
     </div>
