@@ -76,6 +76,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
     const isClassic = tpl === 'classic';
     const isBold = tpl === 'bold';
     const isMinimal = tpl === 'minimal' || tpl === 'simple';
+    const isBoutiqueA5 = tpl === 'boutique_a5';
     const exRate = parseFloat(exchangeRate) || 1;
     const formatAmt = (amt) => (parseFloat(amt || 0) * exRate).toFixed(2);
 
@@ -99,16 +100,16 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
     const getContainerStyle = () => {
         const base = {
-            width: isThermal ? '80mm' : (isA5 ? '148mm' : '210mm'),
-            minHeight: isThermal ? 'auto' : (isA5 ? '210mm' : '297mm'),
-            padding: isThermal ? '4mm' : (isA5 ? '4mm 12mm 12mm 12mm' : '5mm 18mm 15mm 18mm'),
-            fontSize: isThermal ? '10px' : (isA5 ? '12px' : '13px'),
+            width: isThermal ? '80mm' : (isA5 || isBoutiqueA5 ? '148mm' : '210mm'),
+            minHeight: isThermal ? 'auto' : (isA5 || isBoutiqueA5 ? '210mm' : '297mm'),
+            padding: isThermal ? '4mm' : (isBoutiqueA5 ? '8mm 10mm 10mm 10mm' : isA5 ? '4mm 12mm 12mm 12mm' : '5mm 18mm 15mm 18mm'),
+            fontSize: isThermal ? '10px' : (isA5 || isBoutiqueA5 ? '11px' : '13px'),
             backgroundColor: 'white',
             color: '#1f2937',
             margin: isMobile ? '0' : '0 auto',
             boxSizing: 'border-box',
             position: 'relative',
-            fontFamily: isThermal ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' : "'Inter', system-ui, sans-serif"
+            fontFamily: isThermal ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' : (isBoutiqueA5 ? "Arial, Helvetica, sans-serif" : "'Inter', system-ui, sans-serif")
         };
 
         if (isMobile) {
@@ -174,6 +175,207 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                     <div className="flex justify-between w-full text-[13px] border-t border-black pt-1 mt-1 font-extrabold"><span>TOTAL:</span><span>{currentSymbol}{formatAmt(totalAmount)}</span></div>
                 </div>
                 <div className="text-center mt-4 pt-2 border-t border-dashed border-black text-[9px] font-medium tracking-widest"><p>{settings.footerText || settings.footerNote || 'THANK YOU!'}</p></div>
+            </div>
+        );
+    }
+
+    if (isBoutiqueA5) {
+        const rawItems = items || [];
+        const tableRowsCount = Math.max(10, rawItems.length);
+        const displayRows = Array.from({ length: tableRowsCount }, (_, i) => rawItems[i] || null);
+        const currCodeStr = (currencyCode || companyProfile?.currencyCode || 'AED').toUpperCase();
+
+        let dateStr = '___ / ___ / 2026';
+        if (invoiceDate) {
+            const d = new Date(invoiceDate);
+            if (!isNaN(d.getTime())) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                dateStr = `${day} / ${month} / ${year}`;
+            }
+        }
+
+        const totalDiscountAmt = parseFloat(invoiceDiscount || 0);
+        const subTotalAmt = parseFloat(subTotal || 0) + totalDiscountAmt;
+        const grandTotalAmt = parseFloat(totalAmount || 0);
+        const paidAmt = parseFloat(paidAmount || 0) || grandTotalAmt;
+        const balanceAmt = parseFloat(printData.balanceAmount !== undefined ? printData.balanceAmount : (grandTotalAmt - paidAmt));
+
+        return (
+            <div ref={ref} style={getContainerStyle()} className="boutique-a5-invoice bg-white text-black text-[11px] leading-snug">
+                <style>{`
+                    @media print {
+                        @page {
+                            size: 148mm 210mm;
+                            margin: 0;
+                        }
+                        body { margin: 0 !important; -webkit-print-color-adjust: exact; background: #fff !important; }
+                        .boutique-a5-invoice {
+                            width: 148mm !important;
+                            min-height: 210mm !important;
+                            box-shadow: none !important;
+                            margin: 0 !important;
+                            border: none !important;
+                            padding: 8mm 10mm !important;
+                        }
+                    }
+                    .boutique-a5-invoice {
+                        font-family: Arial, Helvetica, sans-serif !important;
+                    }
+                    .boutique-a5-invoice table, .boutique-a5-invoice th, .boutique-a5-invoice td {
+                        border: 1px solid #d1d5db;
+                    }
+                `}</style>
+
+                {/* LOGO (IF ENABLED & AVAILABLE) */}
+                {settings.showLogo !== false && companyProfile?.logoUrl && (
+                    <div className="text-center mb-1">
+                        <img src={companyProfile.logoUrl} alt="Logo" className="max-h-12 mx-auto object-contain mb-1" />
+                    </div>
+                )}
+
+                {/* BOUTIQUE NAME HEADER */}
+                {settings.showCompanyName !== false && (
+                    <div className="text-center mb-2">
+                        <h1 className="text-[22px] font-extrabold uppercase tracking-wide text-black mb-1">
+                            {companyProfile?.companyName || 'BOUTIQUE NAME'}
+                        </h1>
+                    </div>
+                )}
+
+                {/* SUB HEADER: CATEGORY & ADDRESS / CONTACT */}
+                {settings.showAddress !== false && (
+                    <div className="text-left text-[11px] mb-3 space-y-0.5">
+                        <p className="font-bold text-black uppercase tracking-wider">
+                            {companyProfile?.tagline || companyProfile?.businessType || 'FASHION • BOUTIQUE'}
+                        </p>
+                        <p className="text-gray-800">
+                            {companyProfile?.address || companyProfile?.city ? `${companyProfile.address || ''}${companyProfile.city ? `, ${companyProfile.city}` : ''}` : 'Dubai / Sharjah, UAE'} | Tel: <span className="font-medium">{companyProfile?.phone || '___________'}</span> | WhatsApp: <span className="font-medium">{companyProfile?.whatsapp || companyProfile?.phone || '___________'}</span>
+                        </p>
+                    </div>
+                )}
+
+                {/* INVOICE & CUSTOMER INFO BLOCK */}
+                {(settings.showInvoiceMeta !== false || settings.showCustomer !== false) && (
+                    <div className="mb-2">
+                        {settings.showInvoiceMeta !== false && (
+                            <h2 className="text-[17px] font-bold uppercase tracking-wider mb-1.5 text-black">
+                                {settings.headerTitle || (isQuotation ? 'QUOTATION' : 'INVOICE')}
+                            </h2>
+                        )}
+                        <div className="space-y-1 text-[11.5px] text-black">
+                            {settings.showInvoiceMeta !== false && (
+                                <div className="flex justify-between items-center pr-2">
+                                    <div>
+                                        <span className="font-semibold">{isQuotation ? 'Quotation No.:' : 'Invoice No.:'}</span> <span className="font-medium">{quotationNumber || invoiceNumber || 'INV-0001'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-semibold">Date:</span> <span className="font-medium">{dateStr}</span>
+                                    </div>
+                                </div>
+                            )}
+                            {settings.showCustomer !== false && (
+                                <div className="flex justify-between items-center pr-2">
+                                    <div>
+                                        <span className="font-semibold">Customer Name:</span> <span className="font-medium">{customer?.name || customerName || '_______________'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-semibold">Mobile:</span> <span className="font-medium">{customer?.phone || '___________________'}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ITEM TABLE */}
+                <table className="w-full border-collapse my-2 text-[11px]">
+                    <thead>
+                        <tr className="bg-black text-white text-[11px] font-bold">
+                            <th className="py-1.5 px-1.5 text-center w-8 border-r border-gray-700">No.</th>
+                            <th className="py-1.5 px-2 text-center border-r border-gray-700">Item Description</th>
+                            {settings.showColHsn === true && <th className="py-1.5 px-1 text-center w-14 border-r border-gray-700">HSN</th>}
+                            {settings.showColQty !== false && <th className="py-1.5 px-1 text-center w-10 border-r border-gray-700">Qty</th>}
+                            <th className="py-1.5 px-1 text-center w-12 border-r border-gray-700">Size</th>
+                            {settings.showColPrice !== false && <th className="py-1.5 px-1.5 text-center w-28 border-r border-gray-700">Unit Price ({currCodeStr})</th>}
+                            {settings.showColTotal !== false && <th className="py-1.5 px-1.5 text-center w-28">Amount ({currCodeStr})</th>}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {displayRows.map((item, idx) => (
+                            <tr key={idx} className="h-5.5">
+                                <td className="py-0.5 px-1 text-center font-normal">{idx + 1}</td>
+                                <td className="py-0.5 px-2 text-left font-medium">
+                                    {item ? (item.product?.name || item.name || '') : ''}
+                                </td>
+                                {settings.showColHsn === true && <td className="py-0.5 px-1 text-center">{item ? (item.product?.hsnCode || item.hsnCode || '-') : ''}</td>}
+                                {settings.showColQty !== false && <td className="py-0.5 px-1 text-center">{item ? (item.quantity || '') : ''}</td>}
+                                <td className="py-0.5 px-1 text-center">{item ? (item.size || '-') : ''}</td>
+                                {settings.showColPrice !== false && <td className="py-0.5 px-1.5 text-right">{item ? formatAmt(item.unitPrice) : ''}</td>}
+                                {settings.showColTotal !== false && <td className="py-0.5 px-1.5 text-right font-medium">{item ? formatAmt(item.total) : ''}</td>}
+                            </tr>
+                        ))}
+
+                        {/* SUBTOTAL ROW */}
+                        {(() => {
+                            const leadCols = 2 + (settings.showColHsn === true ? 1 : 0) + (settings.showColQty !== false ? 1 : 0) + 1;
+                            return (
+                                <>
+                                    <tr className="h-6">
+                                        <td colSpan={leadCols} className="border-r border-gray-300"></td>
+                                        {settings.showColPrice !== false && <td className="py-1 px-3 text-right font-bold text-black border-r border-gray-300">Subtotal</td>}
+                                        {settings.showColTotal !== false && <td className="py-1 px-1.5 text-right font-bold text-black">{formatAmt(subTotalAmt)}</td>}
+                                    </tr>
+
+                                    {/* DISCOUNT ROW */}
+                                    <tr className="h-6">
+                                        <td colSpan={leadCols} className="border-r border-gray-300"></td>
+                                        {settings.showColPrice !== false && <td className="py-1 px-3 text-right font-bold text-black border-r border-gray-300">Discount</td>}
+                                        {settings.showColTotal !== false && <td className="py-1 px-1.5 text-right font-bold text-black">{totalDiscountAmt > 0 ? formatAmt(totalDiscountAmt) : ''}</td>}
+                                    </tr>
+
+                                    {/* GRAND TOTAL ROW */}
+                                    <tr className="h-6.5 bg-gray-200">
+                                        <td colSpan={leadCols} className="border-r border-gray-300 bg-white"></td>
+                                        {settings.showColPrice !== false && <td className="py-1 px-3 text-right font-extrabold text-black uppercase border-r border-gray-300">GRAND TOTAL</td>}
+                                        {settings.showColTotal !== false && <td className="py-1 px-1.5 text-right font-extrabold text-black bg-gray-200">{formatAmt(grandTotalAmt)}</td>}
+                                    </tr>
+                                </>
+                            );
+                        })()}
+                    </tbody>
+                </table>
+
+                {/* PAYMENT & AMOUNT PAID / BALANCE */}
+                <div className="mt-2 mb-3 space-y-1 text-[11.5px] text-black">
+                    <p>
+                        <span className="font-bold">Payment Method:</span> <span className="font-medium">{paymentMethod || 'Cash / Card / Bank Transfer'}</span>
+                    </p>
+                    <p className="flex justify-between pr-4">
+                        <span>
+                            <span className="font-bold">Amount Paid:</span> {currCodeStr} <span className="font-medium">{formatAmt(paidAmt)}</span>
+                        </span>
+                        <span>
+                            <span className="font-bold">Balance:</span> {currCodeStr} <span className="font-medium">{formatAmt(balanceAmt)}</span>
+                        </span>
+                    </p>
+                </div>
+
+                {/* RETURN / EXCHANGE POLICY */}
+                <div className="mt-3 mb-4 text-[10.5px]">
+                    <h3 className="font-bold text-black uppercase tracking-wider mb-0.5">
+                        RETURN / EXCHANGE POLICY
+                    </h3>
+                    <p className="text-gray-800 leading-tight">
+                        {terms || settings.termsConditions || 'Returns/exchanges are subject to boutique policy. Original invoice is required. Sale/discounted items may be non-refundable/non-exchangeable.'}
+                    </p>
+                </div>
+
+                {/* FOOTER THANK YOU */}
+                <div className="mt-5 text-left italic font-bold text-[13px] text-black">
+                    <p>{settings.footerText || settings.footerNote || 'Thank you for shopping with us!'}</p>
+                </div>
             </div>
         );
     }

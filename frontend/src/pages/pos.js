@@ -413,13 +413,8 @@ const CURRENCY_SYMBOLS = {
                     setBranchSettings({
                         stockIncluded: isStockEnabled
                     });
-                    const branchTemplate = data?.invoiceTemplate || data?.invoiceSettings?.template;
-                    const baseSettings = (data?.invoiceSettings && Object.keys(data.invoiceSettings).length > 0)
-                        ? data.invoiceSettings
-                        : (companyProfile?.invoiceSettings || {});
                     setSalesSettings({
-                        ...baseSettings,
-                        template: branchTemplate || baseSettings?.template || 'modern'
+                        ...companyProfile?.invoiceSettings
                     });
                 } catch (err) {
                     console.error("Failed to fetch branch settings", err);
@@ -881,6 +876,10 @@ const CURRENCY_SYMBOLS = {
     const handlePrint = useReactToPrint({ contentRef: componentRef });
 
     const initiateCheckout = () => {
+        if (!selectedBranch && !user?.branchId) {
+            toast.error("Please select a branch first");
+            return;
+        }
         if (cart.length === 0) { toast.error("Cart is empty"); return; }
         // Validation removed to allow Walk-in customers
         setPaymentData({ ...paymentData, paidAmount: finalPayable.toFixed(2), method: 'Cash' });
@@ -922,6 +921,10 @@ const CURRENCY_SYMBOLS = {
 
     const handleCheckout = async () => {
         try {
+            if (!selectedBranch && !user?.branchId) {
+                toast.error("Please select a branch first");
+                return;
+            }
             const currentInputAmount = parseFloat(paymentData.paidAmount) || 0;
 
             let finalPayments = [];
@@ -1025,7 +1028,6 @@ const CURRENCY_SYMBOLS = {
             // Using shallow: false to ensure state resets correctly
             router.replace('/pos', undefined, { shallow: false });
 
-            const saleBranchTemplate = res.data?.branch?.invoiceTemplate || res.data?.branch?.invoiceSettings?.template;
             setLastSale({
                 ...res.data,
                 currencyCode,
@@ -1033,8 +1035,7 @@ const CURRENCY_SYMBOLS = {
                 exchangeRate: 1,
                 settings: {
                     ...((res.data.isReturn ? returnSettings : salesSettings) || {}),
-                    ...(res.data?.branch?.invoiceSettings || {}),
-                    template: saleBranchTemplate || (res.data.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                    template: (res.data.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
                 }
             });
             setShowPaymentModal(false);
@@ -1775,8 +1776,7 @@ const CURRENCY_SYMBOLS = {
                                 ...lastSale, 
                                 settings: {
                                     ...(lastSale?.isReturn ? returnSettings : salesSettings),
-                                    ...(lastSale?.branch?.invoiceSettings || {}),
-                                    template: lastSale?.branch?.invoiceTemplate || lastSale?.branch?.invoiceSettings?.template || (lastSale?.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
+                                    template: (lastSale?.isReturn ? returnSettings?.template : salesSettings?.template) || 'modern'
                                 }
                             }} 
                             companyProfile={companyProfile} 

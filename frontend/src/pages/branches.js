@@ -131,7 +131,6 @@ export default function Branches() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {branches.map(branch => {
-          const assignedTpl = branch.invoiceTemplate || branch.invoiceSettings?.template;
           return (
             <div key={branch.id} className="card p-6 border-0 shadow-lg hover:shadow-xl transition-shadow relative overflow-hidden group">
               <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full transition-colors ${branch.isActive ? 'bg-primary-light/10' : 'bg-slate-50'} group-hover:scale-110`}></div>
@@ -168,24 +167,6 @@ export default function Branches() {
                   <div className="flex items-center gap-3">
                     <FiMail className="text-slate-400 shrink-0" />
                     <span className="truncate">{branch.email || 'No email'}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <FiFileText className="text-slate-400 shrink-0" />
-                      <span className="text-xs text-slate-500 truncate">
-                        Template: <strong className="text-slate-700 font-semibold">{assignedTpl ? getTemplateName(assignedTpl) : 'Not Assigned'}</strong>
-                      </span>
-                    </div>
-                    {assignedTpl && (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenPreview(assignedTpl)}
-                        className="text-[11px] text-[#009262] hover:text-[#047857] flex items-center gap-1 font-medium bg-[#009262]/5 hover:bg-[#009262]/10 px-2 py-0.5 rounded transition-colors shrink-0"
-                        title="Preview Template"
-                      >
-                        <FiEye size={12} /> Preview
-                      </button>
-                    )}
                   </div>
                 </div>
 
