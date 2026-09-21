@@ -1911,29 +1911,14 @@ export default function Products() {
                           Brand {formData.categoryId && <span className="text-xs text-primary font-normal">(Filtered for Category)</span>}
                         </label>
                       </div>
-                      <div className="flex gap-2 items-center">
-                        <div className="flex-1">
-                          <SearchableSelect
-                            options={(categoryBrands || []).map(b => ({ label: b.name, value: b.id }))}
-                            value={formData.selectedBrandIds || []}
-                            onChange={handleMultiBrandChange}
-                            placeholder={formData.categoryId ? "Select Brand(s) for Category..." : "Select Brand(s)..."}
-                            zIndex={100005}
-                            isMulti={true}
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewBrandName('');
-                            setShowAddBrandModal(true);
-                          }}
-                          className="btn btn-secondary text-xs px-3 py-2 flex items-center gap-1 shrink-0 h-[42px]"
-                          title="Add Brand"
-                        >
-                          <FiPlus /> Add Brand
-                        </button>
-                      </div>
+                      <SearchableSelect
+                        options={(categoryBrands || []).map(b => ({ label: b.name, value: b.id }))}
+                        value={formData.selectedBrandIds || []}
+                        onChange={handleMultiBrandChange}
+                        placeholder={formData.categoryId ? "Select Brand(s) for Category..." : "Select Brand(s)..."}
+                        zIndex={100005}
+                        isMulti={true}
+                      />
                     </div>
                   </div>
                 </div>

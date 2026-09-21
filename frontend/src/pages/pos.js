@@ -12,6 +12,7 @@ import ProfessionalInvoice from '@/components/ProfessionalInvoice';
 export default function POS() {
     const router = useRouter();
     const [products, setProducts] = useState([]);
+    const [brands, setBrands] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [editingSaleId, setEditingSaleId] = useState(null);
     const [loadingInvoice, setLoadingInvoice] = useState(false);
@@ -225,15 +226,17 @@ const CURRENCY_SYMBOLS = {
     const fetchData = async () => {
         try {
             const activeBranchId = selectedBranch || user?.branchId;
-            const [prodRes, custRes, compRes, userRes, branchRes] = await Promise.all([
+            const [prodRes, custRes, compRes, userRes, branchRes, brandRes] = await Promise.all([
                 api.get('/products', { params: { branchId: activeBranchId } }),
                 api.get('/customers'),
                 api.get('/company'),
                 api.get('/users'),
-                activeBranchId ? api.get(`/branches/${activeBranchId}`) : Promise.resolve({ data: null })
+                activeBranchId ? api.get(`/branches/${activeBranchId}`) : Promise.resolve({ data: null }),
+                api.get('/brands').catch(() => ({ data: [] }))
             ]);
             setProducts(prodRes.data);
             setCustomers(custRes.data);
+            setBrands(brandRes.data || []);
             if (branchRes.data) {
                 // Robust check for stockIncluded
                 const isStockEnabled = branchRes.data.stockIncluded !== false && 
@@ -469,20 +472,22 @@ const CURRENCY_SYMBOLS = {
             }
 
             const activeBrandEntries = (bPrices && typeof bPrices === 'object')
-                ? Object.values(bPrices).filter(b => b && !b.isDeleted)
+                ? Object.entries(bPrices).filter(([bIdKey, b]) => b && !b.isDeleted)
                 : [];
 
             if (activeBrandEntries.length > 0) {
-                activeBrandEntries.forEach(bEntry => {
-                    const brandName = bEntry.brandName || p.brandName || (p.brand?.id === bEntry.brandId ? p.brand?.name : '') || '';
-                    const groupKey = `${rawName.toLowerCase()}___brand_${bEntry.brandId}___type_${typeId || typeName || 'none'}`;
+                activeBrandEntries.forEach(([bIdKey, bEntry]) => {
+                    const brandId = bEntry.brandId ? parseInt(bEntry.brandId, 10) : (bIdKey && !isNaN(parseInt(bIdKey, 10)) ? parseInt(bIdKey, 10) : (p.brandId || null));
+                    const matchedBrand = brands.find(b => String(b.id) === String(brandId));
+                    const brandName = bEntry.brandName || matchedBrand?.name || (p.brand?.id === brandId ? p.brand?.name : '') || (p.brandId === brandId ? p.brandName : '') || p.brandName || '';
+                    const groupKey = `prod_${p.id}___brand_${brandId || bIdKey || 'nobrand'}___type_${typeId || typeName || 'none'}`;
 
                     let bSizeStocks = bEntry.sizeStocks;
                     if (typeof bSizeStocks === 'string') {
                         try { bSizeStocks = JSON.parse(bSizeStocks); } catch(e) { bSizeStocks = null; }
                     }
 
-                    if (!Array.isArray(bSizeStocks) || bSizeStocks.length === 0) {
+                    if (!Array.isArray(bSizeStocks)) {
                         let pSizeStocks = p.sizeStocks;
                         if (typeof pSizeStocks === 'string') {
                             try { pSizeStocks = JSON.parse(pSizeStocks); } catch (e) { pSizeStocks = null; }
@@ -492,7 +497,7 @@ const CURRENCY_SYMBOLS = {
                         }
                     }
 
-                    const brandBarcode = bEntry.barcode ? String(bEntry.barcode).trim() : (p.brand?.id === bEntry.brandId && p.brand?.barcode ? String(p.brand.barcode).trim() : null);
+                    const brandBarcode = bEntry.barcode ? String(bEntry.barcode).trim() : (p.brand?.id === brandId && p.brand?.barcode ? String(p.brand.barcode).trim() : null);
                     const productBarcode = p.barcode ? String(p.barcode).trim() : null;
                     const primaryBarcode = brandBarcode || productBarcode;
 
@@ -506,7 +511,7 @@ const CURRENCY_SYMBOLS = {
                                 stock: parseInt(item.stock, 10) || 0,
                                 productId: p.id,
                                 barcode: item.barcode ? String(item.barcode).trim() : primaryBarcode,
-                                brandId: bEntry.brandId,
+                                brandId: brandId,
                                 brandName: brandName
                             });
                         });
@@ -523,7 +528,7 @@ const CURRENCY_SYMBOLS = {
                         id: p.id,
                         name: brandName ? `${rawName} (${brandName})` : rawName,
                         baseName: rawName,
-                        brandId: bEntry.brandId,
+                        brandId: brandId,
                         brandName: brandName,
                         productTypeId: p.productTypeId,
                         productTypeName: typeName || null,
@@ -548,9 +553,9 @@ const CURRENCY_SYMBOLS = {
                 });
             } else {
                 const normName = rawName.toLowerCase();
-                let groupKey = `${normName}___nobrand___type_${typeId || typeName || 'none'}`;
+                let groupKey = `prod_${p.id}___nobrand___type_${typeId || typeName || 'none'}`;
 
-                const brandName = p.brandName || p.brand?.name || '';
+                const brandName = p.brandName || p.brand?.name || (brands.find(b => String(b.id) === String(p.brandId))?.name) || '';
                 const brandBarcode = p.brand?.barcode ? String(p.brand.barcode).trim() : null;
                 const productBarcode = p.barcode ? String(p.barcode).trim() : null;
                 const primaryBarcode = productBarcode || brandBarcode;
@@ -613,7 +618,7 @@ const CURRENCY_SYMBOLS = {
         });
 
         return Array.from(groups.values());
-    }, [products]);
+    }, [products, brands]);
 
     const handleProductCardClick = (product) => {
         if (!customerId) {
