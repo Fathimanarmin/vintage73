@@ -101,14 +101,19 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
     const getContainerStyle = () => {
         const base = {
             width: isThermal ? '80mm' : (isA5 || isBoutiqueA5 ? '148mm' : '210mm'),
-            minHeight: isThermal ? 'auto' : (isA5 || isBoutiqueA5 ? '210mm' : '297mm'),
-            padding: isThermal ? '4mm' : (isBoutiqueA5 ? '8mm 10mm 10mm 10mm' : isA5 ? '4mm 12mm 12mm 12mm' : '5mm 18mm 15mm 18mm'),
+            minHeight: isThermal ? 'auto' : (isA5 || isBoutiqueA5 ? '208mm' : '295mm'),
+            padding: isThermal ? '4mm' : (isBoutiqueA5 ? '6mm 10mm 8mm 10mm' : isA5 ? '6mm 10mm 8mm 10mm' : '8mm 15mm 10mm 15mm'),
             fontSize: isThermal ? '10px' : (isA5 || isBoutiqueA5 ? '11px' : '13px'),
             backgroundColor: 'white',
             color: '#1f2937',
             margin: isMobile ? '0' : '0 auto',
             boxSizing: 'border-box',
             position: 'relative',
+            display: isThermal ? 'block' : 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid',
             fontFamily: isThermal ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' : (isBoutiqueA5 ? "Arial, Helvetica, sans-serif" : "'Inter', system-ui, sans-serif")
         };
 
@@ -127,17 +132,17 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
         return base;
     };
 
-    // Shared Typography Scale (Slightly improved readability)
-    const s_Title = "text-[21px] font-semibold tracking-[0.5px] uppercase";
-    const s_Company = "text-[17px] font-semibold leading-tight mb-1";
-    const s_AddressLabel = "text-[12.5px] text-[#6b7280] leading-[1.6]";
-    const s_SecHead = "text-[12.5px] font-medium uppercase tracking-wider mb-2.5";
-    const s_Label = "text-[12.5px] font-medium text-[#6b7280]";
-    const s_Value = "text-[13.5px] font-medium text-[#1f2937] leading-[1.6]";
-    const s_TableTh = "px-2.5 text-[10.5px] font-medium uppercase tracking-wider";
-    const s_TableTd = "py-2 px-2.5 text-[12.5px] font-medium border-b border-slate-50";
-    const s_TotalBox = "text-[14px] font-medium";
-    const s_GrandTotal = "text-[18px] font-medium";
+    // Shared Typography Scale (Compact & Clean for 1-page fit)
+    const s_Title = "text-[18px] font-semibold tracking-[0.5px] uppercase";
+    const s_Company = "text-[15px] font-semibold leading-tight mb-1";
+    const s_AddressLabel = "text-[11.5px] text-[#6b7280] leading-[1.5]";
+    const s_SecHead = "text-[11.5px] font-medium uppercase tracking-wider mb-1.5";
+    const s_Label = "text-[11.5px] font-medium text-[#6b7280]";
+    const s_Value = "text-[12.5px] font-medium text-[#1f2937] leading-[1.5]";
+    const s_TableTh = "px-2 text-[10px] font-medium uppercase tracking-wider";
+    const s_TableTd = "py-1.5 px-2 text-[11.5px] font-medium border-b border-slate-50";
+    const s_TotalBox = "text-[13px] font-medium";
+    const s_GrandTotal = "text-[17px] font-medium";
 
     if (isThermal) {
         return (
@@ -207,7 +212,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
     if (isBoutiqueA5) {
         const rawItems = items || [];
-        const tableRowsCount = Math.max(10, rawItems.length);
+        const tableRowsCount = Math.max(rawItems.length <= 4 ? 6 : rawItems.length, rawItems.length);
         const displayRows = Array.from({ length: tableRowsCount }, (_, i) => rawItems[i] || null);
         const currCodeStr = (currencyCode || companyProfile?.currencyCode || 'AED').toUpperCase();
 
@@ -237,14 +242,27 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                             size: 148mm 210mm;
                             margin: 0;
                         }
-                        body { margin: 0 !important; -webkit-print-color-adjust: exact; background: #fff !important; }
+                        html, body { 
+                            margin: 0 !important; 
+                            padding: 0 !important; 
+                            -webkit-print-color-adjust: exact; 
+                            print-color-adjust: exact;
+                            background: #fff !important; 
+                        }
                         .boutique-a5-invoice {
                             width: 148mm !important;
-                            min-height: 210mm !important;
+                            height: auto !important;
+                            min-height: auto !important;
+                            max-height: 208mm !important;
                             box-shadow: none !important;
                             margin: 0 !important;
                             border: none !important;
-                            padding: 8mm 10mm !important;
+                            padding: 6mm 10mm !important;
+                            page-break-inside: avoid !important;
+                            break-inside: avoid !important;
+                            page-break-after: avoid !important;
+                            break-after: avoid !important;
+                            box-sizing: border-box !important;
                         }
                     }
                     .boutique-a5-invoice {
@@ -258,14 +276,14 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 {/* LOGO (IF ENABLED & AVAILABLE) */}
                 {settings.showLogo !== false && companyProfile?.logoUrl && (
                     <div className="text-center mb-1">
-                        <img src={companyProfile.logoUrl} alt="Logo" className="max-h-12 mx-auto object-contain mb-1" />
+                        <img src={companyProfile.logoUrl} alt="Logo" className="max-h-10 mx-auto object-contain mb-1" />
                     </div>
                 )}
 
                 {/* BOUTIQUE NAME HEADER */}
                 {settings.showCompanyName !== false && (
-                    <div className="text-center mb-2">
-                        <h1 className="text-[22px] font-extrabold uppercase tracking-wide text-black mb-1">
+                    <div className="text-center mb-1.5">
+                        <h1 className="text-[20px] font-extrabold uppercase tracking-wide text-black mb-0.5">
                             {companyProfile?.companyName || 'BOUTIQUE NAME'}
                         </h1>
                     </div>
@@ -273,7 +291,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
                 {/* SUB HEADER: CATEGORY & ADDRESS / CONTACT */}
                 {settings.showAddress !== false && (
-                    <div className="text-left text-[11px] mb-3 space-y-0.5">
+                    <div className="text-left text-[11px] mb-2 space-y-0.5">
                         <p className="font-bold text-black uppercase tracking-wider">
                             {companyProfile?.tagline || companyProfile?.businessType || 'FASHION • BOUTIQUE'}
                         </p>
@@ -287,11 +305,11 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 {(settings.showInvoiceMeta !== false || settings.showCustomer !== false) && (
                     <div className="mb-2">
                         {settings.showInvoiceMeta !== false && (
-                            <h2 className="text-[17px] font-bold uppercase tracking-wider mb-1.5 text-black">
+                            <h2 className="text-[16px] font-bold uppercase tracking-wider mb-1 text-black">
                                 {settings.headerTitle || (isQuotation ? 'QUOTATION' : 'INVOICE')}
                             </h2>
                         )}
-                        <div className="space-y-1 text-[11.5px] text-black">
+                        <div className="space-y-0.5 text-[11px] text-black">
                             {settings.showInvoiceMeta !== false && (
                                 <div className="flex justify-between items-center pr-2">
                                     <div>
@@ -317,21 +335,21 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 )}
 
                 {/* ITEM TABLE */}
-                <table className="w-full border-collapse my-2 text-[11px]">
+                <table className="w-full border-collapse my-1.5 text-[11px]">
                     <thead>
-                        <tr className="bg-black text-white text-[11px] font-bold">
-                            <th className="py-1.5 px-1.5 text-center w-8 border-r border-gray-700">No.</th>
-                            <th className="py-1.5 px-2 text-center border-r border-gray-700">Item Description</th>
-                            {settings.showColHsn === true && <th className="py-1.5 px-1 text-center w-14 border-r border-gray-700">HSN</th>}
-                            {settings.showColQty !== false && <th className="py-1.5 px-1 text-center w-10 border-r border-gray-700">Qty</th>}
-                            <th className="py-1.5 px-1 text-center w-12 border-r border-gray-700">Size</th>
-                            {settings.showColPrice !== false && <th className="py-1.5 px-1.5 text-center w-28 border-r border-gray-700">Unit Price ({currCodeStr})</th>}
-                            {settings.showColTotal !== false && <th className="py-1.5 px-1.5 text-center w-28">Amount ({currCodeStr})</th>}
+                        <tr className="bg-black text-white text-[10.5px] font-bold">
+                            <th className="py-1 px-1 text-center w-8 border-r border-gray-700">No.</th>
+                            <th className="py-1 px-2 text-center border-r border-gray-700">Item Description</th>
+                            {settings.showColHsn === true && <th className="py-1 px-1 text-center w-14 border-r border-gray-700">HSN</th>}
+                            {settings.showColQty !== false && <th className="py-1 px-1 text-center w-10 border-r border-gray-700">Qty</th>}
+                            <th className="py-1 px-1 text-center w-12 border-r border-gray-700">Size</th>
+                            {settings.showColPrice !== false && <th className="py-1 px-1.5 text-center w-28 border-r border-gray-700">Unit Price ({currCodeStr})</th>}
+                            {settings.showColTotal !== false && <th className="py-1 px-1.5 text-center w-28">Amount ({currCodeStr})</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {displayRows.map((item, idx) => (
-                            <tr key={idx} className="h-5.5">
+                            <tr key={idx} className="h-5">
                                 <td className="py-0.5 px-1 text-center font-normal">{idx + 1}</td>
                                 <td className="py-0.5 px-2 text-left font-medium">
                                     {item ? (item.product?.name || item.name || '') : ''}
@@ -349,24 +367,24 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                             const leadCols = 2 + (settings.showColHsn === true ? 1 : 0) + (settings.showColQty !== false ? 1 : 0) + 1;
                             return (
                                 <>
-                                    <tr className="h-6">
+                                    <tr className="h-5.5">
                                         <td colSpan={leadCols} className="border-r border-gray-300"></td>
-                                        {settings.showColPrice !== false && <td className="py-1 px-3 text-right font-bold text-black border-r border-gray-300">Subtotal</td>}
-                                        {settings.showColTotal !== false && <td className="py-1 px-1.5 text-right font-bold text-black">{formatAmt(subTotalAmt)}</td>}
+                                        {settings.showColPrice !== false && <td className="py-0.5 px-3 text-right font-bold text-black border-r border-gray-300">Subtotal</td>}
+                                        {settings.showColTotal !== false && <td className="py-0.5 px-1.5 text-right font-bold text-black">{formatAmt(subTotalAmt)}</td>}
                                     </tr>
 
                                     {/* DISCOUNT ROW */}
-                                    <tr className="h-6">
+                                    <tr className="h-5.5">
                                         <td colSpan={leadCols} className="border-r border-gray-300"></td>
-                                        {settings.showColPrice !== false && <td className="py-1 px-3 text-right font-bold text-black border-r border-gray-300">Discount</td>}
-                                        {settings.showColTotal !== false && <td className="py-1 px-1.5 text-right font-bold text-black">{totalDiscountAmt > 0 ? formatAmt(totalDiscountAmt) : ''}</td>}
+                                        {settings.showColPrice !== false && <td className="py-0.5 px-3 text-right font-bold text-black border-r border-gray-300">Discount</td>}
+                                        {settings.showColTotal !== false && <td className="py-0.5 px-1.5 text-right font-bold text-black">{totalDiscountAmt > 0 ? formatAmt(totalDiscountAmt) : ''}</td>}
                                     </tr>
 
                                     {/* GRAND TOTAL ROW */}
-                                    <tr className="h-6.5 bg-gray-200">
+                                    <tr className="h-6 bg-gray-200">
                                         <td colSpan={leadCols} className="border-r border-gray-300 bg-white"></td>
-                                        {settings.showColPrice !== false && <td className="py-1 px-3 text-right font-extrabold text-black uppercase border-r border-gray-300">GRAND TOTAL</td>}
-                                        {settings.showColTotal !== false && <td className="py-1 px-1.5 text-right font-extrabold text-black bg-gray-200">{formatAmt(grandTotalAmt)}</td>}
+                                        {settings.showColPrice !== false && <td className="py-0.5 px-3 text-right font-extrabold text-black uppercase border-r border-gray-300">GRAND TOTAL</td>}
+                                        {settings.showColTotal !== false && <td className="py-0.5 px-1.5 text-right font-extrabold text-black bg-gray-200">{formatAmt(grandTotalAmt)}</td>}
                                     </tr>
                                 </>
                             );
@@ -375,12 +393,12 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 </table>
 
                 {/* PAYMENT & AMOUNT PAID / BALANCE */}
-                <div className="mt-2 mb-3 space-y-1 text-[11.5px] text-black">
+                <div className="mt-1.5 mb-2 space-y-0.5 text-[11px] text-black">
                     <p>
                         <span className="font-bold">Payment Method:</span> <span className="font-medium">{paymentMethod || 'Cash'}</span>
                     </p>
                     {paymentsList.length > 1 && (
-                        <div className="text-[10.5px] text-slate-700 pl-2 border-l-2 border-slate-300 space-y-0.5 my-1">
+                        <div className="text-[10px] text-slate-700 pl-2 border-l-2 border-slate-300 space-y-0.5 my-0.5">
                             {paymentsList.map((p, idx) => (
                                 <div key={idx} className="flex justify-between max-w-[200px]">
                                     <span>{p.method}:</span>
@@ -400,7 +418,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 </div>
 
                 {/* RETURN / EXCHANGE POLICY */}
-                <div className="mt-3 mb-4 text-[10.5px]">
+                <div className="mt-2 mb-2 text-[10px]">
                     <h3 className="font-bold text-black uppercase tracking-wider mb-0.5">
                         RETURN / EXCHANGE POLICY
                     </h3>
@@ -410,7 +428,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 </div>
 
                 {/* FOOTER THANK YOU */}
-                <div className="mt-5 text-left italic font-bold text-[13px] text-black">
+                <div className="mt-3 text-left italic font-bold text-[12px] text-black">
                     <p>{settings.footerText || settings.footerNote || 'Thank you for shopping with us!'}</p>
                 </div>
             </div>
@@ -426,31 +444,45 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                         size: ${pageSize === 'A4' ? '210mm 297mm' : '148mm 210mm'}; 
                         margin: 0; 
                     }
-                    body { margin: 0 !important; -webkit-print-color-adjust: exact; background: #fff !important; }
+                    html, body { 
+                        margin: 0 !important; 
+                        padding: 0 !important; 
+                        -webkit-print-color-adjust: exact; 
+                        print-color-adjust: exact;
+                        background: #fff !important; 
+                    }
                     .professional-invoice {
                         width: ${isA4 ? '210mm' : '148mm'} !important;
-                        min-height: ${isA4 ? '297mm' : '210mm'} !important;
+                        height: auto !important;
+                        min-height: auto !important;
+                        max-height: ${isA4 ? '296mm' : '208mm'} !important;
                         box-shadow: none !important; 
                         margin: 0 !important;
-                        border: none !important;
+                        border: ${isClassic ? '2px solid black' : 'none'} !important;
+                        padding: ${isA5 || isBoutiqueA5 ? '6mm 10mm 8mm 10mm' : isA4 ? '8mm 15mm 10mm 15mm' : '4mm'} !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        page-break-after: avoid !important;
+                        break-after: avoid !important;
+                        box-sizing: border-box !important;
                     }
                 }
                 .professional-invoice { font-family: 'Inter', sans-serif !important; }
             `}</style>
 
             {/* HEADER AREA */}
-            <div className={`flex flex-wrap ${isMobile ? 'flex-col items-center text-center' : 'justify-between items-start'} gap-6 mb-6`}>
+            <div className={`flex flex-wrap ${isMobile ? 'flex-col items-center text-center' : 'justify-between items-start'} gap-4 mb-3`}>
                 <div className="flex-1">
                     {settings.showLogo !== false && (
                         companyProfile?.logoUrl ? (
-                            <img src={companyProfile.logoUrl} alt="Logo" style={{ width: isMobile ? '140px' : '200px', height: 'auto', objectFit: 'contain' }} />
+                            <img src={companyProfile.logoUrl} alt="Logo" style={{ maxWidth: isMobile ? '120px' : (isA5 || isBoutiqueA5 ? '120px' : '160px'), maxHeight: isMobile ? '45px' : (isA5 || isBoutiqueA5 ? '45px' : '55px'), objectFit: 'contain' }} />
                         ) : (
-                            <div style={{ width: isMobile ? '140px' : '200px', height: isMobile ? '140px' : '200px' }} className="bg-white rounded-xl flex items-center justify-center font-medium text-slate-300 border border-slate-100 shadow-sm uppercase text-[9px] tracking-widest">Logo</div>
+                            <div style={{ width: isMobile ? '100px' : '110px', height: isMobile ? '40px' : '44px' }} className="bg-white rounded-xl flex items-center justify-center font-medium text-slate-300 border border-slate-100 shadow-sm uppercase text-[9px] tracking-widest">Logo</div>
                         )
                     )}
                 </div>
                 <div className={`${isMobile ? 'text-center' : 'text-right'} flex-1`}>
-                    <h1 className={`${s_Title} mb-2`} style={{ color: (isBold || isModern) ? accent : '#1f2937' }}>
+                    <h1 className={`${s_Title} mb-1`} style={{ color: (isBold || isModern) ? accent : '#1f2937' }}>
                         {settings.headerTitle || (isQuotation ? 'QUOTATION' : 'TAX INVOICE')}
                     </h1>
                     {settings.showCompanyName !== false && (
@@ -466,11 +498,11 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
             </div>
 
             {/* BILL TO & INVOICE DETAILS */}
-            <div className={`flex flex-wrap ${isMobile ? 'flex-col' : ''} gap-x-12 gap-y-8 mb-10 ${isMinimal ? '' : 'border-t border-slate-100 pt-8'}`}>
+            <div className={`flex flex-wrap ${isMobile ? 'flex-col' : ''} gap-x-8 gap-y-3 mb-4 ${isMinimal ? '' : 'border-t border-slate-100 pt-3'}`}>
                 {settings.showCustomer !== false && (
-                    <div className={`flex-1 ${isMinimal || isMobile ? '' : 'border-r border-slate-100 pr-8'}`}>
+                    <div className={`flex-1 ${isMinimal || isMobile ? '' : 'border-r border-slate-100 pr-6'}`}>
                         <p className={`${s_SecHead}`} style={(isBold || isModern) ? { color: accent } : { color: '#94a3b8' }}>Bill To</p>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                             <p className={s_Value}>{customer?.name || customerName || 'Walk-in'}</p>
                             {customer?.phone && <p className={s_AddressLabel}>📞 {customer.phone}</p>}
                             {customer?.address && <p className={s_AddressLabel}>{customer.address}{customer.city ? `, ${customer.city}` : ''}{customer.state ? `, ${customer.state}` : ''}{customer.pincode ? ` - ${customer.pincode}` : ''}</p>}
@@ -482,7 +514,7 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 {settings.showInvoiceMeta !== false && (
                     <div className={`flex-1 ${isMobile ? 'pl-0' : 'pl-4'}`}>
                         <p className={`${s_SecHead}`} style={(isBold || isModern) ? { color: accent } : { color: '#94a3b8' }}>Invoice Details</p>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             <div className={`flex items-center gap-6 ${isMobile ? 'justify-between' : ''}`}>
                                 <span className={`${s_Label} whitespace-nowrap`}>{isQuotation ? 'Quotation No:' : 'Invoice No:'}</span>
                                 <span className={`${s_Value} text-right`}>{quotationNumber || invoiceNumber || ''}</span>
@@ -497,10 +529,10 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
             </div>
 
             {/* ITEMS TABLE */}
-            <div className={`mb-8 ${isMobile ? 'overflow-x-auto lg:no-scrollbar' : ''}`}>
+            <div className={`mb-3 ${isMobile ? 'overflow-x-auto lg:no-scrollbar' : ''}`}>
                 <table className={`w-full ${isMobile ? 'min-w-[600px]' : ''} ${(isBold || isModern) ? 'border-separate border-spacing-0' : 'border-collapse'}`}>
                     <thead>
-                        <tr className={(isBold || isModern) ? 'text-white' : ''} style={(isBold || isModern) ? { backgroundColor: accent, height: (isBold || isModern) ? '36px' : 'auto' } : { backgroundColor: isMinimal ? 'white' : '#f9fbfd' }}>
+                        <tr className={(isBold || isModern) ? 'text-white' : ''} style={(isBold || isModern) ? { backgroundColor: accent, height: (isBold || isModern) ? '32px' : 'auto' } : { backgroundColor: isMinimal ? 'white' : '#f9fbfd' }}>
                             <th className={`${s_TableTh} text-left ${isMinimal ? 'border-b border-slate-200' : isBold ? 'rounded-l-lg' : 'rounded-l-lg'}`}>{isBold ? 'DESCRIPTION' : 'Description'}</th>
                             {settings.showColHsn !== false && <th className={`${s_TableTh} text-center w-20 ${isMinimal ? 'border-b border-slate-200' : ''}`}>{isBold ? 'HSN/SAC' : 'HSN/SAC'}</th>}
                             {settings.showColQty !== false && <th className={`${s_TableTh} text-center w-14 ${isMinimal ? 'border-b border-slate-200' : ''}`}>{isBold ? 'QTY' : 'Qty'}</th>}
@@ -535,19 +567,19 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
             {/* DESCRIPTION / NOTES */}
             {(description || notes) && (
-                <div className="mb-4 p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Description / Notes:</p>
-                    <p className="text-[12px] text-slate-600 leading-relaxed italic">{description || notes}</p>
+                <div className="mb-3 p-2.5 bg-slate-50 border border-slate-100 rounded-lg">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Description / Notes:</p>
+                    <p className="text-[11.5px] text-slate-600 leading-relaxed italic">{description || notes}</p>
                 </div>
             )}
 
             {/* TAX & TOTALS */}
-            <div className={`flex ${isMobile ? 'flex-col gap-6' : 'justify-between items-start gap-4'} mb-8 w-full`}>
+            <div className={`flex ${isMobile ? 'flex-col gap-4' : 'justify-between items-start gap-4'} mb-4 w-full`} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                 <div className={isMobile ? 'w-full' : 'w-fit'}>
                     {settings.showTaxSummary !== false && parseFloat(taxAmount || 0) > 0 && Object.entries(taxBreakdown).filter(([rate]) => parseFloat(rate) > 0).length > 0 && (
-                        <div className={`bg-[#f8fafc] p-3.5 rounded-xl border border-slate-100 shadow-sm min-w-[200px]`}>
-                            <p className={`${s_SecHead} mb-2.5 font-bold text-[10px] tracking-[1.2px]`} style={{ color: '#009262' }}>TAX SUMMARY</p>
-                            <div className={`space-y-1.5 text-[11px]`}>
+                        <div className={`bg-[#f8fafc] p-3 rounded-xl border border-slate-100 shadow-sm min-w-[200px]`}>
+                            <p className={`${s_SecHead} mb-2 font-bold text-[10px] tracking-[1.2px]`} style={{ color: '#009262' }}>TAX SUMMARY</p>
+                            <div className={`space-y-1 text-[11px]`}>
                                 {Object.entries(taxBreakdown)
                                     .filter(([rate]) => parseFloat(rate) > 0)
                                     .map(([rate, data]) => (
@@ -567,8 +599,8 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                     )}
                 </div>
 
-                <div className={`${isMobile ? 'w-full' : 'w-[260px] ml-auto'} p-4 rounded-xl bg-[#f8fafc] border border-slate-200 shadow-sm ${isBold ? 'border-l-[4px]' : isModern ? 'border-t-4' : isClassic ? 'border-2 border-black' : ''}`} style={isBold ? { borderLeftColor: accent } : isModern ? { borderTopColor: accent } : {}}>
-                    <div className="space-y-2 mb-2">
+                <div className={`${isMobile ? 'w-full' : 'w-[250px] ml-auto'} p-3 rounded-xl bg-[#f8fafc] border border-slate-200 shadow-sm ${isBold ? 'border-l-[4px]' : isModern ? 'border-t-4' : isClassic ? 'border-2 border-black' : ''}`} style={isBold ? { borderLeftColor: accent } : isModern ? { borderTopColor: accent } : {}}>
+                    <div className="space-y-1.5 mb-1.5">
                         {/* 1. Sub Total (Base amount before discount) */}
                         <div className="flex justify-between items-center text-slate-500 text-[11px] font-medium tracking-tight">
                             <span className="whitespace-nowrap mr-2">Sub Total</span>
@@ -639,11 +671,11 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                     </div>
 
                     {/* 6. Grand Total */}
-                    <div className={`pt-3 border-t border-slate-200 flex justify-between items-center mt-2.5`}>
-                        <span className="font-bold uppercase tracking-[0.5px] text-[12px] text-[#009262]">
+                    <div className={`pt-2 border-t border-slate-200 flex justify-between items-center mt-2`}>
+                        <span className="font-bold uppercase tracking-[0.5px] text-[11.5px] text-[#009262]">
                             GRAND TOTAL
                         </span>
-                        <span className="font-bold text-[20px] tracking-tighter text-[#009262]">
+                        <span className="font-bold text-[18px] tracking-tighter text-[#009262]">
                             {currentSymbol}{formatAmt(totalAmount)}
                         </span>
                     </div>
@@ -654,9 +686,9 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                         const balance = printData.balanceAmount !== undefined ? parseFloat(printData.balanceAmount) : Math.max(0, parseFloat(totalAmount || 0) - paid - parseFloat(advanceUsed || 0));
                         if (balance > 0.01) {
                             return (
-                                <div className={`pt-2 mt-2 border-t border-dashed border-slate-200 flex justify-between items-center`}>
-                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">BALANCE / OUTSTANDING</span>
-                                    <span className="text-[16px] font-bold text-red-600 tracking-tight">
+                                <div className={`pt-1.5 mt-1.5 border-t border-dashed border-slate-200 flex justify-between items-center`}>
+                                    <span className="text-[10.5px] font-bold text-slate-500 uppercase tracking-wide">BALANCE / OUTSTANDING</span>
+                                    <span className="text-[15px] font-bold text-red-600 tracking-tight">
                                         {currentSymbol}{formatAmt(balance)}
                                     </span>
                                 </div>
@@ -669,41 +701,41 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
             {/* BANK DETAILS (Separate Section) */}
             {settings.showBankDetails !== false && companyBank && (companyBank.name || companyBank.accountNumber) && (
-                <div className={`mb-6 p-4 bg-[#f8fafc] border border-slate-200 rounded-lg max-w-sm ${isBold || isModern ? 'border-t-[3px]' : ''}`} style={{ ...(isBold || isModern ? { borderTopColor: accent } : {}), pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                    <p className={`${s_SecHead} mb-3 font-semibold tracking-wide`} style={(isBold || isModern) ? { color: accent } : { color: '#94a3b8' }}>BANK DETAILS</p>
-                    <div className="space-y-2 text-[11px]">
+                <div className={`mb-3 p-3 bg-[#f8fafc] border border-slate-200 rounded-lg max-w-sm ${isBold || isModern ? 'border-t-[3px]' : ''}`} style={{ ...(isBold || isModern ? { borderTopColor: accent } : {}), pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                    <p className={`${s_SecHead} mb-2 font-semibold tracking-wide`} style={(isBold || isModern) ? { color: accent } : { color: '#94a3b8' }}>BANK DETAILS</p>
+                    <div className="space-y-1.5 text-[10.5px]">
                         {companyBank.name && (
                             <div className="flex">
-                                <span className="w-28 font-medium text-slate-500">Bank Name</span>
-                                <span className="w-4 text-slate-400">:</span>
+                                <span className="w-24 font-medium text-slate-500">Bank Name</span>
+                                <span className="w-3 text-slate-400">:</span>
                                 <span className="font-medium text-slate-700 flex-1">{companyBank.name}</span>
                             </div>
                         )}
                         {companyBankHolder && (
                             <div className="flex">
-                                <span className="w-28 font-medium text-slate-500">Account Holder</span>
-                                <span className="w-4 text-slate-400">:</span>
+                                <span className="w-24 font-medium text-slate-500">Account Holder</span>
+                                <span className="w-3 text-slate-400">:</span>
                                 <span className="font-medium text-slate-700 flex-1">{companyBankHolder}</span>
                             </div>
                         )}
                         {companyBank.accountNumber && (
                             <div className="flex">
-                                <span className="w-28 font-medium text-slate-500">Account Number</span>
-                                <span className="w-4 text-slate-400">:</span>
+                                <span className="w-24 font-medium text-slate-500">Account Number</span>
+                                <span className="w-3 text-slate-400">:</span>
                                 <span className="font-medium text-slate-700 flex-1">{companyBank.accountNumber}</span>
                             </div>
                         )}
                         {companyBank.ifscCode && (
                             <div className="flex">
-                                <span className="w-28 font-medium text-slate-500">IFSC Code</span>
-                                <span className="w-4 text-slate-400">:</span>
+                                <span className="w-24 font-medium text-slate-500">IFSC Code</span>
+                                <span className="w-3 text-slate-400">:</span>
                                 <span className="font-medium text-slate-700 flex-1">{companyBank.ifscCode}</span>
                             </div>
                         )}
                         {companyBank.branchName && (
                             <div className="flex">
-                                <span className="w-28 font-medium text-slate-500">Branch</span>
-                                <span className="w-4 text-slate-400">:</span>
+                                <span className="w-24 font-medium text-slate-500">Branch</span>
+                                <span className="w-3 text-slate-400">:</span>
                                 <span className="font-medium text-slate-700 flex-1">{companyBank.branchName}</span>
                             </div>
                         )}
@@ -712,12 +744,12 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
             )}
 
             {/* FOOTER */}
-            <div className={`mt-auto pt-8 border-t border-slate-50 flex flex-wrap ${isMobile ? 'flex-col items-start' : 'justify-between items-end'} gap-8`}>
+            <div className={`mt-auto pt-3 border-t border-slate-100 flex flex-wrap ${isMobile ? 'flex-col items-start' : 'justify-between items-end'} gap-4`} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                 <div className="flex-1">
-                    <p className={`${s_SecHead} mb-1.5`} style={isBold ? { color: accent } : { color: '#94a3b8' }}>Terms</p>
-                    <p className="text-[12px] text-slate-400 leading-relaxed max-w-[380px] font-normal">{terms || settings.termsConditions || 'Goods once sold will not be taken back.'}</p>
+                    <p className={`${s_SecHead} mb-1`} style={isBold ? { color: accent } : { color: '#94a3b8' }}>Terms</p>
+                    <p className="text-[11px] text-slate-400 leading-relaxed max-w-[380px] font-normal">{terms || settings.termsConditions || 'Goods once sold will not be taken back.'}</p>
                 </div>
-                <div className={`${isMobile ? 'text-left' : 'text-right'} text-slate-300 font-medium italic text-[14px] opacity-80`}>
+                <div className={`${isMobile ? 'text-left' : 'text-right'} text-slate-300 font-medium italic text-[13px] opacity-80`}>
                     {settings.footerText || settings.footerNote || 'Thank you for your business!'}
                 </div>
             </div>
