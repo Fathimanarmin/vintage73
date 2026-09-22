@@ -235,7 +235,33 @@ exports.createSale = asyncHandler(async (req, res) => {
        });
     }
 
-    const finalPaidAmount = parseFloat(paidAmount || 0);
+    // Payment Breakdown Calculation
+    let calculatedPaidAmount = 0;
+    if (Array.isArray(req.body.payments) && req.body.payments.length > 0) {
+      calculatedPaidAmount = req.body.payments
+        .filter(p => p.method && p.method.toLowerCase() !== 'credit')
+        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    } else if (paymentMethod && paymentMethod.toLowerCase() === 'credit') {
+      calculatedPaidAmount = 0;
+    } else {
+      calculatedPaidAmount = parseFloat(paidAmount || 0);
+    }
+
+    const finalPaidAmount = Number(calculatedPaidAmount.toFixed(2));
+    const calculatedBalance = finalGrandTotal - finalPaidAmount - reqAdvanceUsed;
+    const finalBalanceAmount = Number((calculatedBalance >= 0 ? calculatedBalance : 0).toFixed(2));
+
+    // Determine final paymentMethod
+    let resolvedPaymentMethod = paymentMethod;
+    if (!resolvedPaymentMethod) {
+      if (Array.isArray(req.body.payments) && req.body.payments.length > 1) {
+        resolvedPaymentMethod = 'Split';
+      } else if (Array.isArray(req.body.payments) && req.body.payments.length === 1) {
+        resolvedPaymentMethod = req.body.payments[0].method;
+      } else {
+        resolvedPaymentMethod = 'Cash';
+      }
+    }
 
     // Incentive
     let incentiveAmount = 0;
@@ -250,7 +276,7 @@ exports.createSale = asyncHandler(async (req, res) => {
       data: {
         invoiceNumber: genInvNo,
         customerId: customer?.id || null,
-        paymentMethod,
+        paymentMethod: resolvedPaymentMethod,
         discount: finalDiscount,
         subTotal: finalSubTotal,
         taxAmount: finalTaxAmount,
@@ -258,13 +284,13 @@ exports.createSale = asyncHandler(async (req, res) => {
         roundOffAmount: finalRoundOffAmount,
         advanceUsed: reqAdvanceUsed,
         paidAmount: finalPaidAmount,
-        balanceAmount: finalGrandTotal - finalPaidAmount - reqAdvanceUsed,
+        balanceAmount: finalBalanceAmount,
         saleDate: saleDate ? new Date(saleDate) : new Date(),
         branchId: validBranchId,
         salesmanId: salesmanId ? parseInt(salesmanId) : null,
         terminalId: terminalId ? parseInt(terminalId) : null,
         incentiveAmount,
-        status: (finalGrandTotal - finalPaidAmount - reqAdvanceUsed) > 0.5 ? 'partial' : 'completed',
+        status: finalBalanceAmount > 0.01 ? 'partial' : 'completed',
         financialYearId,
         isInvoice: !isReturn,
         isReturn,
@@ -279,7 +305,8 @@ exports.createSale = asyncHandler(async (req, res) => {
         customer: true, 
         items: { include: { product: true } }, 
         salesman: { select: { name: true } },
-        branch: true
+        branch: true,
+        payments: true
       }
     });
 
@@ -363,9 +390,9 @@ exports.createSale = asyncHandler(async (req, res) => {
       }
     }
 
-    const paymentsList = req.body.payments || (finalPaidAmount > 0 ? [{ method: paymentMethod, amount: finalPaidAmount }] : []);
+    const paymentsList = req.body.payments || (finalPaidAmount > 0 ? [{ method: resolvedPaymentMethod || 'Cash', amount: finalPaidAmount }] : []);
     for (const p of paymentsList) {
-      if (p.amount > 0) {
+      if (parseFloat(p.amount) > 0 && p.method && p.method.toLowerCase() !== 'credit') {
         await tx.payment.create({
           data: {
             type: 'receipt', amount: parseFloat(p.amount), method: p.method,
@@ -400,17 +427,34 @@ exports.getAllSales = asyncHandler(async (req, res) => {
       customer: true,
       items: { include: { product: true } },
       salesman: { select: { name: true } },
-      branch: true
+      branch: true,
+      payments: true
     },
     orderBy: { createdAt: 'desc' }
   });
 
-  const normalized = sales.map(s => ({
-    ...s,
-    discount: Number(s.discount || 0),
-    advanceUsed: Number(s.advanceUsed || 0),
-    customerName: s.customer?.name || s.customerName || 'Walk-in Customer'
-  }));
+  const normalized = sales.map(s => {
+    const paidAmt = Number(s.paidAmount || 0);
+    const balAmt = Number(s.balanceAmount || 0);
+    let paymentsList = s.payments || [];
+    
+    // Ensure payments breakdown includes Credit portion for Split or Credit sales
+    if (s.paymentMethod === 'Split' && balAmt > 0 && !paymentsList.some(p => p.method?.toLowerCase() === 'credit')) {
+      paymentsList = [...paymentsList, { method: 'Credit', amount: balAmt }];
+    } else if (s.paymentMethod === 'Credit' && paymentsList.length === 0 && balAmt > 0) {
+      paymentsList = [{ method: 'Credit', amount: balAmt }];
+    }
+
+    return {
+      ...s,
+      discount: Number(s.discount || 0),
+      advanceUsed: Number(s.advanceUsed || 0),
+      paidAmount: paidAmt,
+      balanceAmount: balAmt,
+      payments: paymentsList,
+      customerName: s.customer?.name || s.customerName || 'Walk-in Customer'
+    };
+  });
 
   res.json(normalized);
 });
@@ -638,13 +682,38 @@ exports.updateSale = asyncHandler(async (req, res) => {
     // Explicit Calculation Logic: Total = Subtotal + Tax + RoundOff
     const grandTotal = finalSubTotal + finalTaxAmount + finalRoundOffAmount;
     const finalGrandTotal = Number(grandTotal.toFixed(2));
-    const finalPaidAmount = parseFloat(paidAmount || 0);
+    // Payment Breakdown Calculation
+    let calculatedPaidAmount = 0;
+    if (Array.isArray(req.body.payments) && req.body.payments.length > 0) {
+      calculatedPaidAmount = req.body.payments
+        .filter(p => p.method && p.method.toLowerCase() !== 'credit')
+        .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    } else if (paymentMethod && paymentMethod.toLowerCase() === 'credit') {
+      calculatedPaidAmount = 0;
+    } else {
+      calculatedPaidAmount = parseFloat(paidAmount || 0);
+    }
+
+    const finalPaidAmount = Number(calculatedPaidAmount.toFixed(2));
+    const calculatedBalance = finalGrandTotal - finalPaidAmount - parseFloat(advanceRedeemed || 0);
+    const finalBalanceAmount = Number((calculatedBalance >= 0 ? calculatedBalance : 0).toFixed(2));
+
+    let resolvedPaymentMethod = paymentMethod;
+    if (!resolvedPaymentMethod) {
+      if (Array.isArray(req.body.payments) && req.body.payments.length > 1) {
+        resolvedPaymentMethod = 'Split';
+      } else if (Array.isArray(req.body.payments) && req.body.payments.length === 1) {
+        resolvedPaymentMethod = req.body.payments[0].method;
+      } else {
+        resolvedPaymentMethod = 'Cash';
+      }
+    }
 
     const updated = await tx.sale.update({
       where: { id: validSaleId },
       data: {
         customerId: customerId ? parseInt(customerId) : null,
-        paymentMethod,
+        paymentMethod: resolvedPaymentMethod,
         discount: finalDiscount,
         subTotal: finalSubTotal,
         taxAmount: finalTaxAmount,
@@ -652,16 +721,17 @@ exports.updateSale = asyncHandler(async (req, res) => {
         roundOffAmount: finalRoundOffAmount,
         paidAmount: finalPaidAmount,
         advanceUsed: parseFloat(advanceRedeemed || 0),
-        balanceAmount: finalGrandTotal - finalPaidAmount - parseFloat(advanceRedeemed || 0),
+        balanceAmount: finalBalanceAmount,
         description,
-        status: (finalGrandTotal - finalPaidAmount - parseFloat(advanceRedeemed || 0)) > 0.5 ? 'partial' : 'completed',
+        status: finalBalanceAmount > 0.01 ? 'partial' : 'completed',
         items: { create: saleItemsData }
       },
       include: { 
         customer: true, 
         items: { include: { product: true } },
         salesman: { select: { name: true } },
-        branch: true
+        branch: true,
+        payments: true
       }
     });
 
@@ -726,9 +796,9 @@ exports.updateSale = asyncHandler(async (req, res) => {
       }
     }
 
-    const paymentsList = req.body.payments || (finalPaidAmount > 0 ? [{ method: paymentMethod, amount: finalPaidAmount }] : []);
+    const paymentsList = req.body.payments || (finalPaidAmount > 0 ? [{ method: resolvedPaymentMethod || 'Cash', amount: finalPaidAmount }] : []);
     for (const p of paymentsList) {
-      if (p.amount > 0) {
+      if (parseFloat(p.amount) > 0 && p.method && p.method.toLowerCase() !== 'credit') {
         await tx.payment.create({
           data: {
             type: 'receipt', amount: parseFloat(p.amount), method: p.method,

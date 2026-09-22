@@ -13,6 +13,7 @@ const SearchableSelect = ({
     direction = 'down',   // 'down' | 'up' | 'auto'
     zIndex = 100005,
     isMulti = false,
+    disabled = false,
 }) => {
     const { theme } = useTheme();
     const [isOpen, setIsOpen] = useState(false);
@@ -171,13 +172,15 @@ const SearchableSelect = ({
             {/* ── Trigger ── */}
             <div className={`relative ${className}`} ref={wrapperRef}>
                 <div
-                    onClick={toggleOpen}
-                    className={`w-full bg-white border rounded-lg px-4 flex items-center justify-between cursor-pointer transition-all shadow-sm ${
-                        isOpen
-                            ? 'border-primary ring-2 ring-primary/20'
-                            : 'border-slate-200 hover:border-slate-300'
+                    onClick={disabled ? undefined : toggleOpen}
+                    className={`w-full border rounded-lg px-4 flex items-center justify-between transition-all shadow-sm ${
+                        disabled
+                            ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed opacity-80 select-none'
+                            : isOpen
+                                ? 'bg-white border-primary ring-2 ring-primary/20 cursor-pointer'
+                                : 'bg-white border-slate-200 hover:border-slate-300 cursor-pointer'
                     } ${triggerClassName || 'min-h-[48px]'}`}
-                    style={isOpen ? { borderColor: theme.primaryColor, boxShadow: `0 0 0 2px ${theme.primaryColor}33` } : {}}
+                    style={(!disabled && isOpen) ? { borderColor: theme.primaryColor, boxShadow: `0 0 0 2px ${theme.primaryColor}33` } : {}}
                 >
                     <div className="flex-1 overflow-hidden mr-2">
                         {renderTriggerText()}

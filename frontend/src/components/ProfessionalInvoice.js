@@ -173,6 +173,32 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                         <div className="flex justify-between w-full"><span>Tax:</span><span>{currentSymbol}{formatAmt(taxAmount)}</span></div>
                     )}
                     <div className="flex justify-between w-full text-[13px] border-t border-black pt-1 mt-1 font-extrabold"><span>TOTAL:</span><span>{currentSymbol}{formatAmt(totalAmount)}</span></div>
+                    {paymentMethod && (
+                        <div className="flex justify-between w-full text-[10.5px] pt-1"><span>Payment Method:</span><span className="font-semibold">{paymentMethod}</span></div>
+                    )}
+                    {(() => {
+                        const paid = printData.paidAmount !== undefined ? parseFloat(printData.paidAmount) : parseFloat(paidAmount || 0);
+                        const bal = printData.balanceAmount !== undefined ? parseFloat(printData.balanceAmount) : Math.max(0, parseFloat(totalAmount || 0) - paid - parseFloat(advanceUsed || 0));
+                        const paymentsList = printData.payments || [];
+                        return (
+                            <>
+                                {paymentsList.length > 1 && (
+                                    <div className="w-full text-[10px] text-slate-600 pl-2 border-l border-black my-0.5 space-y-0.5">
+                                        {paymentsList.map((p, idx) => (
+                                            <div key={idx} className="flex justify-between">
+                                                <span>{p.method}:</span>
+                                                <span>{currentSymbol}{formatAmt(p.amount)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="flex justify-between w-full text-[10.5px] text-emerald-700"><span>Amount Paid:</span><span className="font-semibold">{currentSymbol}{formatAmt(paid)}</span></div>
+                                {bal > 0.01 && (
+                                    <div className="flex justify-between w-full text-[10.5px] text-red-600 font-bold"><span>Balance Due:</span><span>{currentSymbol}{formatAmt(bal)}</span></div>
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
                 <div className="text-center mt-4 pt-2 border-t border-dashed border-black text-[9px] font-medium tracking-widest"><p>{settings.footerText || settings.footerNote || 'THANK YOU!'}</p></div>
             </div>
@@ -199,8 +225,9 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
         const totalDiscountAmt = parseFloat(invoiceDiscount || 0);
         const subTotalAmt = parseFloat(subTotal || 0) + totalDiscountAmt;
         const grandTotalAmt = parseFloat(totalAmount || 0);
-        const paidAmt = parseFloat(paidAmount || 0) || grandTotalAmt;
-        const balanceAmt = parseFloat(printData.balanceAmount !== undefined ? printData.balanceAmount : (grandTotalAmt - paidAmt));
+        const paidAmt = printData.paidAmount !== undefined ? parseFloat(printData.paidAmount) : parseFloat(paidAmount || 0);
+        const balanceAmt = printData.balanceAmount !== undefined ? parseFloat(printData.balanceAmount) : Math.max(0, grandTotalAmt - paidAmt - parseFloat(advanceUsed || 0));
+        const paymentsList = printData.payments || [];
 
         return (
             <div ref={ref} style={getContainerStyle()} className="boutique-a5-invoice bg-white text-black text-[11px] leading-snug">
@@ -350,8 +377,18 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                 {/* PAYMENT & AMOUNT PAID / BALANCE */}
                 <div className="mt-2 mb-3 space-y-1 text-[11.5px] text-black">
                     <p>
-                        <span className="font-bold">Payment Method:</span> <span className="font-medium">{paymentMethod || 'Cash / Card / Bank Transfer'}</span>
+                        <span className="font-bold">Payment Method:</span> <span className="font-medium">{paymentMethod || 'Cash'}</span>
                     </p>
+                    {paymentsList.length > 1 && (
+                        <div className="text-[10.5px] text-slate-700 pl-2 border-l-2 border-slate-300 space-y-0.5 my-1">
+                            {paymentsList.map((p, idx) => (
+                                <div key={idx} className="flex justify-between max-w-[200px]">
+                                    <span>{p.method}:</span>
+                                    <span className="font-medium">{currCodeStr} {formatAmt(p.amount)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     <p className="flex justify-between pr-4">
                         <span>
                             <span className="font-bold">Amount Paid:</span> {currCodeStr} <span className="font-medium">{formatAmt(paidAmt)}</span>
@@ -578,13 +615,27 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
                             </div>
                         )}
 
-                        {/* Amount Paid (if provided) */}
-                        {parseFloat(paidAmount || 0) > 0 && (
-                            <div className="flex justify-between items-center text-slate-500 text-[11px] font-medium tracking-tight">
-                                <span className="whitespace-nowrap mr-2">Amount Paid</span>
-                                <span className="font-semibold text-emerald-600 whitespace-nowrap">{currentSymbol}{formatAmt(paidAmount)}</span>
-                            </div>
-                        )}
+                        {/* Split Payment Breakdown */}
+                        {(() => {
+                            const paymentsList = printData.payments || [];
+                            if (paymentsList.length <= 1) return null;
+                            return (
+                                <div className="pl-2 border-l-2 border-slate-200 my-1 space-y-0.5">
+                                    {paymentsList.map((p, idx) => (
+                                        <div key={idx} className="flex justify-between items-center text-slate-500 text-[10px]">
+                                            <span>{p.method}:</span>
+                                            <span className="font-medium text-slate-700">{currentSymbol}{formatAmt(p.amount)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
+
+                        {/* Amount Paid */}
+                        <div className="flex justify-between items-center text-slate-500 text-[11px] font-medium tracking-tight">
+                            <span className="whitespace-nowrap mr-2">Amount Paid</span>
+                            <span className="font-semibold text-emerald-600 whitespace-nowrap">{currentSymbol}{formatAmt(printData.paidAmount !== undefined ? parseFloat(printData.paidAmount) : parseFloat(paidAmount || 0))}</span>
+                        </div>
                     </div>
 
                     {/* 6. Grand Total */}
@@ -599,11 +650,12 @@ const ProfessionalInvoice = React.forwardRef(({ printData, companyProfile, previ
 
                     {/* 7. Balance Due */}
                     {(() => {
-                        const balance = parseFloat(totalAmount || 0) - parseFloat(advanceUsed || 0);
-                        if (balance > 0.5) {
+                        const paid = printData.paidAmount !== undefined ? parseFloat(printData.paidAmount) : parseFloat(paidAmount || 0);
+                        const balance = printData.balanceAmount !== undefined ? parseFloat(printData.balanceAmount) : Math.max(0, parseFloat(totalAmount || 0) - paid - parseFloat(advanceUsed || 0));
+                        if (balance > 0.01) {
                             return (
                                 <div className={`pt-2 mt-2 border-t border-dashed border-slate-200 flex justify-between items-center`}>
-                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">BALANCE DUE</span>
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">BALANCE / OUTSTANDING</span>
                                     <span className="text-[16px] font-bold text-red-600 tracking-tight">
                                         {currentSymbol}{formatAmt(balance)}
                                     </span>

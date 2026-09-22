@@ -292,7 +292,11 @@ const CURRENCY_SYMBOLS = {
         try {
             setLoadingInvoice(true);
             const { data } = await api.get(`/sales?isInvoice=true`);
-            const invoice = data.find(inv => inv.id === parseInt(id));
+            let invoice = data.find(inv => inv.id === parseInt(id));
+            if (!invoice) {
+                const allSalesRes = await api.get('/sales');
+                invoice = allSalesRes.data.find(inv => inv.id === parseInt(id));
+            }
 
             if (!invoice) {
                 toast.error('Invoice to edit not found');
@@ -300,6 +304,9 @@ const CURRENCY_SYMBOLS = {
             }
 
             setEditingSaleId(invoice.id);
+            if (invoice.branchId) {
+                setSelectedBranch(invoice.branchId);
+            }
             setCustomerId(invoice.customerId || '');
             setCustomerName(invoice.customerName || 'Walk-in Customer');
             setSalesmanId(invoice.salesmanId || '');
@@ -313,10 +320,8 @@ const CURRENCY_SYMBOLS = {
             // Set other transaction values without exchange rate conversion
             setRoundOff(parseFloat(invoice.roundOffAmount || 0).toFixed(2));
             setAdvanceRedeemed(parseFloat(invoice.advanceUsed || 0).toFixed(2));
-            setAddedPayments((invoice.payments || []).map(p => ({
-                ...p,
-                amount: p.amount
-            })));
+            setAddedPayments([]);
+            setPaymentData({ method: 'Cash', paidAmount: '0.00' });
 
             // Map items to cart
             const restoredCart = invoice.items.map(item => {
@@ -795,8 +800,9 @@ const CURRENCY_SYMBOLS = {
         const item = cart.find(i => (i.cartItemId || `${i.id}_${i.selectedSize || 'nosize'}`) === cartKey);
         if (!item) return;
 
-        // Zero-stock variant check: variant with stock <= 0 cannot have quantity increased
-        if (item.selectedSize && (parseInt(item.stock, 10) || 0) <= 0) {
+        // Zero-stock variant check: variant with stock <= 0 cannot have quantity increased (skip if editing an existing invoice)
+        const isEditingSale = Boolean(editingSaleId || (router.isReady && router.query?.editId));
+        if (!isEditingSale && item.selectedSize && (parseInt(item.stock, 10) || 0) <= 0) {
             toast.error(`Size "${item.selectedSize}" has 0 stock and cannot be sold.`);
             return;
         }
@@ -935,16 +941,25 @@ const CURRENCY_SYMBOLS = {
     const componentRef = useRef();
     const handlePrint = useReactToPrint({ contentRef: componentRef });
 
+    const closePaymentModal = () => {
+        setShowPaymentModal(false);
+        setAddedPayments([]);
+        setPaymentData({ method: 'Cash', paidAmount: '0.00' });
+    };
+
     const initiateCheckout = () => {
         if (!selectedBranch && !user?.branchId) {
             toast.error("Please select a branch first");
             return;
         }
         if (cart.length === 0) { toast.error("Cart is empty"); return; }
-        // Validation removed to allow Walk-in customers
-        setPaymentData({ ...paymentData, paidAmount: finalPayable.toFixed(2), method: 'Cash' });
-        setAddedPayments([]); // Reset split payments
-        // Auto-select logged in user as salesman if not already selected?
+        // For edit invoice flow: start received amount at 0 — user must explicitly enter the new payment.
+        // For a brand-new sale: pre-fill the full payable amount (existing expected behavior).
+        const isEditing = Boolean(editingSaleId || (router.isReady && router.query?.editId));
+        const initialPaidAmount = isEditing ? '0.00' : finalPayable.toFixed(2);
+        setPaymentData({ method: 'Cash', paidAmount: initialPaidAmount });
+        setAddedPayments([]); // Always clear any stale split payments for a fresh checkout
+        // Auto-select logged in user as salesman if not already selected
         if (!salesmanId && cashier) setSalesmanId(cashier.id);
         setShowPaymentModal(true);
     };
@@ -958,24 +973,26 @@ const CURRENCY_SYMBOLS = {
         setAddedPayments(updatedList);
 
         // Calc remaining
-        const totalPaidSoFar = updatedList.reduce((sum, p) => sum + p.amount, 0);
+        const totalPaidSoFar = updatedList.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
         const remaining = finalPayable - totalPaidSoFar;
         setPaymentData({
             ...paymentData,
-            paidAmount: remaining > 0 ? remaining.toFixed(2) : '0',
-            method: 'Cash' // Reset method to default? Or keep?
+            paidAmount: remaining > 0 ? remaining.toFixed(2) : '0.00',
+            method: 'Cash'
         });
     };
 
     const removePayment = (index) => {
+        const isEditing = Boolean(editingSaleId || (router.isReady && router.query?.editId));
         const updatedList = addedPayments.filter((_, i) => i !== index);
         setAddedPayments(updatedList);
 
         // Update balance display input
-        const totalPaidSoFar = updatedList.reduce((sum, p) => sum + p.amount, 0);
+        const totalPaidSoFar = updatedList.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+        const remaining = finalPayable - totalPaidSoFar;
         setPaymentData({
             ...paymentData,
-            paidAmount: (finalPayable - totalPaidSoFar).toFixed(2)
+            paidAmount: isEditing && updatedList.length === 0 ? '0.00' : Math.max(0, remaining).toFixed(2)
         });
     };
 
@@ -988,7 +1005,6 @@ const CURRENCY_SYMBOLS = {
             const currentInputAmount = parseFloat(paymentData.paidAmount) || 0;
 
             let finalPayments = [];
-            let finalPaidAmount = 0;
 
             // Combine added payments with current input if valid
             if (addedPayments.length > 0) {
@@ -1001,23 +1017,22 @@ const CURRENCY_SYMBOLS = {
                         amount: currentInputAmount
                     });
                 }
-
-                finalPaidAmount = finalPayments.reduce((sum, p) => sum + p.amount, 0);
             } else {
                 // Simple Mode (No split list started)
                 if (currentInputAmount < 0) { toast.error("Invalid Amount"); return; }
-
-                // If Credit, allow 0 paidAmount. If Cash/Card, warn if 0? 
-                // Actually, 0 paidAmount is valid for Credit. For Cash, it means nothing paid (also kind of valid but unusual without Credit method).
-
-                finalPayments = [{ method: paymentData.method, amount: currentInputAmount }];
-                finalPaidAmount = currentInputAmount;
+                const amountToRecord = currentInputAmount > 0 ? currentInputAmount : (paymentData.method === 'Credit' ? finalPayable : 0);
+                finalPayments = [{ method: paymentData.method, amount: amountToRecord }];
             }
 
-            // Basic Total Validation (Optional: warn if underpaid? Logic handled in backend status)
+            const totalAllocated = finalPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+            const actualCollectedPaid = finalPayments
+                .filter(p => p.method?.toLowerCase() !== 'credit')
+                .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+            // Basic Total Validation
             // Check Overpayment
-            if (finalPaidAmount > finalPayable + 1) {
-                toast.error(`Paid amount (₹${finalPaidAmount}) cannot exceed Final Payable (₹${finalPayable.toFixed(2)})`);
+            if (totalAllocated > finalPayable + 1) {
+                toast.error(`Total allocated (${currencySymbol}${totalAllocated.toFixed(2)}) cannot exceed Final Payable (${currencySymbol}${finalPayable.toFixed(2)})`);
                 return;
             }
 
@@ -1034,11 +1049,14 @@ const CURRENCY_SYMBOLS = {
                 }
             }
 
-            // Strict check: zero stock variants must never be sold
-            for (const item of cart) {
-                if (item.selectedSize && (parseInt(item.stock, 10) || 0) <= 0) {
-                    toast.error(`Variant "${item.name}" (Size: ${item.selectedSize}) is out of stock (Stock: 0) and cannot be sold.`);
-                    return;
+            // Strict check: zero stock variants must never be sold on new sales (skip if editing an existing invoice where items are already deducted and will be reconciled on the backend)
+            const isEditingSale = Boolean(editingSaleId || (router.isReady && router.query?.editId));
+            if (!isEditingSale) {
+                for (const item of cart) {
+                    if (item.selectedSize && (parseInt(item.stock, 10) || 0) <= 0) {
+                        toast.error(`Variant "${item.name}" (Size: ${item.selectedSize}) is out of stock (Stock: 0) and cannot be sold.`);
+                        return;
+                    }
                 }
             }
 
@@ -1060,12 +1078,12 @@ const CURRENCY_SYMBOLS = {
                     };
                 }),
                 paymentMethod: finalPayments.length === 1 ? finalPayments[0].method : 'Split',
-                paidAmount: finalPaidAmount,
+                paidAmount: actualCollectedPaid,
                 terminalId: terminal?.id,
                 roundOffAmount: parseFloat(roundOff || 0),
                 advanceRedeemed: parseFloat(advanceRedeemed || 0),
                 payments: finalPayments.map(p => ({
-                    ...p,
+                    method: p.method,
                     amount: p.amount
                 })),
                 salesmanId: salesmanId ? parseInt(salesmanId) : null,
@@ -1075,8 +1093,9 @@ const CURRENCY_SYMBOLS = {
             };
 
             let res;
-            if (editingSaleId) {
-                res = await api.put(`/sales/${editingSaleId}`, payload);
+            const currentEditId = editingSaleId || (router.isReady && router.query?.editId ? parseInt(router.query.editId) : null);
+            if (currentEditId) {
+                res = await api.put(`/sales/${currentEditId}`, payload);
                 toast.success('Invoice Updated Successfully!');
                 setEditingSaleId(null);
             } else {
@@ -1090,6 +1109,9 @@ const CURRENCY_SYMBOLS = {
 
             setLastSale({
                 ...res.data,
+                paidAmount: res.data.paidAmount !== undefined ? Number(res.data.paidAmount) : actualCollectedPaid,
+                balanceAmount: res.data.balanceAmount !== undefined ? Number(res.data.balanceAmount) : Math.max(0, finalPayable - actualCollectedPaid),
+                payments: res.data.payments && res.data.payments.length > 0 ? res.data.payments : finalPayments,
                 currencyCode,
                 currencySymbol,
                 exchangeRate: 1,
@@ -1099,6 +1121,8 @@ const CURRENCY_SYMBOLS = {
                 }
             });
             setShowPaymentModal(false);
+            setAddedPayments([]);
+            setPaymentData({ method: 'Cash', paidAmount: '0.00' });
             // Delay print slightly to allow state update
             setTimeout(() => handlePrint(), 100);
 
@@ -1361,6 +1385,8 @@ const CURRENCY_SYMBOLS = {
                                     setCustomerId('');
                                     setCustomerName('');
                                     setRoundOff(0);
+                                    setAddedPayments([]);
+                                    setPaymentData({ method: 'Cash', paidAmount: '0.00' });
                                     router.replace('/pos', undefined, { shallow: true });
                                     toast.info('Edit mode cancelled');
                                 }}
@@ -1703,7 +1729,7 @@ const CURRENCY_SYMBOLS = {
                         {/* Standard Header */}
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
                             <h2 className="text-lg font-semibold text-slate-800">Complete Payment</h2>
-                            <button onClick={() => setShowPaymentModal(false)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+                            <button onClick={closePaymentModal} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
                                 <FiX />
                             </button>
                         </div>
@@ -1727,15 +1753,29 @@ const CURRENCY_SYMBOLS = {
                                         <button
                                             key={method}
                                             onClick={() => {
-                                                const isCredit = method === 'Credit';
-                                                // If Credit, default to 0. If others, default to remaining amount of finalPayable.
-                                                const alreadyPaid = addedPayments.reduce((s, x) => s + x.amount, 0);
+                                                const isEditing = Boolean(editingSaleId || (router.isReady && router.query?.editId));
+                                                const alreadyPaid = addedPayments.reduce((s, x) => s + (parseFloat(x.amount) || 0), 0);
                                                 const remaining = finalPayable - alreadyPaid;
-                                                setPaymentData({
-                                                    ...paymentData,
-                                                    method,
-                                                    paidAmount: isCredit ? '0' : Math.max(0, remaining).toFixed(2)
-                                                });
+                                                if (isEditing && addedPayments.length === 0 && (!paymentData.paidAmount || parseFloat(paymentData.paidAmount) === 0)) {
+                                                    setPaymentData({
+                                                        ...paymentData,
+                                                        method,
+                                                        paidAmount: '0.00'
+                                                    });
+                                                } else if (remaining <= 0 && addedPayments.length > 0) {
+                                                    setAddedPayments([]);
+                                                    setPaymentData({
+                                                        ...paymentData,
+                                                        method,
+                                                        paidAmount: isEditing ? '0.00' : finalPayable.toFixed(2)
+                                                    });
+                                                } else {
+                                                    setPaymentData({
+                                                        ...paymentData,
+                                                        method,
+                                                        paidAmount: isEditing && addedPayments.length === 0 && (!paymentData.paidAmount || parseFloat(paymentData.paidAmount) === 0) ? '0.00' : Math.max(0, remaining).toFixed(2)
+                                                    });
+                                                }
                                             }}
                                             className={`py-2 px-1 rounded-lg text-[10px] font-medium transition-all border whitespace-nowrap ${paymentData.method === method
                                                 ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
@@ -1752,13 +1792,13 @@ const CURRENCY_SYMBOLS = {
                             <div className="mb-6">
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-xs font-medium text-slate-500 uppercase">Received Amount</label>
-                                    <span className={`text-xs font-medium ${(parseFloat(paymentData.paidAmount || 0) - (finalPayable - addedPayments.reduce((s, x) => s + x.amount, 0))) >= 0
+                                    <span className={`text-xs font-medium ${(parseFloat(paymentData.paidAmount || 0) - (finalPayable - addedPayments.reduce((s, x) => s + (parseFloat(x.amount) || 0), 0))) >= 0
                                         ? 'text-primary'
                                         : 'text-orange-500'
                                         }`}>
                                         {(() => {
                                             const paid = parseFloat(paymentData.paidAmount || 0);
-                                            const alreadyPaid = addedPayments.reduce((s, x) => s + x.amount, 0);
+                                            const alreadyPaid = addedPayments.reduce((s, x) => s + (parseFloat(x.amount) || 0), 0);
                                             const balance = finalPayable - alreadyPaid - paid;
                                             if (balance < -0.01) return `Change: ${currencySymbol}${Math.abs(balance).toFixed(2)}`;
                                             if (balance > 0.01) return `Balance: ${currencySymbol}${balance.toFixed(2)}`;
@@ -1797,7 +1837,19 @@ const CURRENCY_SYMBOLS = {
                             {/* Added Payments List */}
                             {addedPayments.length > 0 && (
                                 <div className="mb-2 bg-slate-50 rounded-lg border border-slate-100 p-3">
-                                    <p className="text-[10px] font-medium text-slate-400 uppercase mb-2">Split Payments</p>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <p className="text-[10px] font-medium text-slate-400 uppercase">Split Payments</p>
+                                        <button 
+                                            onClick={() => {
+                                                const isEditing = Boolean(editingSaleId || (router.isReady && router.query?.editId));
+                                                setAddedPayments([]);
+                                                setPaymentData({ ...paymentData, paidAmount: isEditing ? '0.00' : finalPayable.toFixed(2) });
+                                            }} 
+                                            className="text-[10px] text-slate-400 hover:text-red-500 font-medium transition-colors"
+                                        >
+                                            Clear All
+                                        </button>
+                                    </div>
                                     <div className="space-y-2">
                                         {addedPayments.map((p, i) => (
                                             <div key={i} className="flex justify-between items-center text-sm">
@@ -1806,7 +1858,7 @@ const CURRENCY_SYMBOLS = {
                                                     <span className="font-medium text-slate-700">{p.method}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="font-medium text-slate-800">₹{p.amount.toFixed(2)}</span>
+                                                    <span className="font-medium text-slate-800">{currencySymbol}{(parseFloat(p.amount) || 0).toFixed(2)}</span>
                                                     <button onClick={() => removePayment(i)} className="text-slate-400 hover:text-red-500"><FiX size={14} /></button>
                                                 </div>
                                             </div>
@@ -1818,7 +1870,7 @@ const CURRENCY_SYMBOLS = {
 
                         {/* Footer */}
                         <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3">
-                            <button onClick={() => setShowPaymentModal(false)} className="px-5 py-3 rounded-xl font-medium text-slate-500 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 transition-all text-sm">
+                            <button onClick={closePaymentModal} className="px-5 py-3 rounded-xl font-medium text-slate-500 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 transition-all text-sm">
                                 Cancel
                             </button>
                             <button

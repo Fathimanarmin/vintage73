@@ -215,17 +215,43 @@ const DynamicInvoice = forwardRef(({ printData, companyProfile, invoiceSettings 
                 <span>Grand Total:</span>
                 <span>{companyProfile?.currencySymbol || '₹'}{parseFloat(printData.totalAmount).toFixed(2)}</span>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '200px', fontSize: '11px', color: '#16a34a', marginTop: '2px' }}>
+                <span>Amount Paid:</span>
+                <span>{companyProfile?.currencySymbol || '₹'}{parseFloat(printData.paidAmount !== undefined ? printData.paidAmount : (printData.totalAmount || 0)).toFixed(2)}</span>
+              </div>
+              {parseFloat(printData.balanceAmount || 0) > 0.01 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '200px', fontSize: '11px', color: '#dc2626', fontWeight: 'bold', marginTop: '2px' }}>
+                  <span>Balance Due:</span>
+                  <span>{companyProfile?.currencySymbol || '₹'}{parseFloat(printData.balanceAmount).toFixed(2)}</span>
+                </div>
+              )}
             </div>
           </div>
         );
       }
 
-      case 'payment_info':
+      case 'payment_info': {
+        const paidAmt = parseFloat(printData.paidAmount !== undefined ? printData.paidAmount : (printData.totalAmount || 0));
+        const balAmt = parseFloat(printData.balanceAmount !== undefined ? printData.balanceAmount : Math.max(0, parseFloat(printData.totalAmount || 0) - paidAmt));
+        const statusText = balAmt > 0.01 ? (paidAmt > 0 ? 'Partial' : 'Credit / Unpaid') : 'Paid';
+        const statusColor = balAmt > 0.01 ? (paidAmt > 0 ? '#d97706' : '#dc2626') : '#16a34a';
+
         return (
           <div key={id} style={componentStyle}>
-            <p style={{ margin: 0 }}>Payment Method: <b>{printData.paymentMethod || 'Cash'}</b> | Status: <b style={{ color: printData.status === 'Paid' ? 'green' : 'red' }}>{printData.status || 'Paid'}</b></p>
+            <p style={{ margin: 0 }}>Payment Method: <b>{printData.paymentMethod || 'Cash'}</b> | Status: <b style={{ color: statusColor }}>{statusText}</b></p>
+            {printData.payments && printData.payments.length > 1 && (
+              <div style={{ fontSize: '10px', marginTop: '4px', color: '#4b5563' }}>
+                {printData.payments.map((p, idx) => (
+                  <span key={idx} style={{ marginRight: '8px' }}>{p.method}: <b>{companyProfile?.currencySymbol || '₹'}{parseFloat(p.amount).toFixed(2)}</b></span>
+                ))}
+              </div>
+            )}
+            <p style={{ margin: '2px 0 0 0', fontSize: '11px' }}>
+              Amount Paid: <b>{companyProfile?.currencySymbol || '₹'}{paidAmt.toFixed(2)}</b> | Balance: <b>{companyProfile?.currencySymbol || '₹'}{balAmt.toFixed(2)}</b>
+            </p>
           </div>
         );
+      }
 
       case 'salesman':
         return printData.salesman ? (

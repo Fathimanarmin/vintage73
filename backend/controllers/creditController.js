@@ -7,7 +7,8 @@ exports.getDebtors = asyncHandler(async (req, res) => {
         where: {
             sales: {
                 some: {
-                    balanceAmount: { gt: 0 }
+                    balanceAmount: { gt: 0 },
+                    status: { not: 'cancelled' }
                 }
             }
         },
