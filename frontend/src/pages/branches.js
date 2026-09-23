@@ -5,6 +5,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiMapPin, FiPhone, FiMail, FiEye, FiFileText
 import { toast } from 'react-toastify';
 import ProfessionalInvoice from '@/components/ProfessionalInvoice';
 import { INVOICE_TEMPLATES, getDemoInvoiceData, getTemplateName } from '@/lib/invoiceTemplates';
+import { CURRENCY_LIST } from '@/lib/currency';
 
 export default function Branches() {
   const [branches, setBranches] = useState([]);
@@ -16,6 +17,7 @@ export default function Branches() {
     address: '', 
     phone: '', 
     email: '', 
+    currencyCode: 'INR',
     isActive: true, 
     stockIncluded: true
   });
@@ -62,7 +64,7 @@ export default function Branches() {
       }
       setShowModal(false);
       setEditingId(null);
-      setFormData({ name: '', address: '', phone: '', email: '', isActive: true, stockIncluded: true });
+      setFormData({ name: '', address: '', phone: '', email: '', currencyCode: 'INR', isActive: true, stockIncluded: true });
       fetchBranches();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save branch');
@@ -76,6 +78,7 @@ export default function Branches() {
       address: branch.address || '',
       phone: branch.phone || '',
       email: branch.email || '',
+      currencyCode: branch.currencyCode || 'INR',
       isActive: branch.isActive,
       stockIncluded: branch.stockIncluded !== undefined ? branch.stockIncluded : true
     });
@@ -243,6 +246,19 @@ export default function Branches() {
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Currency</label>
+                <select
+                  className="input w-full"
+                  value={formData.currencyCode}
+                  onChange={e => setFormData({ ...formData, currencyCode: e.target.value })}
+                >
+                  {CURRENCY_LIST.map(c => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-col gap-3 py-2 mt-1">

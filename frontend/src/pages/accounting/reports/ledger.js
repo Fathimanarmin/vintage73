@@ -109,6 +109,28 @@ export default function LedgerReport() {
         }
     };
 
+    const formatDateDMY = (dateInput) => {
+        if (!dateInput) return '-';
+        // Extract YYYY-MM-DD portion from ISO string or date-only string
+        // This avoids timezone shifts (e.g. IST +5:30 shifting a UTC midnight date back by one day)
+        let datePart;
+        if (typeof dateInput === 'string') {
+            // Handles "2026-09-23T10:00:00.000Z" → "2026-09-23"
+            // Handles "2026-09-23" directly
+            datePart = dateInput.substring(0, 10);
+        } else if (dateInput instanceof Date) {
+            // Safely convert Date object using local year/month/day
+            const d = dateInput;
+            datePart = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        } else {
+            return '-';
+        }
+        // datePart is now guaranteed to be "YYYY-MM-DD"
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return '-';
+        const [year, month, day] = datePart.split('-');
+        return `${day}/${month}/${year}`;
+    };
+
     const handleExport = () => {
         if (!transactions.length) {
             toast.error("No data to export");
@@ -124,10 +146,10 @@ export default function LedgerReport() {
             : openingBal;
 
         const csvContent = [
-            ['Date', 'Voucher No', 'Particulars', 'Debit', 'Credit', 'Balance'],
+            ['Date', 'Voucher No', 'Particulars', 'Debit (Out)', 'Credit (In)', 'Balance'],
             // Opening Balance Row
             [
-                startDate,
+                formatDateDMY(startDate),
                 '-',
                 'By Balance b/d (Opening)',
                 '-',
@@ -136,21 +158,21 @@ export default function LedgerReport() {
             ],
             // Transactions
             ...transactions.map(tx => [
-                new Date(tx.date).toLocaleDateString(),
+                formatDateDMY(tx.date),
                 tx.voucherNumber,
                 `"${tx.particulars} - ${tx.narration || ''}"`,
                 tx.debit || 0,
                 tx.credit || 0,
-                `${Math.abs(tx.balance)} ${tx.balance >= 0 ? 'Dr' : 'Cr'}`
+                `${Math.abs(tx.balance)} ${tx.balance >= 0 ? (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr') : (ledgerInfo?.balanceType === 'DEBIT' ? 'Cr' : 'Dr')}`
             ]),
             // Closing Balance Row
             [
-                endDate,
+                formatDateDMY(endDate),
                 '-',
                 'Total Closing Balance',
                 '-',
                 '-',
-                `${closingBal} ${transactions.length > 0 ? (transactions[transactions.length - 1].balance >= 0 ? (ledgerInfo?.balanceType === 'CREDIT' ? 'Cr' : 'Dr') : (ledgerInfo?.balanceType === 'CREDIT' ? 'Dr' : 'Cr')) : (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr')}`
+                `${closingBal} ${transactions.length > 0 ? (transactions[transactions.length - 1].balance >= 0 ? (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr') : (ledgerInfo?.balanceType === 'DEBIT' ? 'Cr' : 'Dr')) : (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr')}`
             ]
         ].map(row => row.join(',')).join('\n');
 
@@ -176,7 +198,7 @@ export default function LedgerReport() {
         ? Math.abs(Number(transactions[transactions.length - 1].balance) || 0)
         : openingBalNum;
     const closingBalType = transactions.length > 0
-        ? (transactions[transactions.length - 1].balance >= 0 ? (ledgerInfo?.balanceType === 'CREDIT' ? 'Cr' : 'Dr') : (ledgerInfo?.balanceType === 'CREDIT' ? 'Dr' : 'Cr'))
+        ? (transactions[transactions.length - 1].balance >= 0 ? (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr') : (ledgerInfo?.balanceType === 'DEBIT' ? 'Cr' : 'Dr'))
         : (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr');
 
     return (
@@ -301,7 +323,7 @@ export default function LedgerReport() {
                                 {ledgerInfo.name} Report
                             </h2>
                             <p className="text-xs text-slate-500 font-semibold mt-1 uppercase tracking-wider">
-                                Period: {startDate} to {endDate}
+                                Period: {formatDateDMY(startDate)} to {formatDateDMY(endDate)}
                             </p>
                         </div>
                     </div>
@@ -314,31 +336,27 @@ export default function LedgerReport() {
                                     <th className="border-b border-r border-slate-300 px-4 py-3 text-left w-[12%]">Date</th>
                                     <th className="border-b border-r border-slate-300 px-4 py-3 text-left w-[15%]">Voucher No</th>
                                     <th className="border-b border-r border-slate-300 px-4 py-3 text-left w-[35%]">Particulars</th>
-                                    <th className="border-b border-r border-slate-300 px-4 py-3 text-right w-[12%]">Debit (In)</th>
-                                    <th className="border-b border-r border-slate-300 px-4 py-3 text-right w-[12%]">Credit (Out)</th>
+                                    <th className="border-b border-r border-slate-300 px-4 py-3 text-right w-[12%]">Debit (Out)</th>
+                                    <th className="border-b border-r border-slate-300 px-4 py-3 text-right w-[12%]">Credit (In)</th>
                                     <th className="border-b border-slate-300 px-4 py-3 text-right w-[14%]">Balance</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {/* Opening Balance Row */}
                                 <tr className="bg-slate-50 font-semibold text-slate-700">
-                                    <td className="border-b border-r border-slate-200 px-4 py-2.5">{startDate ? new Date(startDate).toLocaleDateString() : 'Opening'}</td>
+                                    <td className="border-b border-r border-slate-200 px-4 py-2.5">{startDate ? formatDateDMY(startDate) : 'Opening'}</td>
                                     <td className="border-b border-r border-slate-200 px-4 py-2.5 text-slate-400">-</td>
                                     <td className="border-b border-r border-slate-200 px-4 py-2.5 italic">By Balance b/d (Opening)</td>
                                     <td className="border-b border-r border-slate-200 px-4 py-2.5 text-right text-slate-700">
-                                        {ledgerInfo?.balanceType === 'CREDIT'
-                                            ? (ledgerInfo?.openingCredit || ledgerInfo?.openingBalance > 0 ? `₹${Number(ledgerInfo?.openingCredit || ledgerInfo?.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')
-                                            : (ledgerInfo?.openingDebit || ledgerInfo?.openingBalance > 0 ? `₹${Number(ledgerInfo?.openingDebit || ledgerInfo?.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')}
+                                        {ledgerInfo?.openingDebit ? `₹${Number(ledgerInfo.openingDebit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                                     </td>
                                     <td className="border-b border-r border-slate-200 px-4 py-2.5 text-right text-slate-700">
-                                        {ledgerInfo?.balanceType === 'CREDIT'
-                                            ? (ledgerInfo?.openingDebit ? `₹${Number(ledgerInfo.openingDebit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')
-                                            : (ledgerInfo?.openingCredit ? `₹${Number(ledgerInfo.openingCredit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')}
+                                        {ledgerInfo?.openingCredit ? `₹${Number(ledgerInfo.openingCredit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                                     </td>
                                     <td className="border-b border-slate-200 px-4 py-2.5 text-right font-mono font-medium text-slate-800">
                                         ₹{openingBalNum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                         <span className="text-[10px] ml-1 text-slate-500 font-bold">
-                                            {ledgerInfo?.openingBalance >= 0 ? (ledgerInfo?.balanceType === 'CREDIT' ? 'Cr' : 'Dr') : (ledgerInfo?.balanceType === 'CREDIT' ? 'Dr' : 'Cr')}
+                                            {ledgerInfo?.openingBalance >= 0 ? (ledgerInfo?.balanceType === 'DEBIT' ? 'Dr' : 'Cr') : (ledgerInfo?.balanceType === 'DEBIT' ? 'Cr' : 'Dr')}
                                         </span>
                                     </td>
                                 </tr>
@@ -346,7 +364,7 @@ export default function LedgerReport() {
                                 {transactions.map((tx, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                                         <td className="border-b border-r border-slate-200 px-4 py-2.5 text-slate-600 whitespace-nowrap">
-                                            {new Date(tx.date).toLocaleDateString()}
+                                            {formatDateDMY(tx.date)}
                                         </td>
                                         <td className="border-b border-r border-slate-200 px-4 py-2.5 text-slate-600 text-xs">
                                             <span className="font-medium text-slate-800">{tx.voucherNumber}</span>
@@ -360,20 +378,16 @@ export default function LedgerReport() {
                                                 <div className="text-[11px] text-slate-500 font-normal italic mt-0.5">{tx.narration}</div>
                                             )}
                                         </td>
-                                        <td className="border-b border-r border-slate-200 px-4 py-2.5 text-right font-medium text-emerald-700">
-                                            {ledgerInfo.balanceType === 'CREDIT'
-                                                ? (tx.credit > 0 ? `₹${Number(tx.credit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')
-                                                : (tx.debit > 0 ? `₹${Number(tx.debit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')}
-                                        </td>
                                         <td className="border-b border-r border-slate-200 px-4 py-2.5 text-right font-medium text-red-700">
-                                            {ledgerInfo.balanceType === 'CREDIT'
-                                                ? (tx.debit > 0 ? `₹${Number(tx.debit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')
-                                                : (tx.credit > 0 ? `₹${Number(tx.credit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-')}
+                                            {tx.debit > 0 ? `₹${Number(tx.debit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
+                                        </td>
+                                        <td className="border-b border-r border-slate-200 px-4 py-2.5 text-right font-medium text-emerald-700">
+                                            {tx.credit > 0 ? `₹${Number(tx.credit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                                         </td>
                                         <td className="border-b border-slate-200 px-4 py-2.5 text-right font-mono text-slate-800 bg-slate-50/40">
                                             ₹{Math.abs(Number(tx.balance) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                             <span className="text-[10px] ml-1 text-slate-400 font-semibold">
-                                                {tx.balance >= 0 ? (ledgerInfo.balanceType === 'CREDIT' ? 'Cr' : 'Dr') : (ledgerInfo.balanceType === 'CREDIT' ? 'Dr' : 'Cr')}
+                                                {tx.balance >= 0 ? (ledgerInfo.balanceType === 'DEBIT' ? 'Dr' : 'Cr') : (ledgerInfo.balanceType === 'DEBIT' ? 'Cr' : 'Dr')}
                                             </span>
                                         </td>
                                     </tr>
@@ -392,10 +406,10 @@ export default function LedgerReport() {
                                 {/* Closing Balance Row */}
                                 <tr className="bg-slate-100/90 font-bold border-t-2 border-slate-800 text-slate-900">
                                     <td className="border-r border-slate-300 px-4 py-3" colSpan="3">Total Closing Balance</td>
-                                    <td className="border-r border-slate-300 px-4 py-3 text-right text-emerald-700">
+                                    <td className="border-r border-slate-300 px-4 py-3 text-right text-red-700">
                                         {totalDebit > 0 ? `₹${totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                                     </td>
-                                    <td className="border-r border-slate-300 px-4 py-3 text-right text-red-700">
+                                    <td className="border-r border-slate-300 px-4 py-3 text-right text-emerald-700">
                                         {totalCredit > 0 ? `₹${totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '-'}
                                     </td>
                                     <td className="px-4 py-3 text-right text-base text-slate-900 font-extrabold font-mono">

@@ -336,15 +336,241 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     throw new Error('Ledger not found');
   }
 
-  // 1. Calculate Opening Balance as of startDate
-  let calculatedOpeningBalance = parseFloat(ledger.openingBalance); // Initial Opening Balance
+  // Check if this ledger corresponds to a Customer / Sundry Debtors
+  const customer = await prisma.customer.findFirst({
+    where: { name: ledger.name }
+  });
+  const isCustomerLedger = Boolean(customer || ledger.group?.name === 'Sundry Debtors');
+
+  const start = startDate ? new Date(startDate) : null;
+  let end = endDate ? new Date(endDate) : null;
+  if (end) end.setHours(23, 59, 59, 999);
+
+  if (isCustomerLedger && customer) {
+    // ----------------------------------------------------
+    // CUSTOMER LEDGER STATEMENT LOGIC
+    // ----------------------------------------------------
+    let openingBalance = parseFloat(ledger.openingBalance || 0);
+
+    const allCustomerSales = await prisma.sale.findMany({
+      where: { customerId: customer.id, status: { not: 'cancelled' } },
+      select: { invoiceNumber: true }
+    });
+    const customerInvoiceNumbers = allCustomerSales.map(s => s.invoiceNumber).filter(Boolean);
+
+    if (start) {
+      // Prior sales for this customer (saleDate before start)
+      const priorSales = await prisma.sale.findMany({
+        where: {
+          customerId: customer.id,
+          status: { not: 'cancelled' },
+          saleDate: { lt: start }
+        }
+      });
+      const priorSalesPending = priorSales.reduce((sum, s) => {
+        const bal = parseFloat(s.balanceAmount !== undefined && s.balanceAmount !== null ? s.balanceAmount : (s.totalAmount - s.paidAmount));
+        return sum + (bal > 0 ? bal : 0);
+      }, 0);
+
+      // Prior settlements / receipts from Payment table (strictly excluding initial sale payments)
+      const priorPayments = await prisma.payment.findMany({
+        where: {
+          customerId: customer.id,
+          type: 'receipt',
+          saleId: null,
+          reference: {
+            notIn: [
+              'Initial Payment',
+              'Updated Payment',
+              'Initial POS Payment',
+              ...priorSales.map(s => s.invoiceNumber)
+            ]
+          },
+          paymentDate: { lt: start }
+        }
+      });
+      const priorSettled = priorPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+      // Prior Receipt Vouchers posted to this customer's ledger (via JournalEntry)
+      const priorVoucherReceipts = await prisma.journalEntry.findMany({
+        where: {
+          creditLedgerId: ledger.id,
+          voucher: {
+            status: 'POSTED',
+            voucherType: 'RECEIPT',
+            date: { lt: start }
+          }
+        },
+        include: { voucher: true }
+      });
+      const filteredPriorVoucherReceipts = priorVoucherReceipts.filter(e => {
+        const ref = e.voucher?.reference;
+        const narr = e.voucher?.narration || '';
+        if (ref && customerInvoiceNumbers.includes(ref)) return false;
+        if (narr.startsWith('Payment for #')) return false;
+        return true;
+      });
+      const priorVoucherReceiptsTotal = filteredPriorVoucherReceipts.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+
+      openingBalance += (priorSalesPending - priorSettled - priorVoucherReceiptsTotal);
+    }
+
+    // Fetch Period Sales (by saleDate)
+    const periodSales = await prisma.sale.findMany({
+      where: {
+        customerId: customer.id,
+        status: { not: 'cancelled' },
+        ...(start || end ? {
+          saleDate: {
+            ...(start ? { gte: start } : {}),
+            ...(end ? { lte: end } : {})
+          }
+        } : {})
+      },
+      orderBy: { saleDate: 'asc' }
+    });
+
+    // Fetch Period Payments / Credit Settlements from Payment table (strictly excluding initial sale payments)
+    const periodPayments = await prisma.payment.findMany({
+      where: {
+        customerId: customer.id,
+        type: 'receipt',
+        saleId: null,
+        reference: {
+          notIn: [
+            'Initial Payment',
+            'Updated Payment',
+            'Initial POS Payment',
+            ...periodSales.map(s => s.invoiceNumber)
+          ]
+        },
+        ...(start || end ? {
+          paymentDate: {
+            ...(start ? { gte: start } : {}),
+            ...(end ? { lte: end } : {})
+          }
+        } : {})
+      },
+      orderBy: { paymentDate: 'asc' }
+    });
+
+    // Fetch Period Receipt Vouchers posted to this customer's ledger (via JournalEntry + Voucher)
+    const periodVoucherReceipts = await prisma.journalEntry.findMany({
+      where: {
+        creditLedgerId: ledger.id,
+        voucher: {
+          status: 'POSTED',
+          voucherType: 'RECEIPT',
+          ...(start || end ? {
+            date: {
+              ...(start ? { gte: start } : {}),
+              ...(end ? { lte: end } : {})
+            }
+          } : {})
+        }
+      },
+      include: {
+        voucher: true,
+        debitLedger: true
+      },
+      orderBy: { voucher: { date: 'asc' } }
+    });
+
+    const filteredPeriodVoucherReceipts = periodVoucherReceipts.filter(e => {
+      const ref = e.voucher?.reference;
+      const narr = e.voucher?.narration || '';
+      if (ref && customerInvoiceNumbers.includes(ref)) return false;
+      if (narr.startsWith('Payment for #')) return false;
+      return true;
+    });
+
+    // Build statement rows for Customer
+    const saleRows = periodSales.map(s => {
+      const tot = parseFloat(s.totalAmount || 0);
+      const paid = parseFloat(s.paidAmount || 0);
+      const pending = parseFloat(s.balanceAmount !== undefined && s.balanceAmount !== null ? s.balanceAmount : (tot - paid));
+      const finalPending = pending > 0 ? pending : 0;
+
+      return {
+        id: `sale-${s.id}`,
+        date: s.saleDate,
+        voucherNumber: s.invoiceNumber,
+        voucherType: 'SALES',
+        particulars: `Sales Invoice #${s.invoiceNumber}`,
+        debit: finalPending, // DEBIT (OUT) = Pending / Credit Given to Customer
+        credit: paid,        // CREDIT (IN) = Cash / Amount Received at Sale
+        narration: s.description || (paid > 0 ? `Paid: ₹${paid}, Pending: ₹${finalPending}` : 'Full Credit Sale'),
+        balanceImpact: finalPending
+      };
+    });
+
+    // Payment table rows (credit settlements from creditController etc.)
+    const paymentRows = periodPayments.map(p => {
+      const amt = parseFloat(p.amount || 0);
+      return {
+        id: `pay-${p.id}`,
+        date: p.paymentDate,
+        voucherNumber: p.reference || `REC-${p.id}`,
+        voucherType: 'RECEIPT',
+        particulars: `${p.method || 'Cash'} Receipt (Credit Settlement)`,
+        debit: 0,
+        credit: amt, // CREDIT (IN) = Amount Received
+        narration: p.description || 'Credit Settlement',
+        balanceImpact: -amt
+      };
+    });
+
+    // Receipt Voucher rows (from Voucher/JournalEntry – e.g. Receipt Voucher page)
+    const voucherReceiptRows = filteredPeriodVoucherReceipts.map(e => {
+      const amt = parseFloat(e.amount || 0);
+      const debitLedgerName = e.debitLedger?.name || 'Cash';
+      return {
+        id: `vrec-${e.id}`,
+        date: e.voucher.date,
+        voucherNumber: e.voucher.voucherNumber,
+        voucherType: 'RECEIPT',
+        particulars: `${debitLedgerName} Receipt`,
+        debit: 0,
+        credit: amt, // CREDIT (IN) = Amount Received
+        narration: e.voucher.narration || e.description || 'Receipt Voucher',
+        balanceImpact: -amt
+      };
+    });
+
+    const allRows = [...saleRows, ...paymentRows, ...voucherReceiptRows].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let runningBalance = openingBalance;
+    const statement = allRows.map(row => {
+      runningBalance += row.balanceImpact;
+      return {
+        ...row,
+        balance: Math.abs(runningBalance) < 0.001 ? 0 : runningBalance
+      };
+    });
+
+    return res.json({
+      ledger: {
+        id: ledger.id,
+        name: ledger.name,
+        groupName: ledger.group?.name || 'Sundry Debtors',
+        openingBalance: openingBalance,
+        balanceType: 'DEBIT',
+        openingDebit: openingBalance > 0 ? openingBalance : 0,
+        openingCredit: openingBalance < 0 ? Math.abs(openingBalance) : 0
+      },
+      statement,
+      closingBalance: Math.abs(runningBalance) < 0.001 ? 0 : runningBalance
+    });
+  }
+
+  // ----------------------------------------------------
+  // STANDARD GENERAL LEDGER STATEMENT FOR OTHER ACCOUNTS
+  // ----------------------------------------------------
+  let calculatedOpeningBalance = parseFloat(ledger.openingBalance);
   let openingDebit = 0;
   let openingCredit = 0;
 
-  if (startDate) {
-    const start = new Date(startDate);
-
-    // aggregate all debits before start date
+  if (start) {
     const preDebit = await prisma.journalEntry.aggregate({
       _sum: { amount: true },
       where: {
@@ -356,7 +582,6 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
       }
     });
 
-    // aggregate all credits before start date
     const preCredit = await prisma.journalEntry.aggregate({
       _sum: { amount: true },
       where: {
@@ -378,7 +603,6 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
       calculatedOpeningBalance = masterOpening + totalPreCreditRaw - totalPreDebitRaw;
     }
 
-    // Store separate aggregates for the report summary
     openingDebit = totalPreDebitRaw + (ledger.balanceType === 'DEBIT' ? masterOpening : 0);
     openingCredit = totalPreCreditRaw + (ledger.balanceType === 'CREDIT' ? masterOpening : 0);
   } else {
@@ -386,20 +610,14 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     openingCredit = ledger.balanceType === 'CREDIT' ? parseFloat(ledger.openingBalance) : 0;
   }
 
-  // 2. Build date filter for current period
   const dateFilter = {};
-  if (startDate && endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-
+  if (start || end) {
     dateFilter.date = {
-      gte: start,
-      lte: end
+      ...(start ? { gte: start } : {}),
+      ...(end ? { lte: end } : {})
     };
   }
 
-  // 3. Get all entries for this ledger in the period
   const debitEntries = await prisma.journalEntry.findMany({
     where: {
       debitLedgerId: parseInt(ledgerId),
@@ -428,19 +646,16 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     }
   });
 
-  // 4. Combine and enrich with counterpart names
   const allEntriesRaw = [...debitEntries.map(e => ({ ...e, type: 'DEBIT' })), ...creditEntries.map(e => ({ ...e, type: 'CREDIT' }))];
 
   const entriesWithParticulars = await Promise.all(allEntriesRaw.map(async (e) => {
     let particulars = 'Multiple Accounts';
 
-    // Fetch all entries for this voucher to determine the "Particulars"
     const voucherEntries = await prisma.journalEntry.findMany({
       where: { voucherId: e.voucherId },
       include: { debitLedger: true, creditLedger: true }
     });
 
-    // Find other ledgers involved in this voucher
     const otherLedgers = voucherEntries
       .map(ve => ({
         id: ve.debitLedgerId || ve.creditLedgerId,
@@ -448,7 +663,6 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
       }))
       .filter(l => l.id !== parseInt(ledgerId));
 
-    // Dedup by name
     const uniqueOtherNames = [...new Set(otherLedgers.map(l => l.name))];
 
     if (uniqueOtherNames.length === 1) {
@@ -456,7 +670,6 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     } else if (uniqueOtherNames.length > 1) {
       particulars = `Multiple (${uniqueOtherNames.slice(0, 2).join(', ')}${uniqueOtherNames.length > 2 ? '...' : ''})`;
     } else {
-      // Fallback for simple rows
       particulars = e.type === 'DEBIT' ? (e.creditLedger?.name || 'Related Ledger') : (e.debitLedger?.name || 'Related Ledger');
     }
 
@@ -474,7 +687,6 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
 
   let allEntries = entriesWithParticulars.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // 5. Calculate running balance
   let runningBalance = calculatedOpeningBalance;
   const statement = allEntries.map(entry => {
     if (ledger.balanceType === 'DEBIT') {
@@ -485,7 +697,7 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
 
     return {
       ...entry,
-      balance: runningBalance
+      balance: Math.abs(runningBalance) < 0.001 ? 0 : runningBalance
     };
   });
 
@@ -494,13 +706,13 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
       id: ledger.id,
       name: ledger.name,
       groupName: ledger.group.name,
-      openingBalance: calculatedOpeningBalance, // This is the opening balance FOR THIS PERIOD
+      openingBalance: calculatedOpeningBalance,
       balanceType: ledger.balanceType,
       openingDebit,
       openingCredit
     },
     statement,
-    closingBalance: runningBalance
+    closingBalance: Math.abs(runningBalance) < 0.001 ? 0 : runningBalance
   });
 });
 

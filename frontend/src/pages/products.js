@@ -5,6 +5,7 @@ import Barcode from 'react-barcode';
 import { toast } from 'react-toastify';
 import SearchableSelect from '@/components/SearchableSelect';
 import { printZplViaQz, printImageViaQz, connectQZ, isQzConnected, getAvailablePrinters } from '@/lib/qzTray';
+import { getCurrencySymbol } from '@/lib/currency';
 
 const DEFAULT_GENDERS = ['Men', 'Women', 'Boy', 'Girl', 'Unisex'];
 
@@ -159,6 +160,34 @@ export default function Products() {
       }
     }
   }, []);
+
+  const activeBranchObj = useMemo(() => {
+    if (selectedBranch && selectedBranch !== 'all') {
+      const found = branches.find(b => b.id.toString() === selectedBranch.toString());
+      if (found) return found;
+    }
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        if (u.branchId) {
+          const userBranch = branches.find(b => b.id.toString() === u.branchId.toString());
+          if (userBranch) return userBranch;
+        }
+      } catch (e) {}
+    }
+    return branches[0] || null;
+  }, [selectedBranch, branches]);
+
+  const activeCurrencySymbol = useMemo(() => {
+    if (activeBranchObj?.currencySymbol) {
+      return activeBranchObj.currencySymbol;
+    }
+    if (activeBranchObj?.currencyCode) {
+      return getCurrencySymbol(activeBranchObj.currencyCode);
+    }
+    return companyProfile?.currencySymbol || getCurrencySymbol(companyProfile?.currencyCode) || '₹';
+  }, [activeBranchObj, companyProfile]);
 
   const fetchProducts = async (targetBranch) => {
     try {
@@ -358,7 +387,7 @@ export default function Products() {
 ^FO15,25^A0N,16,16^FD{{productName}}^FS
 ^BY1.5,2.5,30^FO15,45^BCN,30,N,N,N^FD{{barcode}}^FS
 ^FO15,80^A0N,14,14^FD{{barcode}}^FS
-^FO15,100^A0N,16,16^FDPRICE: AED {{price}}^FS
+^FO15,100^A0N,16,16^FDPRICE: ${activeCurrencySymbol} {{price}}^FS
 ^FO15,120^A0N,16,16^FDSIZE: {{size}}^FS
 ^FO15,140^A0N,14,14^FD{{branchName}}^FS
 ^PQ1,0,0,N
@@ -1777,7 +1806,7 @@ export default function Products() {
 
                       {/* Selling Price */}
                       <td className="p-4 text-slate-900 font-semibold">
-                        {companyProfile?.currencySymbol || '₹'}{Number(product.price).toFixed(2)}
+                        {activeCurrencySymbol}{Number(product.price).toFixed(2)}
                       </td>
 
                       {/* Stock */}
@@ -2182,9 +2211,9 @@ export default function Products() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {/* Selling Price */}
                               <div>
-                                <label className="block text-xs font-semibold text-slate-600 mb-1">Selling Price (₹)</label>
+                                <label className="block text-xs font-semibold text-slate-600 mb-1">Selling Price ({activeCurrencySymbol})</label>
                                 <div className="relative">
-                                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">₹</span>
+                                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">{activeCurrencySymbol}</span>
                                   <input
                                     type="number"
                                     step="0.01"
@@ -2294,7 +2323,7 @@ export default function Products() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Selling Price (₹) <span className="text-red-500">*</span>
+                      Selling Price ({activeCurrencySymbol}) <span className="text-red-500">*</span>
                     </label>
                     <input
                       required

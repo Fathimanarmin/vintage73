@@ -180,19 +180,76 @@ const { postTransaction } = require('../services/dynamicPostingService');
  * Centralized logic for Sale posting.
  */
 async function processSalePosting(tx, sale, userId) {
-  const { invoiceNumber, totalAmount, paidAmount, paymentMethod, saleDate } = sale;
+  const { invoiceNumber, totalAmount, paidAmount, paymentMethod, saleDate, customer, taxAmount, subTotal } = sale;
+  const grandTotal = parseFloat(String(totalAmount || 0));
 
-  // 1. Dynamic Posting for the Sale itself (Ledger Setup handles Dr/Cr for Customers, Sales, Taxes, etc.)
-  await postTransaction(tx, 'SALES', sale, userId, invoiceNumber, `Sales Invoice #${invoiceNumber}`);
+  if (!grandTotal || grandTotal === 0) {
+    console.warn('Sale totalAmount is 0, skipping accounting posting.');
+    return;
+  }
 
-  // 2. Handle Receipt if paid (Optional: this could also be a dynamic 'PAYMENT' posting rule)
-  if (paidAmount > 0) {
+  // 1. Dynamic Posting for the Sale itself (if configured in TransactionPosting)
+  let dynamicPosted = false;
+  try {
+    const dynamicResult = await postTransaction(tx, 'SALES', sale, userId, invoiceNumber, `Sales Invoice #${invoiceNumber}`);
+    if (dynamicResult) {
+      dynamicPosted = true;
+    }
+  } catch (err) {
+    console.warn('Dynamic posting for SALES failed or incomplete, using fallback posting:', err.message);
+  }
+
+  // 2. If dynamic posting was not executed (e.g. no rules), use robust fallback posting
+  if (!dynamicPosted) {
+    let customerName = 'Walk-in Customer';
+    if (customer && customer.name) {
+      customerName = customer.name;
+    } else if (sale.customerId) {
+      const cust = await tx.customer.findUnique({ where: { id: parseInt(sale.customerId) } });
+      if (cust && cust.name) customerName = cust.name;
+    }
+
+    const customerLedger = await ensureLedger(tx, customerName, 'Sundry Debtors');
+    const salesLedger = await ensureLedger(tx, 'Sales Account', 'Sales Accounts');
+
+    const entries = [
+      { ledgerId: customerLedger.id, type: 'DEBIT', amount: grandTotal }
+    ];
+
+    const tax = parseFloat(String(taxAmount || 0));
+    const sub = parseFloat(String(subTotal || (grandTotal - tax)));
+
+    if (tax > 0) {
+      entries.push({ ledgerId: salesLedger.id, type: 'CREDIT', amount: sub });
+      const halfTax = parseFloat((tax / 2).toFixed(2));
+      const otherHalf = parseFloat((tax - halfTax).toFixed(2));
+      const cgstLedger = await ensureLedger(tx, 'Output CGST', 'Duties & Taxes');
+      const sgstLedger = await ensureLedger(tx, 'Output SGST', 'Duties & Taxes');
+      entries.push({ ledgerId: cgstLedger.id, type: 'CREDIT', amount: halfTax });
+      entries.push({ ledgerId: sgstLedger.id, type: 'CREDIT', amount: otherHalf });
+    } else {
+      entries.push({ ledgerId: salesLedger.id, type: 'CREDIT', amount: grandTotal });
+    }
+
+    await postVoucher(tx, {
+      type: 'SALES',
+      date: saleDate ? new Date(saleDate) : new Date(),
+      amount: grandTotal,
+      narration: `Sales Invoice #${invoiceNumber}`,
+      reference: invoiceNumber,
+      createdBy: userId
+    }, entries);
+  }
+
+  // 3. Handle Receipt if paid
+  const paid = parseFloat(String(paidAmount || 0));
+  if (paid > 0) {
     const payMethod = paymentMethod || 'Cash';
     let role = 'CASH';
     let defaultLedger = 'Cash';
     let defaultGroup = 'Cash-in-Hand';
 
-    if (payMethod.toLowerCase().includes('online') || payMethod.toLowerCase().includes('bank') || payMethod.toLowerCase().includes('card')) {
+    if (payMethod.toLowerCase().includes('online') || payMethod.toLowerCase().includes('bank') || payMethod.toLowerCase().includes('card') || payMethod.toLowerCase().includes('upi')) {
       role = 'BANK';
       defaultLedger = 'Bank Account';
       defaultGroup = 'Bank Accounts';
@@ -200,20 +257,25 @@ async function processSalePosting(tx, sale, userId) {
 
     const assetLedger = await getLedgerByRole(tx, 'PAYMENT', role, defaultLedger, defaultGroup);
 
-    // We can use postTransaction here too if we want it setup driven
-    // For now, let's keep the receipt simple or use the service with 'PAYMENT' type
-    const customerLedger = await ensureLedger(tx, sale.customer ? sale.customer.name : 'Walk-in Customer', 'Sundry Debtors');
+    let customerName = 'Walk-in Customer';
+    if (customer && customer.name) {
+      customerName = customer.name;
+    } else if (sale.customerId) {
+      const cust = await tx.customer.findUnique({ where: { id: parseInt(sale.customerId) } });
+      if (cust && cust.name) customerName = cust.name;
+    }
+    const customerLedger = await ensureLedger(tx, customerName, 'Sundry Debtors');
 
     await postVoucher(tx, {
       type: 'RECEIPT',
       date: saleDate ? new Date(saleDate) : new Date(),
-      amount: paidAmount,
+      amount: paid,
       narration: `Payment for #${invoiceNumber}`,
       reference: invoiceNumber,
       createdBy: userId
     }, [
-      { ledgerId: assetLedger.id, type: 'DEBIT', amount: paidAmount },
-      { ledgerId: customerLedger.id, type: 'CREDIT', amount: paidAmount }
+      { ledgerId: assetLedger.id, type: 'DEBIT', amount: paid },
+      { ledgerId: customerLedger.id, type: 'CREDIT', amount: paid }
     ]);
   }
 }

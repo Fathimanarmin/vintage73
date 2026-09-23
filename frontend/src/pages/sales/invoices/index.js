@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/api';
+import { getCurrencySymbol } from '@/lib/currency';
 import { FiPrinter, FiEye, FiCheckCircle, FiFileText, FiDollarSign, FiX, FiSearch, FiTrash2, FiAlertTriangle, FiEdit2, FiClock, FiUser, FiCalendar, FiTag, FiShoppingBag, FiCreditCard } from 'react-icons/fi';
 
 import { useRouter } from 'next/router';
@@ -235,7 +236,7 @@ export default function InvoicesList() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-right font-medium text-slate-800">
-                                    {(inv.currencyCode === 'USD' ? '$' : inv.currencyCode === 'AED' ? 'د.إ' : '₹')}
+                                    {getCurrencySymbol(inv.currencyCode)}
                                     {(Number(inv.totalAmount) * Number(inv.exchangeRate || 1)).toFixed(2)}
                                 </td>
                                 <td className="px-6 py-4">
@@ -433,30 +434,30 @@ export default function InvoicesList() {
                             <div className="space-y-2 border-t pt-4">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-slate-500">Subtotal</span>
-                                    <span className="font-semibold text-slate-700">₹{Number(historyInvoice.subTotal).toFixed(2)}</span>
+                                    <span className="font-semibold text-slate-700">{getCurrencySymbol(historyInvoice.currencyCode)}{Number(historyInvoice.subTotal).toFixed(2)}</span>
                                 </div>
                                 {Number(historyInvoice.taxAmount) > 0 && (
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-500">Tax Total</span>
-                                        <span className="font-semibold text-slate-700">₹{Number(historyInvoice.taxAmount).toFixed(2)}</span>
+                                        <span className="font-semibold text-slate-700">{getCurrencySymbol(historyInvoice.currencyCode)}{Number(historyInvoice.taxAmount).toFixed(2)}</span>
                                     </div>
                                 )}
                                 {Number(historyInvoice.discount) > 0 && (
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-slate-500">Discount Applied</span>
-                                        <span className="font-bold text-red-500">-₹{Number(historyInvoice.discount).toFixed(2)}</span>
+                                        <span className="font-bold text-red-500">-{getCurrencySymbol(historyInvoice.currencyCode)}{Number(historyInvoice.discount).toFixed(2)}</span>
                                     </div>
                                 )}
                                 {Number(historyInvoice.advanceUsed) > 0 && (
                                     <div className="flex justify-between items-center text-sm">
                                         <span className="text-emerald-500 font-medium flex items-center gap-1.5"><FiCreditCard size={12} /> Advance Used</span>
-                                        <span className="font-bold text-emerald-600">-₹{Number(historyInvoice.advanceUsed).toFixed(2)}</span>
+                                        <span className="font-bold text-emerald-600">-{getCurrencySymbol(historyInvoice.currencyCode)}{Number(historyInvoice.advanceUsed).toFixed(2)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between items-center pt-3 border-t-2 border-dashed">
                                     <span className="font-bold text-slate-800 uppercase tracking-tight">Grand Total</span>
                                     <span className="text-xl font-black text-primary">
-                                        {(historyInvoice.currencyCode === 'USD' ? '$' : historyInvoice.currencyCode === 'AED' ? 'د.إ' : '₹')}
+                                        {getCurrencySymbol(historyInvoice.currencyCode)}
                                         {(Number(historyInvoice.totalAmount) * Number(historyInvoice.exchangeRate || 1)).toFixed(2)}
                                     </span>
                                 </div>

@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 const asyncHandler = require('../middleware/asyncHandler');
+const { ensureLedger, postVoucher, getLedgerByRole } = require('../utils/accountingHelper');
 
 // Get all customers with outstanding balance
 exports.getDebtors = asyncHandler(async (req, res) => {
@@ -107,6 +108,37 @@ exports.settleCredit = asyncHandler(async (req, res) => {
                 paymentDate: new Date()
             }
         });
+
+        // 4. Create Accounting Voucher (RECEIPT)
+        try {
+            const customer = await tx.customer.findUnique({ where: { id: parseInt(customerId) } });
+            const customerLedger = await ensureLedger(tx, customer ? customer.name : 'Walk-in Customer', 'Sundry Debtors');
+
+            let role = 'CASH';
+            let defaultLedger = 'Cash';
+            let defaultGroup = 'Cash-in-Hand';
+            const method = (paymentMethod || 'Cash').toLowerCase();
+            if (method.includes('online') || method.includes('bank') || method.includes('card') || method.includes('upi')) {
+                role = 'BANK';
+                defaultLedger = 'Bank Account';
+                defaultGroup = 'Bank Accounts';
+            }
+            const assetLedger = await getLedgerByRole(tx, 'PAYMENT', role, defaultLedger, defaultGroup);
+
+            await postVoucher(tx, {
+                type: 'RECEIPT',
+                date: new Date(),
+                amount: payAmount,
+                narration: notes || `Credit Settlement for ${updatedSales.length} invoice(s)`,
+                reference: reference || `SETTLE-${payment.id}`,
+                createdBy: req.user ? req.user.id : 1
+            }, [
+                { ledgerId: assetLedger.id, type: 'DEBIT', amount: payAmount },
+                { ledgerId: customerLedger.id, type: 'CREDIT', amount: payAmount }
+            ]);
+        } catch (accErr) {
+            console.error('Credit Settlement Accounting Error:', accErr);
+        }
 
         return { payment, settledInvoices: updatedSales.length };
     });

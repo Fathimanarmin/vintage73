@@ -44,6 +44,13 @@ exports.getBranchById = asyncHandler(async (req, res) => {
   res.json(branch);
 });
 
+const CURRENCY_SYMBOLS = {
+  INR: '₹',
+  USD: '$',
+  EUR: '€',
+  AED: 'د.إ'
+};
+
 // Create Branch
 exports.createBranch = asyncHandler(async (req, res) => {
   // Only global admin can create branches
@@ -52,13 +59,18 @@ exports.createBranch = asyncHandler(async (req, res) => {
     throw new Error('Access denied: Only global admins can create branches');
   }
 
-  const { name, address, phone, email, stockIncluded, invoiceTemplate, invoiceSettings } = req.body;
+  const { name, address, phone, email, stockIncluded, invoiceTemplate, invoiceSettings, currencyCode, currencySymbol } = req.body;
+  const code = currencyCode || 'INR';
+  const symbol = currencySymbol || CURRENCY_SYMBOLS[code] || '₹';
+
   const dataToSave = {
     name,
     address,
     phone,
     email,
-    stockIncluded: stockIncluded !== undefined ? stockIncluded : true
+    stockIncluded: stockIncluded !== undefined ? stockIncluded : true,
+    currencyCode: code,
+    currencySymbol: symbol
   };
   if (invoiceTemplate !== undefined) {
     dataToSave.invoiceTemplate = invoiceTemplate || null;
@@ -91,8 +103,15 @@ exports.updateBranch = asyncHandler(async (req, res) => {
     throw new Error('Invalid Branch ID');
   }
 
-  const { name, address, phone, email, isActive, stockIncluded, invoiceTemplate, invoiceSettings } = req.body;
+  const { name, address, phone, email, isActive, stockIncluded, invoiceTemplate, invoiceSettings, currencyCode, currencySymbol } = req.body;
   const dataToUpdate = { name, address, phone, email, isActive, stockIncluded };
+
+  if (currencyCode !== undefined) {
+    const code = currencyCode || 'INR';
+    dataToUpdate.currencyCode = code;
+    dataToUpdate.currencySymbol = currencySymbol || CURRENCY_SYMBOLS[code] || '₹';
+  }
+
   if (invoiceTemplate !== undefined) {
     dataToUpdate.invoiceTemplate = invoiceTemplate || null;
   }

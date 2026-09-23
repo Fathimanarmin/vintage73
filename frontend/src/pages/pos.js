@@ -69,7 +69,7 @@ const EXCHANGE_RATES = {
 
 const CURRENCY_SYMBOLS = {
     INR: '₹',
-    AED: 'AED',
+    AED: 'د.إ',
     EUR: '€',
     USD: '$'
 };
@@ -125,7 +125,12 @@ const CURRENCY_SYMBOLS = {
                     setCustomerId(parsed.customerId || '');
                     setCustomerName(parsed.customerName || '');
                     setSalesmanId(parsed.salesmanId || '');
-                    setSaleDate(parsed.saleDate || new Date().toISOString().split('T')[0]);
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (parsed.saleDate && parsed.saleDate === todayStr) {
+                        setSaleDate(parsed.saleDate);
+                    } else {
+                        setSaleDate(todayStr);
+                    }
                     setRoundOff(parsed.roundOff || 0);
                     setTaxEnabled(parsed.taxEnabled !== undefined ? parsed.taxEnabled : true);
                     const restoredCode = parsed.currencyCode || 'INR';
@@ -244,6 +249,11 @@ const CURRENCY_SYMBOLS = {
                                        branchRes.data.stockIncluded !== 0 && 
                                        branchRes.data.stockIncluded !== '0';
                 setBranchSettings({ stockIncluded: isStockEnabled });
+
+                const bCode = branchRes.data.currencyCode || 'INR';
+                const bSymbol = branchRes.data.currencySymbol || CURRENCY_SYMBOLS[bCode] || '₹';
+                setCurrencyCode(bCode);
+                setCurrencySymbol(bSymbol);
             }
 
 
@@ -1131,6 +1141,7 @@ const CURRENCY_SYMBOLS = {
             setRoundOff(0);
             setSaleDescription('');
             setSalesmanId(cashier?.id || ''); // Reset to cashier
+            setSaleDate(new Date().toISOString().split('T')[0]);
             localStorage.removeItem(`pos_state_${user?.id}`);
             
             // Refresh Products to update stock counts
