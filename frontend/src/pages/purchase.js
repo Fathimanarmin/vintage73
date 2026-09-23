@@ -28,7 +28,7 @@ export default function Purchase() {
   const [rows, setRows] = useState([{ ...initialRow }]);
   const [supplier, setSupplier] = useState('');
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [paymentMethod, setPaymentMethod] = useState('Credit');
 
   // Details Modal
   const [selectedPurchase, setSelectedPurchase] = useState(null);
@@ -48,29 +48,36 @@ export default function Purchase() {
   const [purchaseToDelete, setPurchaseToDelete] = useState(null);
 
   useEffect(() => {
-    // Init User
+    // Init User and Branches
     const storedUser = localStorage.getItem('user');
+    let userBranchId = '';
     if (storedUser) {
       const u = JSON.parse(storedUser);
       setUser(u);
-      setSelectedBranch(u.branchId?.toString() || '');
-      if (u.role === 'admin') {
-        api.get('/branches').then(res => setBranches(res.data)).catch(console.error);
-      }
+      userBranchId = u.branchId?.toString() || '';
+      setSelectedBranch(userBranchId);
     }
+    api.get('/branches').then(res => {
+      setBranches(res.data || []);
+      if (!userBranchId && res.data && res.data.length > 0) {
+        setSelectedBranch(res.data[0].id.toString());
+      }
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (targetBranch) => {
     try {
       const storedUser = localStorage.getItem('user');
-      const branchId = storedUser ? JSON.parse(storedUser).branchId : null;
+      const u = storedUser ? JSON.parse(storedUser) : null;
+      const activeBranch = targetBranch !== undefined ? targetBranch : (selectedBranch || u?.branchId);
+      const branchIdParam = activeBranch && activeBranch !== 'all' ? activeBranch : undefined;
 
       const [prodRes, supRes, brandRes] = await Promise.all([
-        api.get('/products', { params: { branchId } }),
+        api.get('/products', { params: { branchId: branchIdParam } }),
         api.get('/suppliers'),
         api.get('/brands')
       ]);
@@ -313,8 +320,8 @@ export default function Purchase() {
       }
 
       const user = JSON.parse(localStorage.getItem('user'));
-      // Use user's branch if available, otherwise use selected branch (for super admins)
-      const branchIdToUse = user.branchId || selectedBranch;
+      // Use selected branch first, fallback to user's branchId
+      const branchIdToUse = selectedBranch || user?.branchId;
 
       if (!branchIdToUse || branchIdToUse === 'all') {
         toast.error('Please select a valid branch');
@@ -372,7 +379,7 @@ export default function Purchase() {
       toast.success('Purchase Saved & Stock Updated!');
       setRows([{ ...initialRow }]);
       setSupplier('');
-      setPaymentMethod('Cash');
+      setPaymentMethod('Credit');
       fetchData(); // Refresh product stocks immediately
       fetchHistory(); // Refresh history
     } catch (err) {
@@ -437,7 +444,7 @@ export default function Purchase() {
 
       {activeTab === 'entry' ? (
         <div className="card shadow-lg border-0 bg-white p-6 rounded-xl">
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Select Supplier</label>
               <SearchableSelect
@@ -452,20 +459,20 @@ export default function Purchase() {
               </div>
             </div>
 
-            {/* Branch Selection for Admins (Only if no branch assigned) */}
-            {user?.role === 'admin' && !user?.branchId && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Select Branch</label>
-                <SearchableSelect
-                  options={branches.map(b => ({ value: b.id, label: b.name }))}
-                  value={selectedBranch}
-                  onChange={val => setSelectedBranch(val)}
-                  placeholder="-- Choose Branch --"
-                  direction="down"
-                />
-                <div className="text-xs text-slate-400 mt-1">Req. for Inventory</div>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Select Branch</label>
+              <SearchableSelect
+                options={branches.map(b => ({ value: b.id.toString(), label: b.name }))}
+                value={selectedBranch}
+                onChange={val => {
+                  setSelectedBranch(val);
+                  fetchData(val);
+                }}
+                placeholder="-- Choose Branch --"
+                direction="down"
+              />
+              <div className="text-xs text-slate-400 mt-1">Req. for Inventory</div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Purchase Date (Backdate)</label>
@@ -482,10 +489,6 @@ export default function Purchase() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
               <SearchableSelect
                 options={[
-                  { value: 'Cash', label: 'Cash' },
-                  { value: 'Bank Transfer', label: 'Bank Transfer' },
-                  { value: 'UPI', label: 'UPI / GPay' },
-                  { value: 'Cheque', label: 'Cheque' },
                   { value: 'Credit', label: 'Credit (Unpaid)' }
                 ]}
                 value={paymentMethod}
