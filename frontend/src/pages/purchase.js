@@ -509,7 +509,7 @@ export default function Purchase() {
                   <th className="p-3 min-w-[260px]">Size & Purchase Qty</th>
                   <th className="p-3 w-20 text-center">Total Qty</th>
                   <th className="p-3 w-28">Cost (₹)</th>
-                  <th className="p-3 w-20">Tax %</th>
+                  <th className="p-3 w-28 min-w-[112px] text-center">Tax %</th>
                   <th className="p-3 w-28">Total (₹)</th>
                   <th className="p-3 w-16 text-center">Action</th>
                 </tr>
@@ -588,7 +588,7 @@ export default function Purchase() {
                       <input type="number" min="0" step="any" className="input w-full p-2 border rounded" value={row.unitCost} onChange={e => handleRowChange(index, 'unitCost', e.target.value)} />
                     </td>
                     <td className="p-2 align-top pt-3">
-                      <input type="number" min="0" step="any" className="input w-full p-2 border rounded bg-slate-50" value={row.taxPercent || 0} onChange={e => handleRowChange(index, 'taxPercent', e.target.value)} placeholder="0" />
+                      <input type="number" min="0" step="any" className="input w-full min-w-[80px] px-2 py-2 border rounded bg-slate-50 text-center" value={row.taxPercent || 0} onChange={e => handleRowChange(index, 'taxPercent', e.target.value)} placeholder="0" />
                     </td>
                     <td className="p-3 font-semibold text-slate-700 align-top pt-4">
                       {row.total?.toFixed(2)}
