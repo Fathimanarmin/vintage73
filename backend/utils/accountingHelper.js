@@ -300,7 +300,24 @@ async function processPurchasePosting(tx, purchase, userId) {
     ? await ensureLedger(tx, supplier.name, 'Sundry Creditors')
     : await ensureLedger(tx, 'Sundry Creditors (General)', 'Sundry Creditors');
 
-  // 2. Post Purchase Voucher: Dr Purchase Account, Cr Supplier
+  // 2. Separate base purchase amount and tax amount
+  const taxAmount = parseFloat(String(purchase.taxAmount || 0));
+  const subTotal = parseFloat(String(purchase.subTotal || 0));
+  const baseAmount = subTotal > 0 ? subTotal : (taxAmount > 0 ? totalAmount - taxAmount : totalAmount);
+
+  const entries = [];
+
+  if (taxAmount > 0) {
+    const taxLedger = await ensureLedger(tx, 'Tax Account', 'Duties & Taxes');
+    entries.push({ ledgerId: purchaseLedger.id, type: 'DEBIT', amount: baseAmount });
+    entries.push({ ledgerId: taxLedger.id, type: 'DEBIT', amount: taxAmount });
+    entries.push({ ledgerId: supplierLedger.id, type: 'CREDIT', amount: totalAmount });
+  } else {
+    entries.push({ ledgerId: purchaseLedger.id, type: 'DEBIT', amount: totalAmount });
+    entries.push({ ledgerId: supplierLedger.id, type: 'CREDIT', amount: totalAmount });
+  }
+
+  // 3. Post Purchase Voucher
   const mainNarration = `${paymentMethod || 'Credit'} Purchase Bill #${reference}`;
   await postVoucher(tx, {
     type: 'PURCHASE',
@@ -309,10 +326,7 @@ async function processPurchasePosting(tx, purchase, userId) {
     narration: mainNarration,
     reference: reference,
     createdBy: userId
-  }, [
-    { ledgerId: purchaseLedger.id, type: 'DEBIT', amount: totalAmount },
-    { ledgerId: supplierLedger.id, type: 'CREDIT', amount: totalAmount }
-  ]);
+  }, entries);
 
   // 3. If Payment is not Credit, also settle the Supplier Ledger (Cr Bank/Cash, Dr Supplier)
   const isSettled = paymentMethod && paymentMethod.toUpperCase() !== 'CREDIT';

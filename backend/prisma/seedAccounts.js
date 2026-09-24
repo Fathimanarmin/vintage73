@@ -52,7 +52,7 @@ async function main() {
                     name: 'Duties & Taxes',
                     type: 'LIABILITIES',
                     isSystem: true,
-                    ledgers: ['Output CGST', 'Output SGST', 'Output IGST', 'Input CGST', 'Input SGST', 'Input IGST']
+                    ledgers: ['Output CGST', 'Output SGST', 'Output IGST', 'Input CGST', 'Input SGST', 'Input IGST', 'Tax Account']
                 },
                 {
                     name: 'Sundry Creditors',
