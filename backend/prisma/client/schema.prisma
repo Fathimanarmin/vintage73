@@ -69,6 +69,8 @@ model Branch {
   invoiceSettings   Json?
   stockIncluded     Boolean            @default(true)
   invoiceTemplate   String?
+  currencyCode      String?            @default("INR")
+  currencySymbol    String?            @default("₹")
   attendance        Attendance[]
   barcodeSetting    BarcodeSetting?
   customers         Customer[]

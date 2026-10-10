@@ -22,22 +22,27 @@ export default function POS() {
     const [terminal, setTerminal] = useState(null);
     const [branches, setBranches] = useState([]);
     const [selectedBranch, setSelectedBranch] = useState('');
+    const [assignedBranch, setAssignedBranch] = useState(null);
     const [branchSettings, setBranchSettings] = useState({ stockIncluded: true });
 
     useEffect(() => {
         const stored = localStorage.getItem('user');
+        let currentUser = null;
         if (stored) {
-            const parsed = JSON.parse(stored);
-            setUser(parsed);
-            setCashier(parsed);
+            currentUser = JSON.parse(stored);
+            setUser(currentUser);
+            setCashier(currentUser);
+            if (currentUser.branchId) {
+                setSelectedBranch(currentUser.branchId);
+            }
         }
 
         // Fetch terminal details
         checkTerminalAccess().then(res => {
             if (res.authorized && res.terminal) {
                 setTerminal(res.terminal);
-                if (res.terminal.branchId) {
-                    setSelectedBranch(res.terminal.branchId);
+                if (currentUser?.role === 'admin' && !currentUser.branchId && res.terminal.branchId) {
+                    setSelectedBranch(prev => prev || res.terminal.branchId);
                 }
             }
         });
@@ -55,7 +60,8 @@ export default function POS() {
     const [search, setSearch] = useState('');
     const [customerId, setCustomerId] = useState('');
     const [customerName, setCustomerName] = useState('');
-    const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]); // Backdating
+    const [saleDate, setSaleDate] = useState(''); // Populated from active business date API
+    const [businessDateLoading, setBusinessDateLoading] = useState(true);
 
     // Salesman Selection
     const [salesmanId, setSalesmanId] = useState('');
@@ -114,9 +120,41 @@ const CURRENCY_SYMBOLS = {
     const [currencySymbol, setCurrencySymbol] = useState('₹');
     const [exchangeRate, setExchangeRate] = useState(1);
 
+    // Fetch the authoritative active business date from Day Close API
+    const fetchBusinessDate = async (branchId) => {
+        try {
+            setBusinessDateLoading(true);
+            const params = branchId ? { branchId } : {};
+            const res = await api.get('/day-close/status', { params });
+            if (res.data && res.data.activeDate) {
+                setSaleDate(res.data.activeDate);
+            } else if (res.data && res.data.currentDate) {
+                setSaleDate(res.data.currentDate);
+            } else {
+                // Fallback: use today only if API fails to return a date
+                const today = new Date();
+                const y = today.getFullYear();
+                const m = String(today.getMonth() + 1).padStart(2, '0');
+                const d = String(today.getDate()).padStart(2, '0');
+                setSaleDate(`${y}-${m}-${d}`);
+            }
+        } catch (err) {
+            console.error('Failed to fetch active business date:', err);
+            // Fallback on error
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            setSaleDate(`${y}-${m}-${d}`);
+        } finally {
+            setBusinessDateLoading(false);
+        }
+    };
+
     // Restore POS state on mount or when user changes
     useEffect(() => {
         if (user?.id) {
+            const activeBranchId = user.branchId || selectedBranch || null;
             const storedPosState = localStorage.getItem(`pos_state_${user.id}`);
             if (storedPosState) {
                 try {
@@ -125,12 +163,6 @@ const CURRENCY_SYMBOLS = {
                     setCustomerId(parsed.customerId || '');
                     setCustomerName(parsed.customerName || '');
                     setSalesmanId(parsed.salesmanId || '');
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    if (parsed.saleDate && parsed.saleDate === todayStr) {
-                        setSaleDate(parsed.saleDate);
-                    } else {
-                        setSaleDate(todayStr);
-                    }
                     setRoundOff(parsed.roundOff || 0);
                     setTaxEnabled(parsed.taxEnabled !== undefined ? parsed.taxEnabled : true);
                     const restoredCode = parsed.currencyCode || 'INR';
@@ -142,6 +174,8 @@ const CURRENCY_SYMBOLS = {
                     console.error('Failed to restore POS state:', e);
                 }
             }
+            // Always fetch the authoritative business date from the server
+            fetchBusinessDate(activeBranchId);
         }
     }, [user?.id]);
 
@@ -230,7 +264,7 @@ const CURRENCY_SYMBOLS = {
 
     const fetchData = async () => {
         try {
-            const activeBranchId = selectedBranch || user?.branchId;
+            const activeBranchId = (user?.role === 'admin' && !user?.branchId) ? selectedBranch : (user?.branchId || selectedBranch);
             const [prodRes, custRes, compRes, userRes, branchRes, brandRes] = await Promise.all([
                 api.get('/products', { params: { branchId: activeBranchId } }),
                 api.get('/customers'),
@@ -243,6 +277,7 @@ const CURRENCY_SYMBOLS = {
             setCustomers(custRes.data);
             setBrands(brandRes.data || []);
             if (branchRes.data) {
+                setAssignedBranch(branchRes.data);
                 // Robust check for stockIncluded
                 const isStockEnabled = branchRes.data.stockIncluded !== false && 
                                        branchRes.data.stockIncluded !== 'false' && 
@@ -254,6 +289,14 @@ const CURRENCY_SYMBOLS = {
                 const bSymbol = branchRes.data.currencySymbol || CURRENCY_SYMBOLS[bCode] || '₹';
                 setCurrencyCode(bCode);
                 setCurrencySymbol(bSymbol);
+
+                if (user && !user.branchName && branchRes.data.name) {
+                    const updatedUser = { ...user, branchName: branchRes.data.name };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    setUser(updatedUser);
+                }
+            } else {
+                setAssignedBranch(null);
             }
 
 
@@ -420,7 +463,7 @@ const CURRENCY_SYMBOLS = {
     // Update Invoice Settings and Stock Settings when Branch Changes
     useEffect(() => {
         const updateSettings = async () => {
-            const activeBranchId = selectedBranch || user?.branchId;
+            const activeBranchId = (user?.role === 'admin' && !user?.branchId) ? selectedBranch : (user?.branchId || selectedBranch);
             if (activeBranchId) {
                 try {
                     const { data } = await api.get(`/branches/${activeBranchId}`);
@@ -958,8 +1001,9 @@ const CURRENCY_SYMBOLS = {
     };
 
     const initiateCheckout = () => {
-        if (!selectedBranch && !user?.branchId) {
-            toast.error("Please select a branch first");
+        const activeBranchId = (user?.role === 'admin' && !user?.branchId) ? selectedBranch : (user?.branchId || selectedBranch);
+        if (!activeBranchId) {
+            toast.error(user?.role === 'admin' ? "Please select a branch first" : "No branch assigned to your account");
             return;
         }
         if (cart.length === 0) { toast.error("Cart is empty"); return; }
@@ -1008,8 +1052,9 @@ const CURRENCY_SYMBOLS = {
 
     const handleCheckout = async () => {
         try {
-            if (!selectedBranch && !user?.branchId) {
-                toast.error("Please select a branch first");
+            const activeBranchId = (user?.role === 'admin' && !user?.branchId) ? selectedBranch : (user?.branchId || selectedBranch);
+            if (!activeBranchId) {
+                toast.error(user?.role === 'admin' ? "Please select a branch first" : "No branch assigned to your account");
                 return;
             }
             const currentInputAmount = parseFloat(paymentData.paidAmount) || 0;
@@ -1073,7 +1118,7 @@ const CURRENCY_SYMBOLS = {
             const payload = {
                 customerId: customerId ? parseInt(customerId) : null,
                 customerName: customerName || 'Walk-in Customer',
-                branchId: selectedBranch ? parseInt(selectedBranch) : (user?.branchId || null),
+                branchId: activeBranchId ? parseInt(activeBranchId) : null,
                 saleDate,
                 items: cart.map(item => {
                     return {
@@ -1141,7 +1186,7 @@ const CURRENCY_SYMBOLS = {
             setRoundOff(0);
             setSaleDescription('');
             setSalesmanId(cashier?.id || ''); // Reset to cashier
-            setSaleDate(new Date().toISOString().split('T')[0]);
+            fetchBusinessDate(activeBranchId ? parseInt(activeBranchId) : (user?.branchId || null));
             localStorage.removeItem(`pos_state_${user?.id}`);
             
             // Refresh Products to update stock counts
@@ -1374,10 +1419,15 @@ const CURRENCY_SYMBOLS = {
                                     />
                                 </div>
                             ) : (
-                                <>
-                                    <p className="text-[10px] text-slate-400 font-medium uppercase">Terminal</p>
-                                    <p className="text-xs font-mono font-medium text-primary">POS-01</p>
-                                </>
+                                <div>
+                                    <p className="text-[10px] text-slate-400 font-medium uppercase">Branch / Terminal</p>
+                                    <p className="text-xs font-semibold text-slate-700 truncate max-w-[180px]" title={assignedBranch?.name || user?.branchName || user?.branch?.name || ''}>
+                                        {assignedBranch?.name || user?.branchName || user?.branch?.name || branches.find(b => b.id.toString() === (user?.branchId || selectedBranch)?.toString())?.name || (user?.branchId ? 'Loading...' : <span className="text-amber-600 font-medium">No Branch Assigned</span>)}
+                                    </p>
+                                    <p className="text-[10px] font-mono font-medium text-primary">
+                                        {terminal?.name || 'POS-01'}
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>

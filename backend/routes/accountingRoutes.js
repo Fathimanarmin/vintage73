@@ -46,6 +46,7 @@ router.post('/bulk-post', accountingController.bulkPostTransactions);
 router.get('/reports/profit-loss', accountingReportsController.getProfitLoss);
 router.get('/reports/balance-sheet', accountingReportsController.getBalanceSheet);
 router.get('/reports/ledger-statement', accountingReportsController.getLedgerStatement);
+router.get('/reports/cash-book', accountingReportsController.getCashBook);
 router.get('/reports/day-book', accountingReportsController.getDayBook);
 
 module.exports = router;

@@ -107,6 +107,7 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 app.use('/api/invoice-settings', require('./routes/invoiceSettingsRoutes'));
 app.use('/api/advances', require('./routes/advanceRoutes'));
+app.use('/api/day-close', require('./routes/dayCloseRoutes'));
 
 // Global Error Handler (MUST be last)
 app.use(errorHandler);

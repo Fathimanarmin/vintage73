@@ -32,7 +32,7 @@ export default function B2BInvoice() {
   const [customerId, setCustomerId] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [placeOfSupply, setPlaceOfSupply] = useState('');
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [invoiceDate, setInvoiceDate] = useState(''); // Populated from active business date API
   const [items, setItems] = useState([]);
   const [roundOff, setRoundOff] = useState(0);
 
@@ -79,6 +79,24 @@ export default function B2BInvoice() {
           setBranchSettings({
             stockIncluded: bData.stockIncluded !== undefined ? bData.stockIncluded : true
           });
+
+          // Fetch the authoritative active business date
+          try {
+            const bdRes = await api.get('/day-close/status', { params: { branchId: user.branchId } });
+            if (bdRes.data?.activeDate) {
+              setInvoiceDate(bdRes.data.activeDate);
+            } else if (bdRes.data?.currentDate) {
+              setInvoiceDate(bdRes.data.currentDate);
+            } else {
+              setInvoiceDate(new Date().toISOString().split('T')[0]);
+            }
+          } catch (bdErr) {
+            console.error('Failed to fetch business date:', bdErr);
+            setInvoiceDate(new Date().toISOString().split('T')[0]);
+          }
+        } else {
+          // No branch — fall back to calendar date
+          setInvoiceDate(new Date().toISOString().split('T')[0]);
         }
       } catch (err) {
         console.error(err);

@@ -135,7 +135,9 @@ exports.Prisma.BranchScalarFieldEnum = {
   updatedAt: 'updatedAt',
   invoiceSettings: 'invoiceSettings',
   stockIncluded: 'stockIncluded',
-  invoiceTemplate: 'invoiceTemplate'
+  invoiceTemplate: 'invoiceTemplate',
+  currencyCode: 'currencyCode',
+  currencySymbol: 'currencySymbol'
 };
 
 exports.Prisma.CompanyProfileScalarFieldEnum = {
@@ -1022,6 +1024,34 @@ exports.Prisma.InvoiceSettingScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.DayCloseScalarFieldEnum = {
+  id: 'id',
+  branchId: 'branchId',
+  businessDate: 'businessDate',
+  status: 'status',
+  salesSummary: 'salesSummary',
+  physicalCash: 'physicalCash',
+  cashDifference: 'cashDifference',
+  notes: 'notes',
+  finalizedById: 'finalizedById',
+  finalizedAt: 'finalizedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StaffDayCloseScalarFieldEnum = {
+  id: 'id',
+  dayCloseId: 'dayCloseId',
+  userId: 'userId',
+  salesSummary: 'salesSummary',
+  physicalCash: 'physicalCash',
+  cashDifference: 'cashDifference',
+  denomination: 'denomination',
+  notes: 'notes',
+  status: 'status',
+  submittedAt: 'submittedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1116,7 +1146,9 @@ exports.Prisma.ModelName = {
   TicketHistory: 'TicketHistory',
   TicketMessage: 'TicketMessage',
   TicketClosureRequest: 'TicketClosureRequest',
-  InvoiceSetting: 'InvoiceSetting'
+  InvoiceSetting: 'InvoiceSetting',
+  DayClose: 'DayClose',
+  StaffDayClose: 'StaffDayClose'
 };
 
 /**

@@ -336,6 +336,10 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     throw new Error('Ledger not found');
   }
 
+  if (req.query.isCashBook === 'true') {
+    return exports.getCashBook(req, res);
+  }
+
   // Check if this ledger corresponds to a Customer / Sundry Debtors
   const customer = await prisma.customer.findFirst({
     where: { name: ledger.name }
@@ -656,12 +660,26 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
       include: { debitLedger: true, creditLedger: true }
     });
 
+    // For particulars, only show the COUNTERPART side of the voucher.
+    // If this entry is a DEBIT, the counterpart is the CREDIT side (and vice versa).
+    // This prevents compound vouchers (e.g. Dr Purchase + Dr Tax + Cr Supplier)
+    // from incorrectly showing Tax Account as a counterpart in the Purchase Account ledger.
+    const counterpartSide = e.type === 'DEBIT' ? 'credit' : 'debit';
+
     const otherLedgers = voucherEntries
+      .filter(ve => {
+        // Only include entries from the counterpart side
+        if (counterpartSide === 'credit') {
+          return ve.creditLedgerId !== null && ve.creditLedgerId !== parseInt(ledgerId);
+        } else {
+          return ve.debitLedgerId !== null && ve.debitLedgerId !== parseInt(ledgerId);
+        }
+      })
       .map(ve => ({
-        id: ve.debitLedgerId || ve.creditLedgerId,
-        name: ve.debitLedger?.name || ve.creditLedger?.name
+        id: counterpartSide === 'credit' ? ve.creditLedgerId : ve.debitLedgerId,
+        name: counterpartSide === 'credit' ? ve.creditLedger?.name : ve.debitLedger?.name
       }))
-      .filter(l => l.id !== parseInt(ledgerId));
+      .filter(l => l.id && l.name);
 
     const uniqueOtherNames = [...new Set(otherLedgers.map(l => l.name))];
 
@@ -670,6 +688,7 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     } else if (uniqueOtherNames.length > 1) {
       particulars = `Multiple (${uniqueOtherNames.slice(0, 2).join(', ')}${uniqueOtherNames.length > 2 ? '...' : ''})`;
     } else {
+      // Fallback: use direct counterpart from this specific entry
       particulars = e.type === 'DEBIT' ? (e.creditLedger?.name || 'Related Ledger') : (e.debitLedger?.name || 'Related Ledger');
     }
 
@@ -713,6 +732,579 @@ exports.getLedgerStatement = asyncHandler(async (req, res) => {
     },
     statement,
     closingBalance: Math.abs(runningBalance) < 0.001 ? 0 : runningBalance
+  });
+});
+
+// ==================== CASH BOOK ====================
+
+function extractSaleBreakdown(sale) {
+  const totalAmount = parseFloat(sale.totalAmount || 0);
+  const paidAmount = parseFloat(sale.paidAmount || 0);
+  const payments = sale.payments || [];
+
+  let cashAmount = 0;
+  let upiAmount = 0;
+  let cardAmount = 0;
+  let otherNonCashAmount = 0;
+
+  if (payments.length > 0) {
+    for (const p of payments) {
+      const amt = parseFloat(p.amount || 0);
+      const method = (p.method || '').trim().toLowerCase();
+      if (method === 'cash') {
+        cashAmount += amt;
+      } else if (method.includes('upi')) {
+        upiAmount += amt;
+      } else if (method.includes('card')) {
+        cardAmount += amt;
+      } else if (method === 'credit') {
+        // Explicit credit method record
+      } else {
+        otherNonCashAmount += amt;
+      }
+    }
+  } else {
+    const method = (sale.paymentMethod || 'cash').trim().toLowerCase();
+    if (method === 'cash') {
+      cashAmount = paidAmount;
+    } else if (method.includes('upi')) {
+      upiAmount = paidAmount;
+    } else if (method.includes('card')) {
+      cardAmount = paidAmount;
+    } else if (method === 'credit') {
+      // 0 paid at sale
+    } else if (method === 'split') {
+      cashAmount = paidAmount;
+    } else {
+      otherNonCashAmount = paidAmount;
+    }
+  }
+
+  const initialCash = cashAmount;
+  const initialNonCash = upiAmount + cardAmount + otherNonCashAmount;
+  const initialCredit = Math.max(0, totalAmount - (initialCash + initialNonCash));
+  const currentOutstanding = Math.min(
+    initialCredit,
+    Math.max(0, parseFloat(sale.balanceAmount !== undefined && sale.balanceAmount !== null ? sale.balanceAmount : (totalAmount - paidAmount)))
+  );
+  const receivedAgainstCredit = Math.max(0, initialCredit - currentOutstanding);
+
+  let credit = 0;
+  let debit = 0;
+
+  if (initialCredit > 0) {
+    // Examples 3 & 4:
+    // Full sale on Credit side, non-cash + outstanding credit on Debit side.
+    // When outstanding credit is collected later, Debit reduces to initialNonCash (or 0).
+    credit = totalAmount - initialNonCash;
+    debit = initialNonCash + currentOutstanding;
+  } else {
+    // Examples 1 & 2:
+    // Cash portion on Credit side, non-cash portion on Debit side.
+    credit = initialCash;
+    debit = initialNonCash;
+  }
+
+  return {
+    totalAmount,
+    initialCash,
+    upiAmount,
+    cardAmount,
+    otherNonCashAmount,
+    initialCredit,
+    currentOutstanding,
+    receivedAgainstCredit,
+    credit,
+    debit
+  };
+}
+
+function groupSalesByDate(sales) {
+  const groups = new Map();
+  for (const sale of sales) {
+    const dateKey = new Date(sale.saleDate).toISOString().split('T')[0];
+    if (!groups.has(dateKey)) {
+      groups.set(dateKey, []);
+    }
+    groups.get(dateKey).push(sale);
+  }
+  return Array.from(groups.values());
+}
+
+function buildDailySaleAndCreditRows(daySales) {
+  if (!daySales || daySales.length === 0) return [];
+
+  const baseDate = daySales[0].saleDate;
+  const dateKey = new Date(baseDate).toISOString().split('T')[0];
+  const invoiceNumbers = daySales.map(s => s.invoiceNumber).filter(Boolean);
+  const voucherNoStr = invoiceNumbers.join(', ') || '-';
+
+  let dailySaleCash = 0;
+  const creditSales = [];
+
+  const saleBreakdowns = daySales.map(sale => {
+    const b = extractSaleBreakdown(sale);
+    const custName = sale.customer?.name || sale.customerName || 'Walk-in Customer';
+    const custPhone = sale.customer?.phone || sale.customerPhone || null;
+
+    if (b.initialCredit > 0) {
+      creditSales.push({ sale, breakdown: b, custName, custPhone });
+      // Cash from credit sales is NOT added to the daily Sale row.
+      // The full sale is represented in the Customer Credit row (credit = totalAmount, debit = outstanding).
+    } else {
+      dailySaleCash += b.initialCash;
+    }
+
+    return {
+      id: sale.id,
+      invoiceNumber: sale.invoiceNumber,
+      customerName: custName,
+      customerPhone: custPhone,
+      totalAmount: b.totalAmount,
+      cashAmount: b.initialCash,
+      upiAmount: b.upiAmount,
+      cardAmount: b.cardAmount,
+      otherNonCashAmount: b.otherNonCashAmount,
+      creditAmount: b.initialCredit,
+      paymentMethod: sale.paymentMethod || 'Cash',
+      description: sale.description
+    };
+  });
+
+  const rows = [];
+
+  // 1. One Single Daily Sale Row
+  rows.push({
+    id: `sale-day-${dateKey}`,
+    rawId: daySales[0].id,
+    date: baseDate,
+    voucherNumber: voucherNoStr,
+    voucherType: 'Sale',
+    particulars: 'Sale',
+    debit: 0,
+    credit: Math.round(dailySaleCash * 100) / 100,
+    narration: daySales.length > 1 ? `Daily Sales (${daySales.length} invoices)` : (daySales[0].description || 'Sale'),
+    isSale: true,
+    details: {
+      date: baseDate,
+      invoiceNumbers,
+      totalSalesCount: daySales.length,
+      sales: saleBreakdowns
+    }
+  });
+
+  // 2. Individual Customer Credit Row for EACH separate credit transaction
+  for (const cs of creditSales) {
+    const { sale, breakdown, custName, custPhone } = cs;
+    const isSettled = breakdown.currentOutstanding <= 0.001;
+    const narrationText = custName
+      ? (isSettled
+          ? `Credit settled (${custName})`
+          : (breakdown.currentOutstanding < breakdown.initialCredit
+              ? `Credit to ${custName} (₹${(breakdown.initialCredit - breakdown.currentOutstanding).toFixed(2)} received)`
+              : `Credit to ${custName}`))
+      : (isSettled ? 'Credit settled' : 'Customer Credit');
+
+    rows.push({
+      id: `crd-${sale.id}`,
+      rawId: sale.id,
+      date: sale.saleDate,
+      voucherNumber: sale.invoiceNumber || voucherNoStr,
+      voucherType: 'Credit',
+      particulars: 'Customer Credit',
+      debit: Math.round(breakdown.currentOutstanding * 100) / 100,
+      credit: Math.round(breakdown.totalAmount * 100) / 100,
+      narration: narrationText,
+      isSale: false,
+      details: {
+        customerName: custName,
+        customerPhone: custPhone,
+        invoiceNumber: sale.invoiceNumber,
+        paymentMethod: 'Credit',
+        totalAmount: breakdown.totalAmount,
+        creditAmount: breakdown.initialCredit,
+        currentOutstanding: breakdown.currentOutstanding,
+        receivedAgainstCredit: breakdown.receivedAgainstCredit,
+        isCustomerCredit: true
+      }
+    });
+  }
+
+  return rows;
+}
+
+exports.getCashBook = asyncHandler(async (req, res) => {
+  const { startDate, endDate, branchId, ledgerId } = req.query;
+
+  const start = startDate ? new Date(startDate) : null;
+  if (start) start.setHours(0, 0, 0, 0);
+
+  let end = endDate ? new Date(endDate) : null;
+  if (end) end.setHours(23, 59, 59, 999);
+
+  // 1. Locate Cash ledger
+  let cashLedger = null;
+  if (ledgerId) {
+    cashLedger = await prisma.ledger.findUnique({
+      where: { id: parseInt(ledgerId) },
+      include: { group: true }
+    });
+  }
+
+  if (!cashLedger) {
+    cashLedger = await prisma.ledger.findFirst({
+      where: {
+        isActive: true,
+        OR: [
+          { name: { equals: 'Cash', mode: 'insensitive' } },
+          { name: { equals: 'Cash in Hand', mode: 'insensitive' } },
+          { name: { equals: 'Cash-in-Hand', mode: 'insensitive' } },
+          { name: { contains: 'Cash', mode: 'insensitive' } }
+        ]
+      },
+      include: { group: true },
+      orderBy: { id: 'asc' }
+    });
+  }
+
+  const masterOpening = parseFloat(cashLedger?.openingBalance || 0);
+  const branchFilter = branchId ? { branchId: parseInt(branchId) } : {};
+
+  // 2. Fetch Period Sales
+  const periodSales = await prisma.sale.findMany({
+    where: {
+      status: { not: 'cancelled' },
+      ...branchFilter,
+      ...(start || end ? {
+        saleDate: {
+          ...(start ? { gte: start } : {}),
+          ...(end ? { lte: end } : {})
+        }
+      } : {})
+    },
+    include: {
+      customer: true,
+      payments: true
+    },
+    orderBy: { saleDate: 'asc' }
+  });
+
+  // 3. Fetch Period Expenses
+  const periodExpenses = await prisma.expense.findMany({
+    where: {
+      ...branchFilter,
+      ...(start || end ? {
+        date: {
+          ...(start ? { gte: start } : {}),
+          ...(end ? { lte: end } : {})
+        }
+      } : {})
+    },
+    orderBy: { date: 'asc' }
+  });
+
+  // 4. Fetch Period Standalone Payments & Credit Settlements
+  const saleInvoices = periodSales.map(s => s.invoiceNumber).filter(Boolean);
+  const periodPayments = await prisma.payment.findMany({
+    where: {
+      saleId: null,
+      ...branchFilter,
+      reference: {
+        notIn: ['Initial Payment', 'Updated Payment', 'Initial POS Payment', ...saleInvoices]
+      },
+      NOT: [
+        { description: { startsWith: 'Payment for Invoice' } },
+        { description: { startsWith: 'Payment for #' } }
+      ],
+      ...(start || end ? {
+        paymentDate: {
+          ...(start ? { gte: start } : {}),
+          ...(end ? { lte: end } : {})
+        }
+      } : {})
+    },
+    include: {
+      customer: true,
+      supplier: true
+    },
+    orderBy: { paymentDate: 'asc' }
+  });
+
+  // 5. Fetch manual vouchers involving Cash ledger
+  let periodManualVoucherEntries = [];
+  if (cashLedger) {
+    const expIds = periodExpenses.map(e => `EXP-${e.id}`);
+    const payRefs = periodPayments.flatMap(p => [
+      p.reference,
+      `PAY-${p.id}`,
+      `REC-${p.id}`,
+      `SETTLE-${p.id}`
+    ]).filter(Boolean);
+
+    periodManualVoucherEntries = await prisma.journalEntry.findMany({
+      where: {
+        OR: [
+          { debitLedgerId: cashLedger.id },
+          { creditLedgerId: cashLedger.id }
+        ],
+        voucher: {
+          status: 'POSTED',
+          voucherType: { not: 'SALES' },
+          reference: {
+            notIn: [...saleInvoices, ...expIds, ...payRefs]
+          },
+          NOT: [
+            { narration: { startsWith: 'Sales Invoice #' } },
+            { narration: { startsWith: 'Payment for #' } },
+            { narration: { startsWith: 'Expense -' } },
+            { narration: { startsWith: 'Credit Settlement' } }
+          ],
+          ...(start || end ? {
+            date: {
+              ...(start ? { gte: start } : {}),
+              ...(end ? { lte: end } : {})
+            }
+          } : {})
+        }
+      },
+      include: {
+        voucher: true,
+        debitLedger: true,
+        creditLedger: true
+      }
+    });
+  }
+
+  // 6. Calculate Opening Balance if start date provided
+  let calculatedOpeningBalance = masterOpening;
+  if (start) {
+    const priorSales = await prisma.sale.findMany({
+      where: {
+        status: { not: 'cancelled' },
+        ...branchFilter,
+        saleDate: { lt: start }
+      },
+      include: { customer: true, payments: true }
+    });
+    const priorDailySalesList = groupSalesByDate(priorSales);
+    for (const salesList of priorDailySalesList) {
+      const gRows = buildDailySaleAndCreditRows(salesList);
+      for (const gr of gRows) {
+        calculatedOpeningBalance += (gr.credit - gr.debit);
+      }
+    }
+
+    const priorExpenses = await prisma.expense.findMany({
+      where: {
+        ...branchFilter,
+        date: { lt: start }
+      }
+    });
+    for (const e of priorExpenses) {
+      calculatedOpeningBalance -= parseFloat(e.amount || 0);
+    }
+
+    const priorSaleInvoices = priorSales.map(s => s.invoiceNumber).filter(Boolean);
+    const priorPayments = await prisma.payment.findMany({
+      where: {
+        saleId: null,
+        ...branchFilter,
+        reference: {
+          notIn: ['Initial Payment', 'Updated Payment', 'Initial POS Payment', ...priorSaleInvoices]
+        },
+        NOT: [
+          { description: { startsWith: 'Payment for Invoice' } },
+          { description: { startsWith: 'Payment for #' } }
+        ],
+        paymentDate: { lt: start }
+      }
+    });
+    for (const p of priorPayments) {
+      const amt = parseFloat(p.amount || 0);
+      const isReceipt = p.type?.toLowerCase() === 'receipt';
+      const isCustomerReceipt = isReceipt && !!p.customerId;
+      if (isCustomerReceipt) {
+        // Customer credit settlement receipts do not count as new income,
+        // as the prior sales opening balance already accounts for the settled balance.
+        continue;
+      }
+      if (isReceipt) {
+        calculatedOpeningBalance += amt;
+      } else {
+        calculatedOpeningBalance -= amt;
+      }
+    }
+
+    if (cashLedger) {
+      const priorVoucherEntries = await prisma.journalEntry.findMany({
+        where: {
+          OR: [
+            { debitLedgerId: cashLedger.id },
+            { creditLedgerId: cashLedger.id }
+          ],
+          voucher: {
+            status: 'POSTED',
+            voucherType: { not: 'SALES' },
+            date: { lt: start }
+          }
+        },
+        include: { voucher: true }
+      });
+      for (const ve of priorVoucherEntries) {
+        const amt = parseFloat(ve.amount || 0);
+        const ref = ve.voucher.reference || '';
+        const narr = ve.voucher.narration || '';
+        if (narr.startsWith('Sales Invoice #') || narr.startsWith('Payment for #') || narr.startsWith('Credit Settlement')) continue;
+        if (ref.startsWith('EXP-') || ref.startsWith('PAY-') || ref.startsWith('REC-') || ref.startsWith('SETTLE-')) continue;
+
+        if (ve.debitLedgerId === cashLedger.id) {
+          calculatedOpeningBalance += amt;
+        } else {
+          calculatedOpeningBalance -= amt;
+        }
+      }
+    }
+  }
+
+  // 7. Build Rows - Single Daily Sale row and separate Customer Credit rows
+  const dailyGroupedSalesList = groupSalesByDate(periodSales);
+  const saleRows = dailyGroupedSalesList.flatMap(salesList => buildDailySaleAndCreditRows(salesList));
+
+  // Expense Rows
+  const expenseRows = periodExpenses.map(exp => {
+    const amt = parseFloat(exp.amount || 0);
+    return {
+      id: `exp-${exp.id}`,
+      rawId: exp.id,
+      date: exp.date,
+      voucherNumber: `EXP-${exp.id}`,
+      voucherType: 'Expense',
+      particulars: 'Expense',
+      debit: amt, // All expenses on Debit (Out) side
+      credit: 0,
+      narration: exp.title || exp.description || 'Expense',
+      isSale: false,
+      details: {
+        customerName: null,
+        transactionType: 'Expense',
+        transactionDate: exp.date,
+        invoiceNumber: `EXP-${exp.id}`,
+        totalAmount: amt,
+        title: exp.title,
+        category: exp.category,
+        description: exp.description
+      }
+    };
+  });
+
+  // Standalone Payment Rows
+  const paymentRows = periodPayments.map(p => {
+    const amt = parseFloat(p.amount || 0);
+    const isReceipt = p.type?.toLowerCase() === 'receipt';
+    const isCustomerReceipt = isReceipt && !!p.customerId;
+    const isCreditSettlement = isCustomerReceipt;
+    const partyName = p.customer?.name || p.supplier?.name || (isReceipt ? 'Payer' : 'Payee');
+    const rowDebit = isReceipt ? 0 : amt;
+    const rowCredit = isReceipt ? (isCreditSettlement ? 0 : amt) : 0;
+    const receiptNarration = p.description || (isCustomerReceipt
+      ? `Credit receipt from ${partyName}`
+      : `${p.method || 'Cash'} ${isReceipt ? 'Receipt' : 'Payment'}`);
+
+    return {
+      id: `pay-${p.id}`,
+      rawId: p.id,
+      date: p.paymentDate,
+      voucherNumber: p.reference || (isReceipt ? `REC-${p.id}` : `PAY-${p.id}`),
+      voucherType: isReceipt ? 'Receipt' : 'Payment',
+      particulars: isCustomerReceipt ? 'Credit Receipt' : (isReceipt ? 'Receipt' : 'Payment'),
+      debit: rowDebit,
+      credit: rowCredit,
+      narration: receiptNarration,
+      isSale: false,
+      details: {
+        customerName: partyName,
+        customerPhone: p.customer?.phone || null,
+        transactionType: isCustomerReceipt ? 'Credit Receipt' : (isReceipt ? 'Receipt' : 'Payment'),
+        transactionDate: p.paymentDate,
+        invoiceNumber: p.reference || (isReceipt ? `REC-${p.id}` : `PAY-${p.id}`),
+        totalAmount: amt,
+        cashAmount: (p.method || '').toLowerCase() === 'cash' ? amt : null,
+        upiAmount: (p.method || '').toLowerCase().includes('upi') ? amt : null,
+        cardAmount: (p.method || '').toLowerCase().includes('card') ? amt : null,
+        paymentMethod: p.method || 'Cash',
+        description: p.description
+      }
+    };
+  });
+
+  // Manual Voucher Rows
+  const manualVoucherRows = periodManualVoucherEntries.map(ve => {
+    const amt = parseFloat(ve.amount || 0);
+    const isCashIn = ve.debitLedgerId === cashLedger?.id;
+    const counterpartName = isCashIn ? (ve.creditLedger?.name || 'Related Account') : (ve.debitLedger?.name || 'Related Account');
+    return {
+      id: `vouch-${ve.id}`,
+      rawId: ve.voucher.id,
+      date: ve.voucher.date,
+      voucherNumber: ve.voucher.voucherNumber,
+      voucherType: ve.voucher.voucherType || (isCashIn ? 'Receipt' : 'Payment'),
+      particulars: isCashIn ? 'Receipt' : 'Payment',
+      debit: isCashIn ? 0 : amt,
+      credit: isCashIn ? amt : 0,
+      narration: ve.voucher.narration || `${counterpartName}`,
+      isSale: false,
+      details: {
+        customerName: counterpartName,
+        transactionType: ve.voucher.voucherType || (isCashIn ? 'Receipt' : 'Payment'),
+        transactionDate: ve.voucher.date,
+        invoiceNumber: ve.voucher.voucherNumber,
+        totalAmount: amt,
+        description: ve.voucher.narration
+      }
+    };
+  });
+
+  // 8. Merge and Sort
+  const allRows = [...saleRows, ...expenseRows, ...paymentRows, ...manualVoucherRows].sort(
+    (a, b) => {
+      const diff = new Date(a.date) - new Date(b.date);
+      if (diff !== 0) return diff;
+      if (a.rawId === b.rawId) {
+        if (a.particulars === 'Sale' && b.particulars === 'Customer Credit') return -1;
+        if (a.particulars === 'Customer Credit' && b.particulars === 'Sale') return 1;
+      }
+      return 0;
+    }
+  );
+
+  // 9. Running Balance
+  let runningBalance = calculatedOpeningBalance;
+  const statement = allRows.map(row => {
+    runningBalance = runningBalance + row.credit - row.debit;
+    return {
+      ...row,
+      balance: Math.abs(runningBalance) < 0.001 ? 0 : Math.round(runningBalance * 100) / 100
+    };
+  });
+
+  const totalCredit = allRows.reduce((sum, r) => sum + r.credit, 0);
+  const totalDebit = allRows.reduce((sum, r) => sum + r.debit, 0);
+  const closingBalance = Math.abs(runningBalance) < 0.001 ? 0 : Math.round(runningBalance * 100) / 100;
+
+  res.json({
+    ledger: {
+      id: cashLedger?.id || 1,
+      name: cashLedger?.name || 'Cash',
+      groupName: cashLedger?.group?.name || 'Cash-in-Hand',
+      openingBalance: calculatedOpeningBalance,
+      balanceType: 'DEBIT',
+      openingDebit: 0,
+      openingCredit: calculatedOpeningBalance
+    },
+    statement,
+    closingBalance,
+    totalDebit,
+    totalCredit
   });
 });
 

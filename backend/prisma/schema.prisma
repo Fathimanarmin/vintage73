@@ -55,6 +55,8 @@ model User {
   managedStaff            User[]                 @relation("StaffAdmin")
   branch                  Branch?                @relation(fields: [branchId], references: [id], map: "User_branchId_fkey")
   terminals               Terminal[]             @relation("TerminalToUser")
+  dayCloseFinalizations   DayClose[]             @relation("DayCloseFinalizedBy")
+  staffDayClosings        StaffDayClose[]
 }
 
 model Branch {
@@ -69,6 +71,8 @@ model Branch {
   invoiceSettings   Json?
   stockIncluded     Boolean            @default(true)
   invoiceTemplate   String?
+  currencyCode      String?            @default("INR")
+  currencySymbol    String?            @default("₹")
   attendance        Attendance[]
   barcodeSetting    BarcodeSetting?
   customers         Customer[]
@@ -91,6 +95,7 @@ model Branch {
   workLogs          WorkLog[]
   leads             Lead[]
   users             User[]
+  dayCloses         DayClose[]
 }
 
 model CompanyProfile {
@@ -1162,3 +1167,41 @@ model InvoiceSetting {
   settings  Json
   updatedAt DateTime @updatedAt
 }
+
+model DayClose {
+  id             Int             @id @default(autoincrement())
+  branchId       Int
+  businessDate   DateTime        @db.Date
+  status         String          @default("OPEN") // OPEN, STAFF_CLOSED, ADMIN_CLOSED
+  salesSummary   Json?
+  physicalCash   Decimal?        @db.Decimal(10, 2)
+  cashDifference Decimal?        @db.Decimal(10, 2)
+  notes          String?
+  finalizedById  Int?
+  finalizedAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  finalizedBy    User?           @relation("DayCloseFinalizedBy", fields: [finalizedById], references: [id])
+  staffClosings  StaffDayClose[]
+
+  @@unique([branchId, businessDate])
+}
+
+model StaffDayClose {
+  id             Int      @id @default(autoincrement())
+  dayCloseId     Int
+  userId         Int
+  salesSummary   Json
+  physicalCash   Decimal  @db.Decimal(10, 2)
+  cashDifference Decimal  @default(0) @db.Decimal(10, 2)
+  denomination   Json?
+  notes          String?
+  status         String   @default("SUBMITTED")
+  submittedAt    DateTime @default(now())
+  dayClose       DayClose @relation(fields: [dayCloseId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@unique([dayCloseId, userId])
+}
+

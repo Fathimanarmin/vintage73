@@ -2,6 +2,7 @@ const prisma = require('../config/prisma');
 const asyncHandler = require('../middleware/asyncHandler');
 const { processSalePosting } = require('../utils/accountingHelper');
 const { generateNextNumber } = require('../services/numberingService');
+const { getBranchActiveBusinessDate } = require('../utils/businessDateHelper');
 
 // Create new sale
 exports.createSale = asyncHandler(async (req, res) => {
@@ -22,6 +23,12 @@ exports.createSale = asyncHandler(async (req, res) => {
   }
 
   const validBranchId = parseInt(branchId);
+
+  let effectiveSaleDate = saleDate ? new Date(saleDate) : null;
+  if (!effectiveSaleDate) {
+    const activeBiz = await getBranchActiveBusinessDate(validBranchId);
+    effectiveSaleDate = activeBiz.dateObj;
+  }
   if (!items || !Array.isArray(items) || items.length === 0) {
     res.status(400);
     throw new Error('Sale must have at least one item.');
@@ -197,7 +204,7 @@ exports.createSale = asyncHandler(async (req, res) => {
     }
 
     // Invoice Numbering
-    const { number: genInvNo, nextSeq, financialYearId } = await generateNextNumber(tx, 'invoice', validBranchId, saleDate);
+    const { number: genInvNo, nextSeq, financialYearId } = await generateNextNumber(tx, 'invoice', validBranchId, effectiveSaleDate);
     if (financialYearId) {
       await tx.financialYear.update({ where: { id: financialYearId }, data: { invoiceSequence: nextSeq } });
     }
@@ -285,7 +292,7 @@ exports.createSale = asyncHandler(async (req, res) => {
         advanceUsed: reqAdvanceUsed,
         paidAmount: finalPaidAmount,
         balanceAmount: finalBalanceAmount,
-        saleDate: saleDate ? new Date(saleDate) : new Date(),
+        saleDate: effectiveSaleDate,
         branchId: validBranchId,
         salesmanId: salesmanId ? parseInt(salesmanId) : null,
         terminalId: terminalId ? parseInt(terminalId) : null,

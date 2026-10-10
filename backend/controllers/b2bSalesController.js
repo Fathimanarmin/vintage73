@@ -2,7 +2,7 @@ const prisma = require('../config/prisma');
 const asyncHandler = require('../middleware/asyncHandler');
 const { ensureLedger, postVoucher } = require('../utils/accountingHelper');
 const { generateNextNumber } = require('../services/numberingService');
-
+const { getBranchActiveBusinessDate } = require('../utils/businessDateHelper');
 
 // Determine if IGST or CGST/SGST based on place of supply
 const determineTaxType = async (placeOfSupply) => {
@@ -40,6 +40,16 @@ exports.createB2BInvoice = asyncHandler(async (req, res) => {
   if (isNaN(branchIdInt)) {
     res.status(400);
     throw new Error('Branch selection is required.');
+  }
+
+  // Resolve the authoritative business date for this branch
+  let effectiveSaleDate;
+  if (saleDate) {
+    // Explicit date provided (e.g., editing/backdating) — use as-is
+    effectiveSaleDate = new Date(saleDate);
+  } else {
+    const activeBiz = await getBranchActiveBusinessDate(branchIdInt);
+    effectiveSaleDate = activeBiz.dateObj;
   }
 
   if (!customerId) {
@@ -123,7 +133,7 @@ exports.createB2BInvoice = asyncHandler(async (req, res) => {
 
     const grandTotal = subTotal + taxAmount + parseFloat(roundOffAmount || 0);
     const finalPaidAmount = parseFloat(paidAmount || 0);
-    const { number: invoiceNumber, nextSeq, financialYearId } = await generateNextNumber(tx, 'invoice', parseInt(branchId), saleDate);
+    const { number: invoiceNumber, nextSeq, financialYearId } = await generateNextNumber(tx, 'invoice', parseInt(branchId), effectiveSaleDate);
 
     if (financialYearId) {
         // Update the FY sequence for sync (store current as per user req)
@@ -149,7 +159,7 @@ exports.createB2BInvoice = asyncHandler(async (req, res) => {
         roundOffAmount: parseFloat(roundOffAmount || 0),
         paidAmount: finalPaidAmount,
         balanceAmount: grandTotal - finalPaidAmount,
-        saleDate: saleDate ? new Date(saleDate) : new Date(),
+        saleDate: effectiveSaleDate,
         branch: { connect: { id: parseInt(branchId) } },
         salesman: salesmanId ? { connect: { id: parseInt(salesmanId) } } : undefined,
         status: (grandTotal - finalPaidAmount) > 0.5 ? 'partial' : 'completed',
@@ -222,7 +232,7 @@ exports.createB2BInvoice = asyncHandler(async (req, res) => {
 
       await postVoucher(tx, {
         type: 'SALES',
-        date: saleDate ? new Date(saleDate) : new Date(),
+        date: effectiveSaleDate,
         amount: grandTotal,
         narration: `B2B Invoice #${invoiceNumber}`,
         reference: invoiceNumber,
@@ -234,7 +244,7 @@ exports.createB2BInvoice = asyncHandler(async (req, res) => {
         const cashLedger = await ensureLedger(tx, 'Cash', 'Cash-in-Hand');
         await postVoucher(tx, {
           type: 'RECEIPT',
-          date: saleDate ? new Date(saleDate) : new Date(),
+          date: effectiveSaleDate,
           amount: finalPaidAmount,
           narration: `Payment for B2B Invoice #${invoiceNumber}`,
           reference: invoiceNumber,
